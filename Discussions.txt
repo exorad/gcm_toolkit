@@ -1,0 +1,8 @@
+1) Dialog system
+SK: I think it would be a good idea to add a fixed consol output system.
+I usually use this:
+ - [INFO] for everything that is just an information
+ - [WARN] for our warnings
+ - [STAT] for current status updates (for example progress of long loops)
+
+Would you also like to add this?
