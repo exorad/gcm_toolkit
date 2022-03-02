@@ -6,7 +6,7 @@
 # ==============================================================
 
 
-def _read_from_mitgcm(gcmt, data_path):
+def m_read_from_mitgcm(gcmt, data_path):
     """
     Data read in for MITgcm output.
 

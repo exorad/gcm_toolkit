@@ -7,7 +7,7 @@
 #  access to the data for more experienced users.
 # ==============================================================
 
-from .read_in import _read_from_mitgcm
+from .read_in import m_read_from_mitgcm
 
 class GCMT:
 
@@ -47,7 +47,7 @@ class GCMT:
         """
 
         if gcm == 'MITgcm':
-            _read_from_mitgcm(self, data_path)
+            m_read_from_mitgcm(self, data_path)
         else:
             raise ValueError('The selected GCM type "' + gcm +
                              '" is not supported')
