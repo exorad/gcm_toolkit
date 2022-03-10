@@ -33,7 +33,7 @@ class GCMT:
         self.models = dict()
         pass
 
-    def read_raw(self, gcm, data_path, key=None):
+    def read_raw(self, gcm, data_path, tag=None):
         """
         General read in function for GCM data
 
@@ -43,8 +43,8 @@ class GCMT:
             Type of GCM, must be 'MITgcm'.
         data_path : str
             Folder path to the standard output of the GCM.
-        key : str
-            Key to reference the simulation in the collection of models.
+        tag : str
+            Tag to reference the simulation in the collection of models.
         """
 
         if gcm == 'MITgcm':
@@ -56,7 +56,7 @@ class GCMT:
         # end read in function
         return
 
-    def read_reduced(self, data_path, key=None):
+    def read_reduced(self, data_path, tag=None):
         """
         Read in function for GCM data that has been reduced and saved according
         to the GCMtools format.
@@ -65,8 +65,8 @@ class GCMT:
         ----------
         data_path : str
             Folder path to the reduced (GCMtools) data.
-        key : str
-            Key to reference the simulation in the collection of models.
+        tag : str
+            Tag to reference the simulation in the collection of models.
         """
         # read dataset using xarray functionalities
         ds = xr.open_dataset(data_path)
@@ -75,12 +75,12 @@ class GCMT:
         if not is_the_data_basic(ds):
             raise ValueError('The selected dataset is not supported by GCMtools\n' + gcm)
 
-        # if no key is given, models are just numbered as they get added
-        if key is None:
-            key = len(models)
+        # if no tag is given, models are just numbered as they get added
+        if tag is None:
+            tag = len(models)
 
         # store dataset
-        self.models[key] = ds
+        self.models[tag] = ds
 
     def save(self):
         """
