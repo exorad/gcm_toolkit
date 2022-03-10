@@ -8,11 +8,28 @@
 # ==============================================================
 
 import xarray as xr
+from collections import UserDict
 
 from .read_in import m_read_from_mitgcm
 from .passport import is_the_data_basic
 
 class GCMT:
+    """
+    The main GCMtools class with which the user can interact.
+
+    Attributes
+    ----------
+    models : dict
+        Dictionary containing all of the 3D GCM models that are stored in the
+        memory, with their respective tags.
+
+    Methods
+    -------
+    read_raw(self, gcm, data_path, tag=None):
+        Read in the raw data output from a GCM.
+    read_reduced(self, data_path, tag=None):
+        Read in the previously reduced GCM
+    """
 
     def __init__(self):
         """
@@ -22,16 +39,36 @@ class GCMT:
         ----------
         models : dict
             Dictionary containing all of the GCM datasets that have been read.
-
-        Returns
-        -------
-        NoneType
-            None
         """
 
         # Initialize empty dictionary to store all GCM models
-        self.models = dict()
-        pass
+        self.models = GCMDatasetCollection()
+
+    def get_models(self, tag=None):
+        """
+        Function return all GCMs in memory. If a tag is given, only return this
+        one.
+
+        Parameters
+        ----------
+        tag : str
+            Name of the model that should be returned.
+
+        Returns
+        -------
+        selected_models : GCMDatasetCollection
+            All models in self.models, or only the one with the right tag.
+        """
+        # If no tag is given, return all models
+        if tag is None:
+            return self.models
+        # If the tag is valid, return the corresponding model
+        elif isinstance(tag, str):
+            return self.models[tag]
+        # If the tag is not a string, raise an error
+        else:
+            raise ValueError('The given tag is not a string.')
+
 
     def read_raw(self, gcm, data_path, tag=None):
         """
@@ -59,7 +96,7 @@ class GCMT:
     def read_reduced(self, data_path, tag=None):
         """
         Read in function for GCM data that has been reduced and saved according
-        to the GCMtools format.
+        to the GCMtools GCMDataset format.
 
         Parameters
         ----------
@@ -73,7 +110,7 @@ class GCMT:
 
         # check if the dataset has all necessary GCMtools attributes
         if not is_the_data_basic(ds):
-            raise ValueError('The selected dataset is not supported by GCMtools\n' + gcm)
+            raise ValueError('This dataset is not supported by GCMtools\n')
 
         # if no tag is given, models are just numbered as they get added
         if tag is None:
@@ -117,3 +154,17 @@ class GCMT:
 
         # Todo: add functionalities if required
         pass
+
+# ------------------------------------------------------------------------------
+
+class GCMDatasetCollection(UserDict):
+    """
+    This class represents a collection of 3D GCM Datasets.
+    A GCMDatasetCollection is a dictionary with in which GCM models are loaded
+    with a tag.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    # TODO add additional functionalitiess
