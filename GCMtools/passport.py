@@ -60,12 +60,6 @@ def is_the_data_basic(dataset):
               'not contain W (vertical wind) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
-    if 'W' not in data_variables:
-        is_the_data_ok = False
-        print('[ERROR] The dataset "' + str(dataset['tag']) + '" does ' +
-              'not contain W (vertical wind) information and ' +
-              'therefore does not qualify as a basic GCM dataset.')
-
     if 'g' not in data_attributes:
         is_the_data_ok = False
         print('[ERROR] The dataset "' + str(dataset['tag']) + '" does ' +
