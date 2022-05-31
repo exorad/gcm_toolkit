@@ -38,49 +38,49 @@ def is_the_data_basic(dataset):
 
     if 'T' not in data_variables:
         is_the_data_ok = False
-        print('[ERROR] The dataset "' + str(dataset['tag']) + '" does ' +
+        print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
               'not contain T (temperature) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
     if 'U' not in data_variables:
         is_the_data_ok = False
-        print('[ERROR] The dataset "' + str(dataset['tag']) + '" does ' +
+        print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
               'not contain U (equatorial wind) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
     if 'V' not in data_variables:
         is_the_data_ok = False
-        print('[ERROR] The dataset "' + str(dataset['tag']) + '" does ' +
+        print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
               'not contain V (polar wind) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
     if 'W' not in data_variables:
         is_the_data_ok = False
-        print('[ERROR] The dataset "' + str(dataset['tag']) + '" does ' +
+        print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
               'not contain W (vertical wind) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
     if 'g' not in data_attributes:
         is_the_data_ok = False
-        print('[ERROR] The dataset "' + str(dataset['tag']) + '" does ' +
+        print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
               'not contain g (avarage gravity) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
     if 'P_rot' not in data_attributes:
         is_the_data_ok = False
-        print('[ERROR] The dataset "' + str(dataset['tag']) + '" does ' +
+        print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
               'not contain P_rot (rotational period) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
     if 'P_orb' not in data_attributes:
         is_the_data_ok = False
-        print('[ERROR] The dataset "' + str(dataset['tag']) + '" does ' +
+        print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
               'not contain P_orb (orbital period) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
     if 'R_p' not in data_attributes:
         is_the_data_ok = False
-        print('[ERROR] The dataset "' + str(dataset['tag']) + '" does ' +
+        print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
               'not contain R_p (planet radius) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
@@ -123,22 +123,22 @@ def is_the_data_cloudy(dataset):
 
     if 'ClAb' not in data_variables:
         print('[WARN] ClAb (cloud abundance) is missing from the dataset '
-              + str(dataset['tag']))
+              + str(dataset.attrs['tag']))
         is_the_data_ok = False
 
     if 'ClDr' not in data_variables:
         print('[WARN] ClDr (cloud particle radius) is missing from the dataset '
-              + str(dataset['tag']))
+              + str(dataset.attrs['tag']))
         is_the_data_ok = False
 
     if 'ClKs' not in data_variables:
         print('[WARN] ClKs (cloud scattering opacity) is missing from the dataset '
-              + str(dataset['tag']))
+              + str(dataset.attrs['tag']))
         is_the_data_ok = False
 
     if 'ClKa' not in data_variables:
         print('[WARN] ClKa (cloud absorption opacity) is missing from the dataset '
-              + str(dataset['tag']))
+              + str(dataset.attrs['tag']))
         is_the_data_ok = False
 
     # return status of the check

@@ -22,24 +22,23 @@
 * [Robin Baeyens](https://github.com/robinbaeyens)
 * [Thomas Konings](https://github.com/ThomasKonings)
 
----
-
 ## Get Started
 
 ### Installation
 
-`git clone https://github.com/exorad/GCMtools`
+`git clone https://github.com/exorad/GCMtools`  
+
 `pip install -e <directory containing setup.py>`
 
 ### Packages needed
 
-xarray, netcdf4
+xarray, netcdf4, xmitgcm
+
+cubedsphere (see https://cubedsphere.readthedocs.io/en/latest/index.html)
 
 ### Running the first example
 
 Even if you do not have GCM output data matching one of the supported models, you can still get started with *GCMtools* by loading pre-reduced datasets (in NetCDF format). Have a look at the example dataset `example_dataset.nc` and plot it with `python get_started.py`.
-
----
 
 ## Miscellaneous Documentation
 
@@ -47,8 +46,6 @@ Even if you do not have GCM output data matching one of the supported models, yo
 * Latitudes run from -90&deg; to 90&deg; ; Longitudes run from -180&deg; to 180&deg;.
 * The substellar point for tidally locked planets is located at (0&deg;, 0&deg;).
 * The radius of the planet is defined at the bottom boundary of the vertical grid.
-
----
 
 ## Contact
 

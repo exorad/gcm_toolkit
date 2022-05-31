@@ -70,7 +70,7 @@ class GCMT:
             raise ValueError('The given tag is not a string.')
 
 
-    def read_raw(self, gcm, data_path, tag=None):
+    def read_raw(self, gcm, data_path, iters='last', tag=None):
         """
         General read in function for GCM data
 
@@ -80,18 +80,34 @@ class GCMT:
             Type of GCM, must be 'MITgcm'.
         data_path : str
             Folder path to the standard output of the GCM.
+        iters : list, str
+            The iteration (time step) of the input files to be read.
+            If None, no data will be read.
+            If 'last' (default), only the last iteration will be read.
+            If 'all', all iterations will be read.
         tag : str
             Tag to reference the simulation in the collection of models.
         """
 
+        # call the required GCM read-in method
         if gcm == 'MITgcm':
-            m_read_from_mitgcm(self, data_path)
+            ds = m_read_from_mitgcm(self, data_path, iters)
         else:
             raise ValueError('The selected GCM type "' + gcm +
                              '" is not supported')
 
-        # end read in function
-        return
+        # if no tag is given, models are just numbered as they get added
+        if tag is None:
+            print('[WARN] -- No tag provided. This model is stored with tag: ' + str(len(self.models)))
+            tag = str(len(self.models))
+            ds.attrs['tag'] = tag
+
+        # check if the dataset has all necessary GCMtools attributes
+        if not is_the_data_basic(ds):
+            raise ValueError('This dataset is not supported by GCMtools\n')
+
+        # store dataset
+        self.models[tag] = ds
 
     def read_reduced(self, data_path, tag=None):
         """
@@ -108,13 +124,15 @@ class GCMT:
         # read dataset using xarray functionalities
         ds = xr.open_dataset(data_path)
 
+        # if no tag is given, models are just numbered as they get added
+        if tag is None:
+            print('[WARN] -- No tag provided. This model is stored with tag: ' + str(len(self.models)))
+            tag = str(len(self.models))
+            ds.attrs['tag'] = tag
+
         # check if the dataset has all necessary GCMtools attributes
         if not is_the_data_basic(ds):
             raise ValueError('This dataset is not supported by GCMtools\n')
-
-        # if no tag is given, models are just numbered as they get added
-        if tag is None:
-            tag = len(models)
 
         # store dataset
         self.models[tag] = ds
