@@ -14,7 +14,7 @@ gcmt.plot_overview(tag='HD209458b') # TODO
 
 # Access all models
 all_models = gcmt.models
-all_modes = gcmt.get_models()
+all_models = gcmt.get_models()
 # or a specific one using the tag
 ds = gcmt.models['HD209458b']
 ds = gcmt.get_models('HD209458b')
