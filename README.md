@@ -20,7 +20,6 @@
 * [Aaron Schneider](https://github.com/AaronDavidSchneider)
 * [Sven Kiefer](https://github.com/Kiefersv)
 * [Robin Baeyens](https://github.com/robinbaeyens)
-* [Thomas Konings](https://github.com/ThomasKonings)
 
 ## Get Started
 
@@ -49,5 +48,5 @@ Even if you do not have GCM output data matching one of the supported models, yo
 
 ## Contact
 
-Feel free to contact one of the main authors: **Aaron Schneider**, **Sven Kiefer**, **[Robin Baeyens](https://www.linkedin.com/in/robin-baeyens/)**, or **Thomas Konings**.
+Feel free to contact one of the main authors: **Aaron Schneider**, **Sven Kiefer**, or **[Robin Baeyens](https://www.linkedin.com/in/robin-baeyens/)**.
 Project url: https://github.com/exorad/GCMtools
