@@ -100,7 +100,9 @@ class GCMT:
         if tag is None:
             print('[WARN] -- No tag provided. This model is stored with tag: ' + str(len(self.models)))
             tag = str(len(self.models))
-            ds.attrs['tag'] = tag
+
+        # store tag in the dataset attributes
+        ds.attrs['tag'] = tag
 
         # check if the dataset has all necessary GCMtools attributes
         if not is_the_data_basic(ds):
@@ -128,7 +130,9 @@ class GCMT:
         if tag is None:
             print('[WARN] -- No tag provided. This model is stored with tag: ' + str(len(self.models)))
             tag = str(len(self.models))
-            ds.attrs['tag'] = tag
+
+        # store tag in the dataset attributes    
+        ds.attrs['tag'] = tag
 
         # check if the dataset has all necessary GCMtools attributes
         if not is_the_data_basic(ds):
