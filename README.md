@@ -49,4 +49,5 @@ Even if you do not have GCM output data matching one of the supported models, yo
 ## Contact
 
 Feel free to contact one of the main authors: **Aaron Schneider**, **Sven Kiefer**, or **[Robin Baeyens](https://www.linkedin.com/in/robin-baeyens/)**.
+
 Project url: https://github.com/exorad/GCMtools
