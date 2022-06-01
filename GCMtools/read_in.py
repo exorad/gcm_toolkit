@@ -41,8 +41,8 @@ def m_read_from_mitgcm(gcmt, data_path, iters, data_file=None):
         all_iters = find_iters_mitgcm(data_path)
         iters = [max(all_iters)]
 
-    print('[INFO] -- Preparing to read from MITgcm data directory:' + data_path)
-    print('          Iterations: ' + ", ".join([str(i) for i in iters]))
+    print('[INFO] Preparing to read from MITgcm data directory:' + data_path)
+    print('       Iterations: ' + ", ".join([str(i) for i in iters]))
 
     # Currently, the read-in method is built using the wrapper functionality of
     # the cubedsphere package (Aaron Schneider)
@@ -112,7 +112,7 @@ def get_data_parameter(data_file, keyword):
     """
     # Check if the data file exists
     if not os.path.isfile(data_file):
-        raise FileNotFoundError('Data-file not found at: '+data_file)
+        raise FileNotFoundError('[ERROR] Data-file not found at: '+data_file)
     else: # if it does:
         valueFound = False
         with open(data_file, 'r') as f:
@@ -123,4 +123,4 @@ def get_data_parameter(data_file, keyword):
                     valueFound = True
                     return value
         if not valueFound:
-            raise NameError(r'No value could be associated with the keyword: '+keyword)
+            raise NameError(r'[ERROR] No value could be associated with the keyword: '+keyword)
