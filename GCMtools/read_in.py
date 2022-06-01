@@ -12,7 +12,7 @@
 import os
 import cubedsphere as cs
 
-def m_read_from_mitgcm(gcmt, data_path, iters):
+def m_read_from_mitgcm(gcmt, data_path, iters, data_file=None):
     """
     Data read in for MITgcm output.
 
@@ -27,6 +27,9 @@ def m_read_from_mitgcm(gcmt, data_path, iters):
         If None, no data will be read.
         If 'last' (default), only the last iteration will be read.
         If 'all', all iterations will be read.
+    data_file : str
+        Full path to the 'data' input file of MITgcm. If None, the default
+        location of the file is assumed to be: data_path/data
 
     Returns
     -------
@@ -53,8 +56,17 @@ def m_read_from_mitgcm(gcmt, data_path, iters):
     # convert wind, vertical dimension, time, ...
     ds = cs.exorad_postprocessing(ds, outdir=data_path)
 
-    return ds
+    # set location of data-file
+    if data_file is None:
+        data_file = data_path+'/data'
 
+    # supplement the dataset attributes with necessary values
+    ds.attrs['R_p'] = ds.attrs.pop('radius') # rename radius
+    P_rot = float(get_data_parameter(data_file, 'rotationperiod')) # rotation period in seconds
+    ds.attrs['P_rot'] = P_rot
+    ds.attrs['P_orb'] = P_rot # TODO : update when non-synchronously rotating planets are allowed
+
+    return ds
 
 def find_iters_mitgcm(data_path):
     """
@@ -73,10 +85,42 @@ def find_iters_mitgcm(data_path):
     """
     iterations = []
 
-    for data_file in os.listdir(data_path):
+    for f in os.listdir(data_path):
         # look for files matching the pattern T.xxxxxxxxxx.data
-        if data_file[:2] == 'T.' and data_file[-5:] == '.data':
+        if f[:2] == 'T.' and f[-5:] == '.data':
             # if it matches, add the iteration number to the list
-            iterations.append(int(data_file[2:-5]))
+            iterations.append(int(f[2:-5]))
 
     return iterations
+
+def get_data_parameter(data_file, keyword):
+    """
+    Function to parse the MITgcm 'data' file and return the parameter values
+    of the given specific keyword.
+
+    Parameters
+    ----------
+    data_file: string
+        Full path to the MITgcm data file.
+    keyword: string
+        Parameter of which the value is required.
+
+    Returns
+    -------
+    value: string
+        The value associated with the given keyword is returned as a string (!).
+    """
+    # Check if the data file exists
+    if not os.path.isfile(data_file):
+        raise FileNotFoundError('Data-file not found at: '+data_file)
+    else: # if it does:
+        valueFound = False
+        with open(data_file, 'r') as f:
+            for line in f.readlines():
+                if keyword in line and line[0] != '#': # find uncommented line with the keyword
+                    line = line.replace(" ", "")       # remove all unnecessary spaces
+                    value = line.split(keyword+'=', 1)[1].rstrip().rstrip(',') # separate keyword and value
+                    valueFound = True
+                    return value
+        if not valueFound:
+            raise NameError(r'No value could be associated with the keyword: '+keyword)
