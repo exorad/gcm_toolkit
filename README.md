@@ -31,8 +31,11 @@
 
 ### Packages needed
 
-xarray, netcdf4, xmitgcm
+**general:**
+xarray, netcdf4
 
+**exPERT/MITgcm:**
+xmitgcm, xgcm, f90nml, 
 cubedsphere (see https://cubedsphere.readthedocs.io/en/latest/index.html)
 
 ### Running the first example
