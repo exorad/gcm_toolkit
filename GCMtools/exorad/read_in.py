@@ -10,6 +10,7 @@
 # ==============================================================
 
 import os
+import glob
 import xarray as xr
 
 
@@ -42,15 +43,18 @@ def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds = Non
     import cubedsphere as cs
     from .utils import exorad_postprocessing
 
+    # determine the prefixes that should be loaded
+    prefix = kwargs.pop('prefix', ["T","U","V","W"])
+
     # determine the final iteration if needed
     if iters == 'last':
-        all_iters = find_iters_mitgcm(data_path)
+        all_iters = find_iters_mitgcm(data_path, prefix)
         iters = [max(all_iters)]
+    elif iters == 'all':
+        iters = find_iters_mitgcm(data_path, prefix)
 
     print('[INFO] Preparing to read from MITgcm data directory:' + data_path)
     print('       Iterations: ' + ", ".join([str(i) for i in iters]))
-
-    prefix = kwargs.pop('prefix', ["T","U","V","W"])
 
     if loaded_ds is not None:
         to_load = list(set(iters)-set(list(loaded_ds.iter.values)))
@@ -78,7 +82,7 @@ def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds = Non
     return ds
 
 
-def find_iters_mitgcm(data_path):
+def find_iters_mitgcm(data_path, prefixes):
     """
     Helper method to list all iterations (time steps) that are present in the
     given MITgcm output directory.
@@ -93,12 +97,14 @@ def find_iters_mitgcm(data_path):
     iterations : list of int
         List of all iterations that were found in the output folder.
     """
-    iterations = []
+    iters_list = []
+    for prefix in prefixes:
+        files = glob.glob(os.path.join(data_path,"{}.*.data".format(prefix)))
 
-    for f in os.listdir(data_path):
-        # look for files matching the pattern T.xxxxxxxxxx.data
-        if f[:2] == 'T.' and f[-5:] == '.data':
-            # if it matches, add the iteration number to the list
-            iterations.append(int(f[2:-5]))
+        iters = [int(f.split('.')[-2]) for f in files]
+        iters_list.append(iters)
+
+    # find common iterations with data for all prefixes
+    iterations = set.intersection(*[set(list) for list in iters_list])
 
     return iterations

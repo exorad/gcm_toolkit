@@ -172,8 +172,8 @@ class GCMT:
             if tag is not None and tag != key:
                 continue
 
-            filename = os.path.join(dir, f"{key}.nc")
-            model.to_netcdf(filename)
+            filename = os.path.join(dir, f"{key}.zarr")
+            model.to_zarr(filename)
 
     def load(self, dir, tag = None):
         """
@@ -190,14 +190,14 @@ class GCMT:
             None
         """
         if tag is None:
-            available_datasets = glob.glob(f'{dir}/*.nc')
+            available_datasets = glob.glob(f'{dir}/*.zarr')
         else:
-            available_datasets = glob.glob(f'{dir}/{tag}.nc')
+            available_datasets = glob.glob(f'{dir}/{tag}.zarr')
 
         for file in available_datasets:
             head, tail = os.path.split(file)
-            tag = tail.replace('.nc', '')
-            self._models[tag] = xr.open_dataset(file)
+            tag = tail.replace('.zarr', '')
+            self._models[tag] = xr.open_zarr(file)
 
 
 # ------------------------------------------------------------------------------
