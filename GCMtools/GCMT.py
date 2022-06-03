@@ -10,6 +10,7 @@ import os.path
 import glob
 
 import xarray as xr
+import numpy as np
 from collections import UserDict
 
 from .passport import is_the_data_basic
@@ -154,14 +155,18 @@ class GCMT:
         # store dataset
         self._models[tag] = ds
 
-    def save(self, dir, tag = None):
+    def save(self, dir, update_along_time = False, tag = None):
         """
         Save function to store current member variables.
+
+        Relies on https://stackoverflow.com/questions/65339851/xarray-dataset-to-zarr-overwrite-data-if-exists-with-append-dim
 
         Parameters
         ----------
         example : int
             Short description of the variable.
+        update_along_time: bool
+            Append already written files along time dimension (less IO)
 
         Returns
         -------
@@ -173,7 +178,23 @@ class GCMT:
                 continue
 
             filename = os.path.join(dir, f"{key}.zarr")
-            model.to_zarr(filename)
+
+            if os.path.isdir(filename) and update_along_time:
+                # read structure of dataset to see what's on disk
+                ds_ondisk = xr.open_zarr(filename)
+
+                # get index of first new datapoint
+                start_ix, = np.nonzero(~np.isin(model.time, ds_ondisk.time))
+
+                if len(start_ix)>0:
+                    # region of new data
+                    region_new = slice(start_ix[0], model.time.size)
+
+                    # append structure of new data (compute=False means no data is written)
+                    model.isel(time=region_new).to_zarr(filename, append_dim='time', compute=True)
+            else:
+                model.to_zarr(filename, mode='w')
+
 
     def load(self, dir, tag = None):
         """
