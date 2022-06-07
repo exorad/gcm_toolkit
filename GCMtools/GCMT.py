@@ -10,6 +10,7 @@ import os.path
 import glob
 
 import xarray as xr
+import numpy as np
 from collections import UserDict
 
 from .passport import is_the_data_basic
@@ -154,7 +155,7 @@ class GCMT:
         # store dataset
         self._models[tag] = ds
 
-    def save(self, dir, tag = None):
+    def save(self, dir,  method='nc', update_along_time = False, tag = None):
         """
         Save function to store current member variables.
 
@@ -162,20 +163,48 @@ class GCMT:
         ----------
         example : int
             Short description of the variable.
+        update_along_time: bool
+            Append already written files along time dimension (less IO)
+        tag: str
+            Tag of the model that should be saved.
 
         Returns
         -------
         NoneType
             None
         """
+        if method not in ['nc', 'zarr']:
+            raise NotImplementedError("Please use zarr or nc.")
+
         for key, model in self._models.items():
             if tag is not None and tag != key:
                 continue
 
-            filename = os.path.join(dir, f"{key}.nc")
-            model.to_netcdf(filename)
+            filename = os.path.join(dir, f"{key}.{method}")
 
-    def load(self, dir, tag = None):
+            if method == 'nc':
+                if os.path.isfile(filename):
+                    os.remove(filename)
+                model.to_netcdf(filename)
+            elif method == 'zarr':
+                if os.path.isdir(filename) and update_along_time:
+                    # Relies on https://stackoverflow.com/questions/65339851/xarray-dataset-to-zarr-overwrite-data-if-exists-with-append-dim
+                    # read structure of dataset to see what's on disk
+                    ds_ondisk = xr.open_zarr(filename)
+
+                    # get index of first new datapoint
+                    start_ix, = np.nonzero(~np.isin(model.time, ds_ondisk.time))
+
+                    if len(start_ix)>0:
+                        # region of new data
+                        region_new = slice(start_ix[0], model.time.size)
+
+                        # append structure of new data (compute=False means no data is written)
+                        model.isel(time=region_new).to_zarr(filename, append_dim='time', compute=True)
+                else:
+                    model.to_zarr(filename, mode='w')
+
+    def load(self, dir, method='nc', tag = None):
         """
         Save function to store current member variables.
 
@@ -183,21 +212,33 @@ class GCMT:
         ----------
         example : int
             Short description of the variable.
+        method : str
+
 
         Returns
         -------
         NoneType
             None
         """
+
+        if method not in ['nc', 'zarr']:
+            raise NotImplementedError("Please use zarr or nc.")
+
         if tag is None:
-            available_datasets = glob.glob(f'{dir}/*.nc')
+            available_datasets = glob.glob(f'{dir}/*.{method}')
         else:
-            available_datasets = glob.glob(f'{dir}/{tag}.nc')
+            available_datasets = glob.glob(f'{dir}/{tag}.{method}')
+
+        if len(available_datasets) == 0:
+            print(f'[INFO] No data available to load for method {method}')
 
         for file in available_datasets:
             head, tail = os.path.split(file)
-            tag = tail.replace('.nc', '')
-            self._models[tag] = xr.open_dataset(file)
+            tag = tail.replace(f'.{method}', '')
+            if method == 'zarr':
+                self._models[tag] = xr.open_zarr(file)
+            elif method == 'nc':
+                self._models[tag] = xr.open_dataset(file)
 
 
 # ------------------------------------------------------------------------------
