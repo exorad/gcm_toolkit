@@ -56,7 +56,7 @@ class Plotting:
             The key of the variable quantity that should be plotted.
         p : float
             Pressure level for the isobaric slice to be plotted, expressed in
-            the units specified in the init-method.
+            the units specified in the dataset attributes (e.g., init of GCMT object).
         time : int, optional
             Timestamp that should be plotted. By default, the last time is
             selected.
