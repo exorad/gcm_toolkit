@@ -24,6 +24,8 @@ class Plotting:
     -------
     isobaric_slice:
         Plot the isobaric slice of a given dataset at a certain pressure level.
+    plot_horizontal_wind:
+        Plot the horizontal wind speed at a certain pressure as vector arrows.
     zonal_mean:
         Plot the zonal mean quantity of a given dataset.
     """
@@ -55,6 +57,29 @@ class Plotting:
         p : float
             Pressure level for the isobaric slice to be plotted, expressed in
             the units specified in the init-method.
+        time : int, optional
+            Timestamp that should be plotted. By default, the last time is
+            selected.
+        ax : matplotlib.axes.Axes, optional
+            The axis on which you want your plot to appear.
+        plot_windvectors : boolean, optional
+            If True (default), plot the horizontal wind vectors over the colour
+            mesh.
+        wind_kwargs : dict, optional
+            Additional keywords for the method plot_horizontal_wind.
+        cbar_kwargs : dict, optional
+            Additional keywords for the colorbar.
+        fs_labels : int, optional
+            Font size of the axis labels, 14 by default.
+        fs_ticks : int, optional
+            Font size of the tick labels, 11 by default.
+        title : str, optional
+            Title for the isobaric slice plot. By default, the selected pressure
+            and time stamp of the slice are displayed.
+        xlabel : str, optional
+            X-axis label, longitude by default.
+        ylabel : str, optional
+            Y-axis label, latitude by default.
         """
         if ax is None:
             fig= plt.figure()
@@ -72,8 +97,8 @@ class Plotting:
         #   - pressure is the nearest to p
         #   - iteration is the last one
         this_p = ds.Z.sel(Z=p, method="nearest").values
-        this_time = ds.time.isel(time=-1).values
-        ds2d = ds.isel(time=-1).sel(Z=p, method='nearest')
+        this_time = ds.time.isel(time=time).values
+        ds2d = ds.isel(time=time).sel(Z=p, method='nearest')
 
         # Simple plot (with xarray.plot.pcolormesh)
         plotted = ds2d[var_key].plot(add_colorbar=False, **kwargs)
@@ -112,6 +137,13 @@ class Plotting:
         ds : DataSet
             A GCMtools-compatible dataset where only latitude and longitude are
             non-singleton dimensions.
+        ax : matplotlib.axes.Axes, optional
+            The axis on which you want your plot to appear.
+        sample_one_in : int, optional
+            If given, only one every nth coordinate will be sampled, to avoid
+            overcrowding the figure.
+        arrowColor : str, optional
+            Specify the arrow color.
 
         Returns
         -------
@@ -127,6 +159,7 @@ class Plotting:
         arrows = ax.quiver(ds.U.coords['lon'][::i], ds.U.coords['lat'][::i],
                            ds.U.values[::i, ::i], ds.V.values[::i, ::i],
                            pivot='mid', color=arrowColor)
+
         # TODO: perhaps use quiverkey to add a legend to the arrow length
 
         return arrows
