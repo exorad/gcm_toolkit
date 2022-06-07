@@ -63,9 +63,10 @@ class Plotting:
             wind_kwargs = {}
         if cbar_kwargs is None:
             cbar_kwargs = {}
-            
-        # set pressure unit
+
+        # retrieve default units
         p_unit = ds.attrs.get('p_unit')
+        time_unit = ds.attrs.get('time_unit')
 
         # By default, the plotted...
         #   - pressure is the nearest to p
@@ -98,7 +99,7 @@ class Plotting:
         ax.set_xlabel(xlabel, fontsize=fs_labels)
         ax.set_ylabel(ylabel, fontsize=fs_labels)
         if title is None:
-            title = f'p = {this_p:.2e}, time = {this_time:.0f}'
+            title = f'p = {this_p:.2e} {p_unit}, time = {this_time:.0f} {time_unit}'
         ax.set_title(title, fontsize=fs_labels)
 
 
