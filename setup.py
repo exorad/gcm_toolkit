@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 with open("README.md", "r") as fh:
@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 setup(
     name='GCMtools',
     version='v0.1',
-    packages=setuptools.find_packages(),
+    packages=find_packages(),
     include_package_data=True,
     url='https://github.com/exorad/GCMtools',
     license='MIT',
@@ -19,5 +19,6 @@ setup(
     install_requires=[
         "scipy>=1.7.0",
         "numpy",
+        "f90nml",
     ]
 )

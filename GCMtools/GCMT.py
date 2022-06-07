@@ -6,12 +6,14 @@
 #  environment for new users of GCMs while allowing direct
 #  access to the data for more experienced users.
 # ==============================================================
+import os.path
+import glob
 
 import xarray as xr
 from collections import UserDict
 
-from .read_in import m_read_from_mitgcm
 from .passport import is_the_data_basic
+
 
 class GCMT:
     """
@@ -31,7 +33,7 @@ class GCMT:
         Read in the previously reduced GCM
     """
 
-    def __init__(self):
+    def __init__(self, use_bar=True, use_days=True):
         """
         Constructor for the GCMtools class.
 
@@ -42,7 +44,16 @@ class GCMT:
         """
 
         # Initialize empty dictionary to store all GCM models
-        self.models = GCMDatasetCollection()
+        self._models = GCMDatasetCollection()
+        self.use_bar = use_bar
+        self.use_days = use_days
+
+    @property
+    def models(self):
+        if len(self._models) > 1:
+            return self._models
+        else:
+            return list(self._models.values())[0]
 
     def get_models(self, tag=None):
         """
@@ -57,20 +68,19 @@ class GCMT:
         Returns
         -------
         selected_models : GCMDatasetCollection
-            All models in self.models, or only the one with the right tag.
+            All models in self._models, or only the one with the right tag.
         """
         # If no tag is given, return all models
         if tag is None:
             return self.models
         # If the tag is valid, return the corresponding model
         elif isinstance(tag, str):
-            return self.models[tag]
+            return self._models[tag]
         # If the tag is not a string, raise an error
         else:
             raise ValueError('The given tag is not a string.')
 
-
-    def read_raw(self, gcm, data_path, iters='last', tag=None):
+    def read_raw(self, gcm, data_path, iters='last', load_existing=False, tag=None, **kwargs):
         """
         General read in function for GCM data
 
@@ -85,31 +95,30 @@ class GCMT:
             If None, no data will be read.
             If 'last' (default), only the last iteration will be read.
             If 'all', all iterations will be read.
+        load_existing: bool
+            Set to false if you want to overwrite already loaded data
+            Set to true if you want to increment already loaded data
         tag : str
             Tag to reference the simulation in the collection of models.
+        kwargs: dict
+            Additional options passed down to read functions
         """
 
         # call the required GCM read-in method
         if gcm == 'MITgcm':
-            ds = m_read_from_mitgcm(self, data_path, iters)
+            from GCMtools.exorad import m_read_from_mitgcm
+
+            if tag is not None and load_existing:
+                loaded_ds = self._models.get(tag)
+            else:
+                loaded_ds = None
+
+            ds = m_read_from_mitgcm(self, data_path, iters, loaded_ds=loaded_ds, **kwargs)
         else:
             raise ValueError('The selected GCM type "' + gcm +
                              '" is not supported')
 
-        # if no tag is given, models are just numbered as they get added
-        if tag is None:
-            print('[WARN] -- No tag provided. This model is stored with tag: ' + str(len(self.models)))
-            tag = str(len(self.models))
-
-        # store tag in the dataset attributes
-        ds.attrs['tag'] = tag
-
-        # check if the dataset has all necessary GCMtools attributes
-        if not is_the_data_basic(ds):
-            raise ValueError('This dataset is not supported by GCMtools\n')
-
-        # store dataset
-        self.models[tag] = ds
+        self._add_attrs_and_store(ds, tag)
 
     def read_reduced(self, data_path, tag=None):
         """
@@ -126,22 +135,26 @@ class GCMT:
         # read dataset using xarray functionalities
         ds = xr.open_dataset(data_path)
 
+        self._add_attrs_and_store(ds, tag)
+
+    def _add_attrs_and_store(self, ds, tag):
         # if no tag is given, models are just numbered as they get added
         if tag is None:
-            print('[WARN] -- No tag provided. This model is stored with tag: ' + str(len(self.models)))
-            tag = str(len(self.models))
-
-        # store tag in the dataset attributes    
+            print('[WARN] -- No tag provided. This model is stored with tag: ' + str(len(self._models)))
+            tag = str(len(self._models))
+        # store tag in the dataset attributes
         ds.attrs['tag'] = tag
-
+        # store the units in the dataset attributes
+        ds.attrs['p_unit'] = 'bar' if self.use_bar else 'Pa'
+        ds.attrs['time_unit'] = 'days' if self.use_days else 'iter'
         # check if the dataset has all necessary GCMtools attributes
         if not is_the_data_basic(ds):
             raise ValueError('This dataset is not supported by GCMtools\n')
 
         # store dataset
-        self.models[tag] = ds
+        self._models[tag] = ds
 
-    def save(self):
+    def save(self, dir, tag = None):
         """
         Save function to store current member variables.
 
@@ -155,11 +168,14 @@ class GCMT:
         NoneType
             None
         """
+        for key, model in self._models.items():
+            if tag is not None and tag != key:
+                continue
 
-        # Todo: add functionalities if required
-        pass
+            filename = os.path.join(dir, f"{key}.nc")
+            model.to_netcdf(filename)
 
-    def load(self):
+    def load(self, dir, tag = None):
         """
         Save function to store current member variables.
 
@@ -173,11 +189,19 @@ class GCMT:
         NoneType
             None
         """
+        if tag is None:
+            available_datasets = glob.glob(f'{dir}/*.nc')
+        else:
+            available_datasets = glob.glob(f'{dir}/{tag}.nc')
 
-        # Todo: add functionalities if required
-        pass
+        for file in available_datasets:
+            head, tail = os.path.split(file)
+            tag = tail.replace('.nc', '')
+            self._models[tag] = xr.open_dataset(file)
+
 
 # ------------------------------------------------------------------------------
+
 
 class GCMDatasetCollection(UserDict):
     """

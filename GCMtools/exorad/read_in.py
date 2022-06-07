@@ -10,9 +10,10 @@
 # ==============================================================
 
 import os
-import cubedsphere as cs
+import xarray as xr
 
-def m_read_from_mitgcm(gcmt, data_path, iters, data_file=None):
+
+def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds = None, **kwargs):
     """
     Data read in for MITgcm output.
 
@@ -30,12 +31,17 @@ def m_read_from_mitgcm(gcmt, data_path, iters, data_file=None):
     data_file : str
         Full path to the 'data' input file of MITgcm. If None, the default
         location of the file is assumed to be: data_path/data
+    **kwargs: dict
+        pass down parameters to open_ascii_dataset from cubedsphere.
 
     Returns
     -------
     NoneType
         None
     """
+    import cubedsphere as cs
+    from .utils import exorad_postprocessing
+
     # determine the final iteration if needed
     if iters == 'last':
         all_iters = find_iters_mitgcm(data_path)
@@ -44,29 +50,33 @@ def m_read_from_mitgcm(gcmt, data_path, iters, data_file=None):
     print('[INFO] Preparing to read from MITgcm data directory:' + data_path)
     print('       Iterations: ' + ", ".join([str(i) for i in iters]))
 
+    prefix = kwargs.pop('prefix', ["T","U","V","W"])
+
+    if loaded_ds is not None:
+        to_load = list(set(iters)-set(list(loaded_ds.iter.values)))
+        if len(to_load) == 0:
+            return loaded_ds
+    else:
+        to_load = iters
+
+
     # Currently, the read-in method is built using the wrapper functionality of
     # the cubedsphere package (Aaron Schneider)
     # see: https://cubedsphere.readthedocs.io/en/latest/index.html
-    ds_ascii, grid = cs.open_ascii_dataset(data_path, iters=iters, prefix = ["T","U","V","W"])
+    ds_ascii, grid = cs.open_ascii_dataset(data_path, iters=to_load, prefix=prefix, **kwargs)
 
     # regrid the dataset
-    regrid = cs.Regridder(ds_ascii, grid)
+    regrid = cs.Regridder(ds=ds_ascii, cs_grid=grid, d_lon=d_lon, d_lat=d_lat)
     ds = regrid()
 
     # convert wind, vertical dimension, time, ...
-    ds = cs.exorad_postprocessing(ds, outdir=data_path)
+    ds = exorad_postprocessing(ds, outdir=data_path, convert_to_bar=gcmt.use_bar, convert_to_days=gcmt.use_days)
 
-    # set location of data-file
-    if data_file is None:
-        data_file = data_path+'/data'
-
-    # supplement the dataset attributes with necessary values
-    ds.attrs['R_p'] = ds.attrs.pop('radius') # rename radius
-    P_rot = float(get_data_parameter(data_file, 'rotationperiod')) # rotation period in seconds
-    ds.attrs['P_rot'] = P_rot
-    ds.attrs['P_orb'] = P_rot # TODO : update when non-synchronously rotating planets are allowed
+    if loaded_ds is not None:
+        ds = xr.merge([ds, loaded_ds])
 
     return ds
+
 
 def find_iters_mitgcm(data_path):
     """
@@ -92,35 +102,3 @@ def find_iters_mitgcm(data_path):
             iterations.append(int(f[2:-5]))
 
     return iterations
-
-def get_data_parameter(data_file, keyword):
-    """
-    Function to parse the MITgcm 'data' file and return the parameter values
-    of the given specific keyword.
-
-    Parameters
-    ----------
-    data_file: string
-        Full path to the MITgcm data file.
-    keyword: string
-        Parameter of which the value is required.
-
-    Returns
-    -------
-    value: string
-        The value associated with the given keyword is returned as a string (!).
-    """
-    # Check if the data file exists
-    if not os.path.isfile(data_file):
-        raise FileNotFoundError('[ERROR] Data-file not found at: '+data_file)
-    else: # if it does:
-        valueFound = False
-        with open(data_file, 'r') as f:
-            for line in f.readlines():
-                if keyword in line and line[0] != '#': # find uncommented line with the keyword
-                    line = line.replace(" ", "")       # remove all unnecessary spaces
-                    value = line.split(keyword+'=', 1)[1].rstrip().rstrip(',') # separate keyword and value
-                    valueFound = True
-                    return value
-        if not valueFound:
-            raise NameError(r'[ERROR] No value could be associated with the keyword: '+keyword)

@@ -9,6 +9,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 class Plotting:
     """
     The GCMtools plotting class to collect all predefined
@@ -27,21 +28,13 @@ class Plotting:
         Plot the zonal mean quantity of a given dataset.
     """
 
-    def __init__(self, p_unit='bar'):
+    def __init__(self):
         """
         Constructor for the GCMtools plotting class.
 
         Parameters
         ----------
-        p_unit : str
-            Sets the default pressure unit for all plotting routines to either
-            'bar' (default) or 'Pa'.
         """
-        # check if the given pressure unit is allowed (bar or pascal)
-        if p_unit in ['bar', 'Pa']:
-            self.p_unit = p_unit
-        else:
-            raise KeyError("[ERROR] The specified pressure unit (" + p_unit + ") is not allowed. Please use either 'bar' or 'Pa'.")
 
 
     def isobaric_slice(self, ds, var_key, p, time=-1, ax=None,
@@ -70,6 +63,9 @@ class Plotting:
             wind_kwargs = {}
         if cbar_kwargs is None:
             cbar_kwargs = {}
+            
+        # set pressure unit
+        p_unit = ds.attrs.get('p_unit')
 
         # By default, the plotted...
         #   - pressure is the nearest to p
