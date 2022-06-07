@@ -41,7 +41,7 @@ class Plotting:
 
     def isobaric_slice(self, ds, var_key, p, time=-1, ax=None,
                        plot_windvectors=True, wind_kwargs=None, cbar_kwargs=None,
-                       fs_labels=14, fs_ticks=11, title=None,
+                       fs_labels=None, fs_ticks=None, title=None,
                        xlabel='Longitude (deg)', ylabel='Latitude (deg)',
                        **kwargs):
         """
@@ -70,9 +70,9 @@ class Plotting:
         cbar_kwargs : dict, optional
             Additional keywords for the colorbar.
         fs_labels : int, optional
-            Font size of the axis labels, 14 by default.
+            Optionally set font size of the axis labels.
         fs_ticks : int, optional
-            Font size of the tick labels, 11 by default.
+            Optionally set font size of the tick labels.
         title : str, optional
             Title for the isobaric slice plot. By default, the selected pressure
             and time stamp of the slice are displayed.
