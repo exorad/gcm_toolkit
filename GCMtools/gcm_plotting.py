@@ -9,7 +9,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def isobaric_slice(ds, var_key, p, time=-1, ax=None,
+def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
                    plot_windvectors=True, wind_kwargs=None, cbar_kwargs=None,
                    fs_labels=None, fs_ticks=None, title=None,
                    xlabel='Longitude (deg)', ylabel='Latitude (deg)',
@@ -30,6 +30,11 @@ def isobaric_slice(ds, var_key, p, time=-1, ax=None,
     time : int, optional
         Timestamp that should be plotted. By default, the last time is
         selected.
+    lookup_method : str, optional
+        The look-up method that is used to slice along pressure:
+        'exact' for exactly matching key look-up (default);
+        'nearest' to pick out the nearest neighbour Z coordinate;
+        'interpolate' for a linear interpolation along the Z axis.
     ax : matplotlib.axes.Axes, optional
         The axis on which you want your plot to appear.
     plot_windvectors : boolean, optional
@@ -63,12 +68,26 @@ def isobaric_slice(ds, var_key, p, time=-1, ax=None,
     p_unit = ds.attrs.get('p_unit')
     time_unit = ds.attrs.get('time_unit')
 
-    # By default, the plotted...
-    #   - pressure is the nearest to p
-    #   - iteration is the last one
-    this_p = ds.Z.sel(Z=p, method="nearest").values
-    this_time = ds.time.isel(time=time).values
-    ds2d = ds.isel(time=time).sel(Z=p, method='nearest')
+    # if no timestamp is given, pick the last available time
+    if time == -1:
+        time = ds.time.isel(time=-1).values
+    # time-slice of the dataset
+    # (note: the look-up method for time is always assumed to be exact)
+    this_time = ds.time.sel(time=time).values
+    ds = ds.sel(time=time)
+
+    # isobaric slice based on the look-up method for pressure
+    if lookup_method == 'exact':
+        this_p = ds.Z.sel(Z=p).values
+        ds2d = ds.sel(Z=p)
+    elif lookup_method == 'nearest':
+        this_p = ds.Z.sel(Z=p, method="nearest").values
+        ds2d = ds.sel(Z=p, method='nearest')
+    elif lookup_method == 'interpolate':
+        this_p = ds.Z.interp(Z=p).values
+        ds2d = ds.interp(Z=p)
+    else:
+        raise ValueError("Please enter 'exact', 'nearest', or 'interpolate' as Z lookup method.")
 
     # Simple plot (with xarray.plot.pcolormesh)
     plotted = ds2d[var_key].plot(add_colorbar=False, **kwargs)
