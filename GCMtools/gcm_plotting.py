@@ -124,6 +124,13 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k'):
         fig= plt.figure()
         ax = plt.gca()
 
+    # assert whether the dataset is 2d-horizontal, i.e. the vertical and time
+    # dimensions only have a single coordinate
+    if len(np.atleast_1d(ds.coords['Z'].values)) != 1:
+        raise ValueError('This function only takes 2d-horizontal datasets. Select a single Z-coordinate first.')
+    if len(np.atleast_1d(ds.coords['time'].values)) != 1:
+        raise ValueError('This function only takes 2d-horizontal datasets. Select a single time-coordinate first.')
+
     # reduce the number of arrows plotted by sampling every one in n coordinates
     i = sample_one_in
     arrows = ax.quiver(ds.U.coords['lon'][::i], ds.U.coords['lat'][::i],
