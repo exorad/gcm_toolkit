@@ -14,6 +14,7 @@ import numpy as np
 from collections import UserDict
 
 from .passport import is_the_data_basic
+import GCMtools.gcm_plotting as gcmplt
 
 
 class GCMT:
@@ -240,6 +241,33 @@ class GCMT:
             elif method == 'nc':
                 self._models[tag] = xr.open_dataset(file)
 
+    # Wrapped plotting routines:
+
+    def isobaric_slice(self, var_key, p, tag=None, **kwargs):
+        """
+        Plot an isobaric slice of the given quantity at the given pressure
+        level. The user can specify the DataSet to be plotted by providing the
+        corresponding tag.
+
+        Parameters
+        ----------
+        var_key : str
+            The key of the variable quantity that should be plotted.
+        p : float
+            Pressure level for the isobaric slice to be plotted, expressed in
+            the units specified in the dataset attributes (e.g., init of GCMT object).
+        tag : str, optional
+            The tag of the dataset that should be plotted. If no tag is provided
+            and multiple datasets are available, an error is raised.
+        """
+        # select the appropriate dataset
+        ds = self.get_models(tag=tag)
+        # if a collection is given (because multiple datasets are available, and
+        # the tag is not provided), avoid ambiguity by raising an error
+        if isinstance(ds, GCMDatasetCollection) and len(ds) > 1 and tag is None:
+            raise RuntimeError('Ambiguous plotting task. Please provide a tag.')
+
+        gcmplt.isobaric_slice(ds, var_key, p, **kwargs)
 
 # ------------------------------------------------------------------------------
 
