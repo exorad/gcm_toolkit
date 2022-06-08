@@ -13,6 +13,7 @@ import xarray as xr
 from collections import UserDict
 
 from .passport import is_the_data_basic
+import GCMtools.gcm_plotting as gcmplt
 
 
 class GCMT:
