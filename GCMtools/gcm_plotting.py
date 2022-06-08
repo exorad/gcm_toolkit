@@ -94,10 +94,7 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
 
     # make own colorbar, as the automatic colorbar is hard to customize
     cbar = plt.colorbar(plotted, ax=ax, **cbar_kwargs)
-    if 'label' in cbar_kwargs:  # look if a colorbar label is given
-        cbar_label = cbar_kwargs['label']
-    else:
-        cbar_label = var_key    # if not, use label of the plotted quantity
+    cbar_label = cbar_kwargs.get('label', var_key)
     cbar.set_label(cbar_label, fontsize=fs_labels)
 
     # Overplot the wind vectors if needed
