@@ -105,8 +105,8 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     ax.set_aspect('equal')
     xt=np.arange(-180, 181, 45)
     yt=np.arange(-90, 91, 45)
-    plt.xticks(ticks=xt, labels=[str(n)+r'$^\circ$' for n in xt], fontsize=fs_ticks)
-    plt.yticks(ticks=yt, labels=[str(n)+r'$^\circ$' for n in yt], fontsize=fs_ticks)
+    ax.set_xticks(ticks=xt, labels=[str(n)+r'$^\circ$' for n in xt], fontsize=fs_ticks)
+    ax.set_yticks(ticks=yt, labels=[str(n)+r'$^\circ$' for n in yt], fontsize=fs_ticks)
     ax.set_xlabel(xlabel, fontsize=fs_labels)
     ax.set_ylabel(ylabel, fontsize=fs_labels)
     if title is None:
