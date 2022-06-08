@@ -1,4 +1,4 @@
-from GCMtools.GCMT import GCMT
+from GCMtools import GCMT
 
 # Construct a GCMtools object
 gcmt = GCMT()
