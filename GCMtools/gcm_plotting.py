@@ -163,7 +163,8 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k'):
 
 
 def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
-               fs_labels=None, fs_ticks=None, title=None, add_colorbar=True,
+               fs_labels=None, xlabel='Longitude (deg)', ylabel='Z', add_ylabel_unit=True,
+               title=None, add_colorbar=True,
                **kwargs):
     """
     Plot a zonal mean average of a quantity for the given dataset.
@@ -177,24 +178,24 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
     time : int, optional
         Timestamp that should be plotted. By default, the last time is
         selected.
-    lookup_method : str, optional
-        The look-up method that is used to slice along pressure:
-        'exact' for exactly matching key look-up (default);
-        'nearest' to pick out the nearest neighbour Z coordinate;
-        'interpolate' for a linear interpolation along the Z axis.
     ax : matplotlib.axes.Axes, optional
         The axis on which you want your plot to appear.
     cbar_kwargs : dict, optional
         Additional keywords for the colorbar.
     fs_labels : int, optional
         Optionally set font size of the axis labels.
-    fs_ticks : int, optional
-        Optionally set font size of the tick labels.
-    add_colorbar: bool, optional,
-        Optionally decide if you want a colorbar or don't
+    xlabel: str, optional
+        Label for x
+    ylabel: str, optional
+        Label for y
+    add_ylabel_unit: bool, optional
+        Optionally decide, if you want to add a unit to ylabel.
     title : str, optional
         Title for the isobaric slice plot. By default, the selected pressure
         and time stamp of the slice are displayed.
+    add_colorbar: bool, optional,
+        Optionally decide if you want a colorbar or don't
+
     """
     if ax is None:
         fig = plt.figure()
@@ -224,11 +225,16 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
         cbar.set_label(cbar_label, fontsize=fs_labels)
 
     # set other plot qualities
-    ax.set_aspect('equal')
-    xt=np.arange(-180, 181, 45)
-    yt=np.arange(-90, 91, 45)
-    ax.set_xticks(ticks=xt, labels=[str(n)+r'$^\circ$' for n in xt], fontsize=fs_ticks)
-    ax.set_yticks(ticks=yt, labels=[str(n)+r'$^\circ$' for n in yt], fontsize=fs_ticks)
     if title is None:
         title = f'time = {this_time:.0f} {time_unit}'
     ax.set_title(title, fontsize=fs_labels)
+
+    if add_ylabel_unit:
+        ylabel = ylabel + f' ({p_unit})'
+
+    ax.set_xlabel(xlabel, fontsize=fs_labels)
+    ax.set_ylabel(ylabel, fontsize=fs_labels)
+
+    # Invert y-axis and set scale to log
+    ax.set_yscale('log')
+    ax.invert_yaxis()

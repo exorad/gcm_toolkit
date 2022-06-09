@@ -76,7 +76,7 @@ class GCMT:
         # if a collection is given (because multiple datasets are available, and
         # the tag is not provided), avoid ambiguity by raising an error
         if isinstance(ds, GCMDatasetCollection) and len(ds) > 1 and tag is None:
-            raise RuntimeError('Ambiguous plotting task. Please provide a tag.')
+            raise RuntimeError('Ambiguous task. Please provide a tag.')
 
         return ds
 
@@ -288,10 +288,9 @@ class GCMT:
         avg = (ds[area_key]*ds[var_key]).sum(dim=['lon','lat'])/ds[area_key].sum(dim=['lon','lat'])
 
         if var_key_out is not None:
-            ds[var_key] = avg
+            ds.update({var_key_out: avg})
 
         return avg
-
 
 
     def isobaric_slice(self, var_key, p, tag=None, **kwargs):
