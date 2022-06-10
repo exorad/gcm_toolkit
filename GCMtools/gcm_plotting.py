@@ -14,6 +14,7 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
                    plot_windvectors=True, wind_kwargs=None, cbar_kwargs=None,
                    add_colorbar = True, fs_labels=None, fs_ticks=None, title=None,
                    xlabel='Longitude (deg)', ylabel='Latitude (deg)',
+                   contourf = False,
                    **kwargs):
     """
     Plot an isobaric slice of the dataset and quantity at the given pressure
@@ -58,6 +59,8 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
         X-axis label, longitude by default.
     ylabel : str, optional
         Y-axis label, latitude by default.
+    contourf: bool, optional
+        Decide if you want to do a contourplot or a pcolormesh plot
     """
     if ax is None:
         fig= plt.figure()
@@ -93,7 +96,10 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
         raise ValueError("Please enter 'exact', 'nearest', or 'interpolate' as Z lookup method.")
 
     # Simple plot (with xarray.plot.pcolormesh)
-    plotted = ds2d[var_key].plot(add_colorbar=False, ax=ax, **kwargs)
+    if contourf:
+        plotted = ds2d[var_key].plot.contourf(add_colorbar=False, ax=ax, **kwargs)
+    else:
+        plotted = ds2d[var_key].plot.pcolormesh(add_colorbar=False, ax=ax, **kwargs)
 
     # make own colorbar, as the automatic colorbar is hard to customize
     if add_colorbar:
@@ -178,7 +184,7 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k', windstrea
 
 def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
                fs_labels=None, xlabel='Longitude (deg)', ylabel='Z', add_ylabel_unit=True,
-               title=None, add_colorbar=True,
+               title=None, add_colorbar=True, contourf=False,
                **kwargs):
     """
     Plot a zonal mean average of a quantity for the given dataset.
@@ -207,8 +213,10 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
     title : str, optional
         Title for the isobaric slice plot. By default, the selected pressure
         and time stamp of the slice are displayed.
-    add_colorbar: bool, optional,
+    add_colorbar: bool, optional
         Optionally decide if you want a colorbar or don't
+    contourf: bool, optional
+        Decide if you want to do a contourplot or a pcolormesh plot
 
     """
     if ax is None:
@@ -230,7 +238,10 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
     zmean = ds[var_key].sel(time=time).mean(dim='lon')
 
     # Simple plot (with xarray.plot.pcolormesh)
-    plotted = zmean.plot(add_colorbar=False, ax=ax, **kwargs)
+    if contourf:
+        plotted = zmean.plot.contourf(add_colorbar=False, ax=ax, **kwargs)
+    else:
+        plotted = zmean.plot.pcolormesh(add_colorbar=False, ax=ax, **kwargs)
 
     # make own colorbar, as the automatic colorbar is hard to customize
     if add_colorbar:
