@@ -313,6 +313,24 @@ class GCMT:
         ds = self._get_one_model(tag)
         gcmplt.isobaric_slice(ds, var_key, p, **kwargs)
 
+    def time_evol(self, var_key, tag=None, **kwargs):
+        """
+        Function that plots the time evolution of a quantity in a 1D line collection plot, where the colorscale can be related to the time evolution.
+        Note: var_key needs to contain data that is 2D in time and pressure.
+
+        Parameters
+        ----------
+        ds : DataSet
+            A GCMtools-compatible dataset of a 3D climate simulation.
+        var_key : str
+            The key of the variable quantity that should be plotted.
+        tag : str, optional
+            The tag of the dataset that should be plotted. If no tag is provided
+            and multiple datasets are available, an error is raised.
+        """
+        ds = self._get_one_model(tag)
+        gcmplt.time_evol(ds, var_key, **kwargs)
+
     def zonal_mean(self, var_key, tag=None, **kwargs):
         """
         Plot a zonal mean average of a quantity for the given dataset.

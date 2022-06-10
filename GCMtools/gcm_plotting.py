@@ -8,6 +8,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 
 
 def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
@@ -181,6 +182,127 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k', windstrea
                        density=sample_one_in, **kwargs)
 
     return arrows
+
+
+def _multiline(xs, ys, c, ax=None, **kwargs):
+    """Plot lines with different colorings
+
+    Parameters
+    ----------
+    xs : iterable container of x coordinates
+    ys : iterable container of y coordinates
+    c : iterable container of numbers mapped to colormap
+    ax (optional): Axes to plot on.
+    kwargs (optional): passed to LineCollection
+
+    Notes:
+        len(xs) == len(ys) == len(c) is the number of line segments
+        len(xs[i]) == len(ys[i]) is the number of points for each line (indexed by i)
+
+    Returns
+    -------
+    lc : LineCollection instance.
+    """
+
+    # find axes
+    ax = plt.gca() if ax is None else ax
+
+    # create LineCollection
+    segments = [np.column_stack([x, y]) for x, y in zip(xs, ys)]
+    lc = LineCollection(segments, **kwargs)
+
+    # set coloring of line segments
+    #    Note: I get an error if I pass c as a list here... not sure why.
+    lc.set_array(np.asarray(c))
+
+    # add lines to axes and rescale
+    #    Note: adding a collection doesn't autoscalee xlim/ylim
+    ax.add_collection(lc)
+    ax.autoscale()
+    return lc
+
+
+def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorbar=True, title=None, xlabel=None, ylabel='Z', add_ylabel_unit=True, **kwargs):
+    """
+    Function that plots the time evolution of a quantity in a 1D line collection plot, where the colorscale can be related to the time evolution.
+    Note: var_key needs to contain data that is 2D in time and pressure.
+
+    Parameters
+    ----------
+    ds : DataSet
+        A GCMtools-compatible dataset of a 3D climate simulation.
+    var_key : str
+        The key of the variable quantity that should be plotted.
+    ax : matplotlib.axes.Axes, optional
+        The axis on which you want your plot to appear.
+    fs_labels : int, optional
+        Optionally set font size of the axis labels.
+    cbar_kwargs : dict, optional
+        Additional keywords for the colorbar.
+    add_colorbar: bool, optional
+        Decide if you want a colorbar
+    title : str, optional
+        Title for the isobaric slice plot. By default, the selected pressure
+        and time stamp of the slice are displayed.
+    xlabel: str, optional
+        Label for x
+    ylabel: str, optional
+        Label for y
+    add_ylabel_unit: bool, optional
+        Optionally decide, if you want to add a unit to ylabel.
+
+    Returns
+    -------
+    l: LineCollection
+        the collection of plotted lines
+
+    """
+    p_unit = ds.attrs.get('p_unit')
+    time_unit = ds.attrs.get('time_unit')
+
+    if cbar_kwargs is None:
+        cbar_kwargs = {}
+
+    if ax is None:
+        fig = plt.figure()
+        ax = plt.gca()
+
+    # Test the dimension of the quantity. Needs to be one two dimensional (time + pressure)
+    if len(ds[var_key].dims) != 2:
+        raise ValueError('Time evolution plots only work with two dimensional data (time + pressure)!')
+
+    xs, ys = [], []
+    for t in ds.time:
+        x = ds[var_key].sel(time=t)
+        y = ds[x.dims[0]]
+        xs.append(x)
+        ys.append(y)
+
+    l = _multiline(xs=xs, ys=ys, c=ds.time, ax=ax, **kwargs)
+
+    # make own colorbar, as the automatic colorbar is hard to customize
+    if add_colorbar:
+        cbar = plt.colorbar(l, ax=ax, **cbar_kwargs)
+        cbar_label = cbar_kwargs.get('label', f'time ({time_unit})')
+        cbar.set_label(cbar_label, fontsize=fs_labels)
+
+    # set other plot qualities
+    if title is None:
+        title = f'timeevolution of {var_key}'
+    ax.set_title(title, fontsize=fs_labels)
+
+    if add_ylabel_unit:
+        ylabel = ylabel + f' ({p_unit})'
+    if xlabel is None:
+        xlabel = var_key
+
+    ax.set_xlabel(xlabel, fontsize=fs_labels)
+    ax.set_ylabel(ylabel, fontsize=fs_labels)
+
+    # Invert y-axis and set scale to log
+    ax.set_yscale('log')
+    ax.invert_yaxis()
+    return l
 
 
 def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
