@@ -109,8 +109,11 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     ax.set_aspect('equal')
     xt=np.arange(-180, 181, 45)
     yt=np.arange(-90, 91, 45)
-    ax.set_xticks(ticks=xt, labels=[str(n)+r'$^\circ$' for n in xt], fontsize=fs_ticks)
-    ax.set_yticks(ticks=yt, labels=[str(n)+r'$^\circ$' for n in yt], fontsize=fs_ticks)
+    ax.set_xticks(xt)
+    ax.set_yticks(yt)
+    ax.set_xticklabels([str(n)+r'$^\circ$' for n in xt], fontsize=fs_ticks)
+    ax.set_yticklabels([str(n) + r'$^\circ$' for n in yt], fontsize = fs_ticks)
+
     ax.set_xlabel(xlabel, fontsize=fs_labels)
     ax.set_ylabel(ylabel, fontsize=fs_labels)
     if title is None:
@@ -118,7 +121,7 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     ax.set_title(title, fontsize=fs_labels)
 
 
-def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k'):
+def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k', windstream=False, **kwargs):
     """
     Plot the horizontal wind speeds as vector arrows.
 
@@ -134,6 +137,8 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k'):
         overcrowding the figure.
     arrowColor : str, optional
         Specify the arrow color.
+    windstream: bool, optional
+        Specify if you want to plot a streamfunction or arrows.
 
     Returns
     -------
@@ -151,13 +156,22 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k'):
     if len(np.atleast_1d(ds.coords['time'].values)) != 1:
         raise ValueError('This function only takes 2d-horizontal datasets. Select a single time-coordinate first.')
 
-    # reduce the number of arrows plotted by sampling every one in n coordinates
-    i = sample_one_in
-    arrows = ax.quiver(ds.U.coords['lon'][::i], ds.U.coords['lat'][::i],
-                       ds.U.values[::i, ::i], ds.V.values[::i, ::i],
-                       pivot='mid', color=arrowColor)
+    if not windstream or not hasattr(ax, "projection"):
+        # reduce the number of arrows plotted by sampling every one in n coordinates
+        i = sample_one_in
+        arrows = ax.quiver(ds.U.coords['lon'][::i], ds.U.coords['lat'][::i],
+                           ds.U.values[::i, ::i], ds.V.values[::i, ::i],
+                           pivot='mid', color=arrowColor, **kwargs)
 
-    # TODO: perhaps use quiverkey to add a legend to the arrow length
+        # TODO: perhaps use quiverkey to add a legend to the arrow length
+    else:
+        U, V = ds.U.values, ds.V.values
+        speed = np.sqrt(U ** 2 + V ** 2)
+        lw = (speed / speed.max()) ** 0.5
+
+        arrows = ax.streamplot(ds.U.coords['lon'], ds.U.coords['lat'], U, V, linewidth=lw,
+                       color=arrowColor,
+                       density=sample_one_in, **kwargs)
 
     return arrows
 

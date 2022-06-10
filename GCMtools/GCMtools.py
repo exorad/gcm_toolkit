@@ -292,7 +292,6 @@ class GCMT:
 
         return avg
 
-
     def isobaric_slice(self, var_key, p, tag=None, **kwargs):
         """
         Plot an isobaric slice of the given quantity at the given pressure
