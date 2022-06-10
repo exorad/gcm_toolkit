@@ -93,7 +93,7 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
         raise ValueError("Please enter 'exact', 'nearest', or 'interpolate' as Z lookup method.")
 
     # Simple plot (with xarray.plot.pcolormesh)
-    plotted = ds2d[var_key].plot(add_colorbar=False, **kwargs)
+    plotted = ds2d[var_key].plot(add_colorbar=False, ax=ax, **kwargs)
 
     # make own colorbar, as the automatic colorbar is hard to customize
     if add_colorbar:
@@ -230,7 +230,7 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
     zmean = ds[var_key].sel(time=time).mean(dim='lon')
 
     # Simple plot (with xarray.plot.pcolormesh)
-    plotted = zmean.plot(add_colorbar=False, **kwargs)
+    plotted = zmean.plot(add_colorbar=False, ax=ax, **kwargs)
 
     # make own colorbar, as the automatic colorbar is hard to customize
     if add_colorbar:
