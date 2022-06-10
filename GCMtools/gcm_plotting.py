@@ -112,13 +112,14 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
         plot_horizontal_wind(ds2d, ax=ax, **wind_kwargs)
 
     # set other plot qualities
-    ax.set_aspect('equal')
-    xt=np.arange(-180, 181, 45)
-    yt=np.arange(-90, 91, 45)
-    ax.set_xticks(xt)
-    ax.set_yticks(yt)
-    ax.set_xticklabels([str(n)+r'$^\circ$' for n in xt], fontsize=fs_ticks)
-    ax.set_yticklabels([str(n) + r'$^\circ$' for n in yt], fontsize = fs_ticks)
+    if not hasattr(ax, "projection"):
+        ax.set_aspect('equal')
+        xt=np.arange(-180, 181, 45)
+        yt=np.arange(-90, 91, 45)
+        ax.set_xticks(xt)
+        ax.set_yticks(yt)
+        ax.set_xticklabels([str(n)+r'$^\circ$' for n in xt], fontsize=fs_ticks)
+        ax.set_yticklabels([str(n) + r'$^\circ$' for n in yt], fontsize = fs_ticks)
 
     ax.set_xlabel(xlabel, fontsize=fs_labels)
     ax.set_ylabel(ylabel, fontsize=fs_labels)
