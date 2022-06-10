@@ -9,9 +9,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
                    plot_windvectors=True, wind_kwargs=None, cbar_kwargs=None,
-                   fs_labels=None, fs_ticks=None, title=None,
+                   add_colorbar = True, fs_labels=None, fs_ticks=None, title=None,
                    xlabel='Longitude (deg)', ylabel='Latitude (deg)',
                    **kwargs):
     """
@@ -44,6 +45,8 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
         Additional keywords for the method plot_horizontal_wind.
     cbar_kwargs : dict, optional
         Additional keywords for the colorbar.
+    add_colorbar: bool, optional,
+        Optionally decide if you want a colorbar or don't
     fs_labels : int, optional
         Optionally set font size of the axis labels.
     fs_ticks : int, optional
@@ -93,9 +96,10 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     plotted = ds2d[var_key].plot(add_colorbar=False, **kwargs)
 
     # make own colorbar, as the automatic colorbar is hard to customize
-    cbar = plt.colorbar(plotted, ax=ax, **cbar_kwargs)
-    cbar_label = cbar_kwargs.get('label', var_key)
-    cbar.set_label(cbar_label, fontsize=fs_labels)
+    if add_colorbar:
+        cbar = plt.colorbar(plotted, ax=ax, **cbar_kwargs)
+        cbar_label = cbar_kwargs.get('label', var_key)
+        cbar.set_label(cbar_label, fontsize=fs_labels)
 
     # Overplot the wind vectors if needed
     if plot_windvectors:
@@ -158,7 +162,10 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k'):
     return arrows
 
 
-def zonal_mean(ds, var_key):
+def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
+               fs_labels=None, xlabel='Longitude (deg)', ylabel='Z', add_ylabel_unit=True,
+               title=None, add_colorbar=True,
+               **kwargs):
     """
     Plot a zonal mean average of a quantity for the given dataset.
 
@@ -168,6 +175,66 @@ def zonal_mean(ds, var_key):
         A GCMtools-compatible dataset of a 3D climate simulation.
     var_key : str
         The key of the variable quantity that should be plotted.
+    time : int, optional
+        Timestamp that should be plotted. By default, the last time is
+        selected.
+    ax : matplotlib.axes.Axes, optional
+        The axis on which you want your plot to appear.
+    cbar_kwargs : dict, optional
+        Additional keywords for the colorbar.
+    fs_labels : int, optional
+        Optionally set font size of the axis labels.
+    xlabel: str, optional
+        Label for x
+    ylabel: str, optional
+        Label for y
+    add_ylabel_unit: bool, optional
+        Optionally decide, if you want to add a unit to ylabel.
+    title : str, optional
+        Title for the isobaric slice plot. By default, the selected pressure
+        and time stamp of the slice are displayed.
+    add_colorbar: bool, optional,
+        Optionally decide if you want a colorbar or don't
+
     """
-    # TODO: implement
-    pass
+    if ax is None:
+        fig = plt.figure()
+        ax = plt.gca()
+    if cbar_kwargs is None:
+        cbar_kwargs = {}
+
+    # retrieve default units
+    p_unit = ds.attrs.get('p_unit')
+    time_unit = ds.attrs.get('time_unit')
+
+    # if no timestamp is given, pick the last available time
+    if time == -1:
+        time = ds.time.isel(time=-1).values
+    # time-slice of the dataset
+    # (note: the look-up method for time is always assumed to be exact)
+    this_time = ds.time.sel(time=time).values
+    zmean = ds[var_key].sel(time=time).mean(dim='lon')
+
+    # Simple plot (with xarray.plot.pcolormesh)
+    plotted = zmean.plot(add_colorbar=False, **kwargs)
+
+    # make own colorbar, as the automatic colorbar is hard to customize
+    if add_colorbar:
+        cbar = plt.colorbar(plotted, ax=ax, **cbar_kwargs)
+        cbar_label = cbar_kwargs.get('label', var_key)
+        cbar.set_label(cbar_label, fontsize=fs_labels)
+
+    # set other plot qualities
+    if title is None:
+        title = f'time = {this_time:.0f} {time_unit}'
+    ax.set_title(title, fontsize=fs_labels)
+
+    if add_ylabel_unit:
+        ylabel = ylabel + f' ({p_unit})'
+
+    ax.set_xlabel(xlabel, fontsize=fs_labels)
+    ax.set_ylabel(ylabel, fontsize=fs_labels)
+
+    # Invert y-axis and set scale to log
+    ax.set_yscale('log')
+    ax.invert_yaxis()

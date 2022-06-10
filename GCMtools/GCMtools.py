@@ -57,6 +57,29 @@ class GCMT:
         else:
             return list(self._models.values())[0]
 
+    def _get_one_model(self, tag=None):
+        """
+        Helper Function that raises an error, if more than one model is selected.
+
+        Parameters
+        ----------
+        tag: str, optional
+            Name of the model that should be returned
+        Returns
+        -------
+        ds: xarray Dataset
+            Selected model
+        """
+
+        # select the appropriate dataset
+        ds = self.get_models(tag=tag)
+        # if a collection is given (because multiple datasets are available, and
+        # the tag is not provided), avoid ambiguity by raising an error
+        if isinstance(ds, GCMDatasetCollection) and len(ds) > 1 and tag is None:
+            raise RuntimeError('Ambiguous task. Please provide a tag.')
+
+        return ds
+
     def get_models(self, tag=None):
         """
         Function return all GCMs in memory. If a tag is given, only return this
@@ -69,7 +92,7 @@ class GCMT:
 
         Returns
         -------
-        selected_models : GCMDatasetCollection
+        selected_models : GCMDatasetCollection or xarray Dataset
             All models in self._models, or only the one with the right tag.
         """
         # If no tag is given, return all models
@@ -156,7 +179,7 @@ class GCMT:
         # store dataset
         self._models[tag] = ds
 
-    def save(self, dir,  method='nc', update_along_time = False, tag = None):
+    def save(self, dir, method='nc', update_along_time=False, tag=None):
         """
         Save function to store current member variables.
 
@@ -196,7 +219,7 @@ class GCMT:
                     # get index of first new datapoint
                     start_ix, = np.nonzero(~np.isin(model.time, ds_ondisk.time))
 
-                    if len(start_ix)>0:
+                    if len(start_ix) > 0:
                         # region of new data
                         region_new = slice(start_ix[0], model.time.size)
 
@@ -205,7 +228,7 @@ class GCMT:
                 else:
                     model.to_zarr(filename, mode='w')
 
-    def load(self, dir, method='nc', tag = None):
+    def load(self, dir, method='nc', tag=None):
         """
         Save function to store current member variables.
 
@@ -241,7 +264,34 @@ class GCMT:
             elif method == 'nc':
                 self._models[tag] = xr.open_dataset(file)
 
-    # Wrapped plotting routines:
+    def add_horizontal_average(self, var_key, var_key_out=None, area_key='area_c', tag=None):
+        """
+        Calculate horizontal averaged quantities. Horizontal averages
+        are calculated as:
+
+            \bar q = \int{q dA}/\int{dA}
+
+        Parameters
+        ----------
+        var_key: str
+            The key of the variable quantity that should be plotted.
+        tag : str, optional
+            The tag of the dataset that should be used. If no tag is provided,
+            and multiple datasets are available, an error is raised.
+        var_key_out: str, optional
+            variable name used to store the outcome. If not provided, this script will just
+            return the averages and not change the dataset inplace.
+        area_key: str, optional
+            Variable key in the dataset for the area of grid cells
+        """
+        ds = self._get_one_model(tag)
+        avg = (ds[area_key]*ds[var_key]).sum(dim=['lon','lat'])/ds[area_key].sum(dim=['lon','lat'])
+
+        if var_key_out is not None:
+            ds.update({var_key_out: avg})
+
+        return avg
+
 
     def isobaric_slice(self, var_key, p, tag=None, **kwargs):
         """
@@ -261,13 +311,27 @@ class GCMT:
             and multiple datasets are available, an error is raised.
         """
         # select the appropriate dataset
-        ds = self.get_models(tag=tag)
-        # if a collection is given (because multiple datasets are available, and
-        # the tag is not provided), avoid ambiguity by raising an error
-        if isinstance(ds, GCMDatasetCollection) and len(ds) > 1 and tag is None:
-            raise RuntimeError('Ambiguous plotting task. Please provide a tag.')
-
+        ds = self._get_one_model(tag)
         gcmplt.isobaric_slice(ds, var_key, p, **kwargs)
+
+    def zonal_mean(self, var_key, tag=None, **kwargs):
+        """
+        Plot a zonal mean average of a quantity for the given dataset.
+
+        Parameters
+        ----------
+        ds : DataSet
+            A GCMtools-compatible dataset of a 3D climate simulation.
+        var_key : str
+            The key of the variable quantity that should be plotted.
+        tag : str, optional
+            The tag of the dataset that should be plotted. If no tag is provided
+            and multiple datasets are available, an error is raised.
+        """
+        # select the appropriate dataset
+        ds = self._get_one_model(tag)
+        gcmplt.zonal_mean(ds, var_key, **kwargs)
+
 
 # ------------------------------------------------------------------------------
 
