@@ -52,6 +52,9 @@ class GCMT:
 
     @property
     def models(self):
+        """
+        returns dataset if only one model is loaded, otherwise collection of datasets.
+        """
         if len(self._models) > 1:
             return self._models
         else:
@@ -185,12 +188,16 @@ class GCMT:
 
         Parameters
         ----------
-        example : int
-            Short description of the variable.
-        update_along_time: bool
-            Append already written files along time dimension (less IO)
-        tag: str
-            Tag of the model that should be saved.
+        dir : str
+            directory at which the GCMtools datasets should be stored.
+        method : str, optional
+            Datasets can be stored as '.zarr' or '.nc'. Decide which type you prefer.
+            Defaults to '.nc'.
+        update_along_time: str, optional
+            Decide if you want to update already saved datasets along the timedimension.
+            This only works with method='zarr'.
+        tag: str, optional
+            tag of the model that should be loaded. Will save all available models by default.
 
         Returns
         -------
@@ -230,19 +237,16 @@ class GCMT:
 
     def load(self, dir, method='nc', tag=None):
         """
-        Save function to store current member variables.
+        Load function to load stored member variables.
 
         Parameters
         ----------
-        example : int
-            Short description of the variable.
-        method : str
-
-
-        Returns
-        -------
-        NoneType
-            None
+        dir : str
+            directory at which the GCMtools datasets are stored
+        method : str, optional
+            Should be the same method with which you stored the data
+        tag: str, optional
+            tag of the model that should be loaded. Will load all available models by default.
         """
 
         if method not in ['nc', 'zarr']:
@@ -311,7 +315,7 @@ class GCMT:
         """
         # select the appropriate dataset
         ds = self._get_one_model(tag)
-        gcmplt.isobaric_slice(ds, var_key, p, **kwargs)
+        return gcmplt.isobaric_slice(ds, var_key, p, **kwargs)
 
     def time_evol(self, var_key, tag=None, **kwargs):
         """
@@ -329,7 +333,7 @@ class GCMT:
             and multiple datasets are available, an error is raised.
         """
         ds = self._get_one_model(tag)
-        gcmplt.time_evol(ds, var_key, **kwargs)
+        return gcmplt.time_evol(ds, var_key, **kwargs)
 
     def zonal_mean(self, var_key, tag=None, **kwargs):
         """
@@ -347,7 +351,7 @@ class GCMT:
         """
         # select the appropriate dataset
         ds = self._get_one_model(tag)
-        gcmplt.zonal_mean(ds, var_key, **kwargs)
+        return gcmplt.zonal_mean(ds, var_key, **kwargs)
 
 
 # ------------------------------------------------------------------------------
