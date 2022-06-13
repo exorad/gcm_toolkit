@@ -14,6 +14,8 @@ import numpy as np
 from collections import UserDict
 
 from .passport import is_the_data_basic
+from .units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS, convert_time, convert_pressure
+from .const import VARNAMES as c
 import GCMtools.gcm_plotting as gcmplt
 
 
@@ -35,20 +37,28 @@ class GCMT:
         Read in the previously reduced GCM
     """
 
-    def __init__(self, use_bar=True, use_days=True):
+    def __init__(self, p_unit='bar', time_unit='day'):
         """
         Constructor for the GCMtools class.
 
         Parameters
         ----------
-        models : dict
-            Dictionary containing all of the GCM datasets that have been read.
+        p_unit: str, optional
+            Set the unit that is used internally for pressure related things
+        time_unit: str, optional
+            Set the unit that is used internally for time related things
         """
 
         # Initialize empty dictionary to store all GCM models
         self._models = GCMDatasetCollection()
-        self.use_bar = use_bar
-        self.use_days = use_days
+
+        if p_unit not in ALLOWED_PUNITS:
+            raise ValueError(f"Please use a pressure unit from {ALLOWED_PUNITS}")
+        self.p_unit = p_unit
+
+        if time_unit not in ALLOWED_TIMEUNITS:
+            raise ValueError(f"Please use a time unit from {ALLOWED_TIMEUNITS}")
+        self.time_unit = time_unit
 
     @property
     def models(self):
@@ -173,8 +183,8 @@ class GCMT:
         # store tag in the dataset attributes
         ds.attrs['tag'] = tag
         # store the units in the dataset attributes
-        ds.attrs['p_unit'] = 'bar' if self.use_bar else 'Pa'
-        ds.attrs['time_unit'] = 'days' if self.use_days else 'iter'
+        ds.attrs['p_unit'] = self.p_unit
+        ds.attrs['time_unit'] = self.time_unit
         # check if the dataset has all necessary GCMtools attributes
         if not is_the_data_basic(ds):
             raise ValueError('This dataset is not supported by GCMtools\n')
@@ -224,14 +234,14 @@ class GCMT:
                     ds_ondisk = xr.open_zarr(filename)
 
                     # get index of first new datapoint
-                    start_ix, = np.nonzero(~np.isin(model.time, ds_ondisk.time))
+                    start_ix, = np.nonzero(~np.isin(model[c['time']], ds_ondisk[c['time']]))
 
                     if len(start_ix) > 0:
                         # region of new data
-                        region_new = slice(start_ix[0], model.time.size)
+                        region_new = slice(start_ix[0], model[c['time']].size)
 
                         # append structure of new data (compute=False means no data is written)
-                        model.isel(time=region_new).to_zarr(filename, append_dim='time', compute=True)
+                        model.isel(time=region_new).to_zarr(filename, append_dim=c['time'], compute=True)
                 else:
                     model.to_zarr(filename, mode='w')
 
@@ -264,9 +274,14 @@ class GCMT:
             head, tail = os.path.split(file)
             tag = tail.replace(f'.{method}', '')
             if method == 'zarr':
-                self._models[tag] = xr.open_zarr(file)
+                ds = xr.open_zarr(file)
             elif method == 'nc':
-                self._models[tag] = xr.open_dataset(file)
+                ds = xr.open_dataset(file)
+
+            convert_time(ds, current_unit=ds.attrs.get('time_unit'), goal_unit=self.time_unit)
+            convert_pressure(ds, current_unit=ds.attrs.get('p_unit'), goal_unit=self.p_unit)
+
+            self._models[tag] = ds
 
     def add_horizontal_average(self, var_key, var_key_out=None, area_key='area_c', tag=None):
         """
@@ -289,7 +304,7 @@ class GCMT:
             Variable key in the dataset for the area of grid cells
         """
         ds = self._get_one_model(tag)
-        avg = (ds[area_key]*ds[var_key]).sum(dim=['lon','lat'])/ds[area_key].sum(dim=['lon','lat'])
+        avg = (ds[area_key]*ds[var_key]).sum(dim=[c['lon'],c['lat']])/ds[area_key].sum(dim=[c['lon'],c['lat']])
 
         if var_key_out is not None:
             ds.update({var_key_out: avg})

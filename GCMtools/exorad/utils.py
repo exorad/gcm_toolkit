@@ -51,26 +51,6 @@ def get_parameter(datafile, keyword):
     raise KeyError("Keyword not found")
 
 
-def convert_vertical_to_bar(ds, dim):
-    """
-    Convert the vertical dimension to bar.
-
-    Parameters
-    ----------
-    ds: Dataset
-        dataset to be converted
-    dim: str
-        Vertical dimension to be converted
-
-    Returns
-    -------
-    ds: Dataset
-        dataset with converted dimension
-    """
-    ds[dim] = np.array(ds[dim])/1e5
-    return ds
-
-
 def convert_winds_and_T(ds, T_dim, W_dim):
     """
     Convert winds and temperature in dataset.
@@ -115,7 +95,7 @@ def convert_winds_and_T(ds, T_dim, W_dim):
     return ds
 
 
-def exorad_postprocessing(ds, outdir=None, datafile=None, convert_to_bar=True, convert_to_days=True):
+def exorad_postprocessing(ds, outdir=None, datafile=None):
     """
     Preliminaray postprocessing on exorad dataset.
     This function converts the vertical windspeed from Pa into meters and saves attributes to the dataset.
@@ -128,10 +108,6 @@ def exorad_postprocessing(ds, outdir=None, datafile=None, convert_to_bar=True, c
         directory in which to find the data file (following the convention f'{outdir}/data')
     datafile: string
         alternatively specify datafile directly
-    convert_to_bar: (Optional) bool
-        convert vertical pressure dimension to bar
-    convert_to_days: (Optional) bool
-        convert time dimension to days
 
     Returns
     ----------
@@ -163,17 +139,6 @@ def exorad_postprocessing(ds, outdir=None, datafile=None, convert_to_bar=True, c
         ds = convert_winds_and_T(ds, c.T, c.W)
     if c.Ttave in ds:
         ds = convert_winds_and_T(ds, c.Ttave, c.wVeltave)
-
-    # Convert pressure from SI to bar
-    if convert_to_bar:
-        for dim in {c.Z, c.Z_l, c.Z_p1, c.Z_u}:
-            if dim in ds.dims:
-                ds = convert_vertical_to_bar(ds, dim)
-        ds.attrs.update({'p_ref': ds.p_ref/1e5})
-
-    # Convert time to days
-    if convert_to_days:
-        ds[c.time] = ds.iter * ds.attrs["dt"] / (3600 * 24)
 
     # Add metrics to dataset
     if c.FACEDIM not in ds.dims:
