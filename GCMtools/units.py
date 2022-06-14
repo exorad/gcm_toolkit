@@ -34,6 +34,9 @@ def convert_pressure(ds, current_unit, goal_unit):
             ds[dim] = (np.array(ds[dim]) * u.Unit(current_unit)).to(u.Unit(goal_unit)).value
     ds.attrs.update({'p_ref':(ds.p_ref * u.Unit(current_unit)).to(u.Unit(goal_unit)).value})
 
+    # store the units in the dataset attributes
+    ds.attrs['p_unit'] = goal_unit
+
     return ds
 
 
@@ -69,5 +72,8 @@ def convert_time(ds, current_unit, goal_unit):
         ds[c["time"]] = ds.iter * ds.attrs["dt"] / (3600 * 24)
     if current_unit == 'day' and goal_unit == 'iter':
         ds[c["time"]] = ds.iter / ds.attrs["dt"] * (3600 * 24)
+
+    # store the units in the dataset attributes
+    ds.attrs['time_unit'] = goal_unit
 
     return ds

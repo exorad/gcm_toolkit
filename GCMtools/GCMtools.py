@@ -158,7 +158,7 @@ class GCMT:
 
         self._add_attrs_and_store(ds, tag)
 
-    def read_reduced(self, data_path, tag=None):
+    def read_reduced(self, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa'):
         """
         Read in function for GCM data that has been reduced and saved according
         to the GCMtools GCMDataset format.
@@ -167,11 +167,18 @@ class GCMT:
         ----------
         data_path : str
             Folder path to the reduced (GCMtools) data.
+        time_unit_in: str
+            units of time dimension in input dataset
+        p_unit_in: str
+            units of pressure dimensions in input dataset
         tag : str
             Tag to reference the simulation in the collection of models.
         """
         # read dataset using xarray functionalities
         ds = xr.open_dataset(data_path)
+
+        ds = convert_time(ds, current_unit=time_unit_in, goal_unit=self.time_unit)
+        ds = convert_pressure(ds, current_unit=p_unit_in, goal_unit=self.p_unit)
 
         self._add_attrs_and_store(ds, tag)
 
@@ -182,9 +189,6 @@ class GCMT:
             tag = str(len(self._models))
         # store tag in the dataset attributes
         ds.attrs['tag'] = tag
-        # store the units in the dataset attributes
-        ds.attrs['p_unit'] = self.p_unit
-        ds.attrs['time_unit'] = self.time_unit
         # check if the dataset has all necessary GCMtools attributes
         if not is_the_data_basic(ds):
             raise ValueError('This dataset is not supported by GCMtools\n')
@@ -278,8 +282,8 @@ class GCMT:
             elif method == 'nc':
                 ds = xr.open_dataset(file)
 
-            convert_time(ds, current_unit=ds.attrs.get('time_unit'), goal_unit=self.time_unit)
-            convert_pressure(ds, current_unit=ds.attrs.get('p_unit'), goal_unit=self.p_unit)
+            ds = convert_time(ds, current_unit=ds.attrs.get('time_unit'), goal_unit=self.time_unit)
+            ds = convert_pressure(ds, current_unit=ds.attrs.get('p_unit'), goal_unit=self.p_unit)
 
             self._models[tag] = ds
 

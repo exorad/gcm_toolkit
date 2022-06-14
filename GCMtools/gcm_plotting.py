@@ -77,10 +77,9 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
 
     # if no timestamp is given, pick the last available time
     if time == -1:
-        time = ds[c['time']].isel(time=-1).values
+        time = ds[c['time']].isel(**{c['time']: -1}).values
     # time-slice of the dataset
     # (note: the look-up method for time is always assumed to be exact)
-    this_time = ds[c['time']].sel(time=time).values
     ds = ds.sel(**{c['time']: time})
 
     # isobaric slice based on the look-up method for pressure
@@ -125,7 +124,12 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     ax.set_xlabel(xlabel, fontsize=fs_labels)
     ax.set_ylabel(ylabel, fontsize=fs_labels)
     if title is None:
-        title = f'p = {this_p:.2e} {p_unit}, time = {this_time:.0f} {time_unit}'
+        if time_unit == 'iter':
+            # need to convert time from nanosecond like datatype to iters
+            time_string = f'{1e-9 * float(time):.0f}'
+        else:
+            time_string = f'{time}'
+        title = f'p = {this_p:.2e} {p_unit}, time = {time_string} {time_unit}'
     ax.set_title(title, fontsize=fs_labels)
 
 
@@ -357,7 +361,7 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
         time = ds[c['time']].isel(**{c['time']:-1}).values
     # time-slice of the dataset
     # (note: the look-up method for time is always assumed to be exact)
-    this_time = ds.time.sel(**{c['time']:time}).values
+    this_time = time
     zmean = ds[var_key].sel(**{c['time']:time}).mean(dim=c['lon'])
 
     # Simple plot (with xarray.plot.pcolormesh)
@@ -374,7 +378,13 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
 
     # set other plot qualities
     if title is None:
-        title = f'time = {this_time:.0f} {time_unit}'
+        if time_unit == 'iter':
+            # need to convert time from nanosecond like datatype to iters
+            time_string = f'{1e-9 * float(time):.0f}'
+        else:
+            time_string = f'{time}'
+
+        title = f'time = {time_string} {time_unit}'
     ax.set_title(title, fontsize=fs_labels)
 
     if add_ylabel_unit:

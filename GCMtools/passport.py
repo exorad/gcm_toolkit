@@ -8,6 +8,9 @@
 #  value error if the conditions are not fulfilled.
 # ==============================================================
 
+from .const import VARNAMES as c
+
+
 def is_the_data_basic(dataset):
     """
     Check if the dataset fulfills the minimal requirements for
@@ -34,54 +37,64 @@ def is_the_data_basic(dataset):
 
     # get names of all data variables and attributes
     data_variables = list(dataset.keys())
+    data_coords = list(dataset.coords)
     data_attributes = dataset.attrs
 
-    if 'T' not in data_variables:
+    to_be_checked_coords = [c['lon'], c['lat'], c['Z'], c['time']]
+
+    for dim in to_be_checked_coords:
+        if dim not in data_coords:
+            is_the_data_ok = False
+            print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
+                  f'not contain {dim} information and ' +
+                  'therefore does not qualify as a basic GCM dataset.')
+
+    if c['T'] not in data_variables:
         is_the_data_ok = False
         print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
-              'not contain T (temperature) information and ' +
+              f'not contain {c["T"]} (temperature) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
-    if 'U' not in data_variables:
+    if c['U'] not in data_variables:
         is_the_data_ok = False
         print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
-              'not contain U (equatorial wind) information and ' +
+              f'not contain {c["U"]} (equatorial wind) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
-    if 'V' not in data_variables:
+    if c['V'] not in data_variables:
         is_the_data_ok = False
         print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
-              'not contain V (polar wind) information and ' +
+              f'not contain {c["V"]} (polar wind) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
-    if 'W' not in data_variables:
+    if c['W'] not in data_variables:
         is_the_data_ok = False
         print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
-              'not contain W (vertical wind) information and ' +
+              f'not contain {c["W"]} (vertical wind) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
-    if 'g' not in data_attributes:
+    if c['g'] not in data_attributes:
         is_the_data_ok = False
         print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
-              'not contain g (avarage gravity) information and ' +
+              f'not contain {c["g"]} (avarage gravity) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
-    if 'P_rot' not in data_attributes:
+    if c['P_rot'] not in data_attributes:
         is_the_data_ok = False
         print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
-              'not contain P_rot (rotational period) information and ' +
+              f'not contain {c["P_rot"]} (rotational period) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
-    if 'P_orb' not in data_attributes:
+    if c['P_orb'] not in data_attributes:
         is_the_data_ok = False
         print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
-              'not contain P_orb (orbital period) information and ' +
+              f'not contain {c["P_orb"]} (orbital period) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
-    if 'R_p' not in data_attributes:
+    if c['R_p'] not in data_attributes:
         is_the_data_ok = False
         print('[ERROR] The dataset "' + str(dataset.attrs['tag']) + '" does ' +
-              'not contain R_p (planet radius) information and ' +
+              f'not contain {c["R_p"]} (planet radius) information and ' +
               'therefore does not qualify as a basic GCM dataset.')
 
     if not is_the_data_ok:
