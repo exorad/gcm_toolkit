@@ -12,6 +12,7 @@
 import os
 import glob
 import xarray as xr
+from GCMtools.units import convert_pressure, convert_time
 
 
 def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds = None, **kwargs):
@@ -74,7 +75,10 @@ def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds = Non
     ds = regrid()
 
     # convert wind, vertical dimension, time, ...
-    ds = exorad_postprocessing(ds, outdir=data_path, convert_to_bar=gcmt.use_bar, convert_to_days=gcmt.use_days)
+    ds = exorad_postprocessing(ds, outdir=data_path)
+
+    convert_pressure(ds, current_unit='Pa', goal_unit=gcmt.p_unit)
+    convert_time(ds, current_unit='iter', goal_unit=gcmt.time_unit)
 
     if loaded_ds is not None:
         ds = xr.merge([ds, loaded_ds])

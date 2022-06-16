@@ -9,7 +9,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-
+from .const import VARNAMES as c
 
 def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
                    plot_windvectors=True, wind_kwargs=None, cbar_kwargs=None,
@@ -77,22 +77,21 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
 
     # if no timestamp is given, pick the last available time
     if time == -1:
-        time = ds.time.isel(time=-1).values
+        time = ds[c['time']].isel(**{c['time']: -1}).values
     # time-slice of the dataset
     # (note: the look-up method for time is always assumed to be exact)
-    this_time = ds.time.sel(time=time).values
-    ds = ds.sel(time=time)
+    ds = ds.sel(**{c['time']: time})
 
     # isobaric slice based on the look-up method for pressure
     if lookup_method == 'exact':
-        this_p = ds.Z.sel(Z=p).values
-        ds2d = ds.sel(Z=p)
+        this_p = ds[c['Z']].sel(**{c['Z']: p}).values
+        ds2d = ds.sel(**{c['Z']: p})
     elif lookup_method == 'nearest':
-        this_p = ds.Z.sel(Z=p, method="nearest").values
-        ds2d = ds.sel(Z=p, method='nearest')
+        this_p = ds[c['Z']].sel(**{c['Z']: p}, method="nearest").values
+        ds2d = ds.sel(**{c['Z']: p}, method='nearest')
     elif lookup_method == 'interpolate':
-        this_p = ds.Z.interp(Z=p).values
-        ds2d = ds.interp(Z=p)
+        this_p = ds[c['Z']].interp(**{c['Z']: p}).values
+        ds2d = ds.interp(**{c['Z']: p})
     else:
         raise ValueError("Please enter 'exact', 'nearest', or 'interpolate' as Z lookup method.")
 
@@ -125,7 +124,12 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     ax.set_xlabel(xlabel, fontsize=fs_labels)
     ax.set_ylabel(ylabel, fontsize=fs_labels)
     if title is None:
-        title = f'p = {this_p:.2e} {p_unit}, time = {this_time:.0f} {time_unit}'
+        if time_unit == 'iter':
+            # need to convert time from nanosecond like datatype to iters
+            time_string = f'{1e-9 * float(time):.0f}'
+        else:
+            time_string = f'{time}'
+        title = f'p = {this_p:.2e} {p_unit}, time = {time_string} {time_unit}'
     ax.set_title(title, fontsize=fs_labels)
 
 
@@ -154,30 +158,30 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k', windstrea
         Quiver object that has been plotted.
     """
     if ax is None:
-        fig= plt.figure()
+        fig = plt.figure()
         ax = plt.gca()
 
     # assert whether the dataset is 2d-horizontal, i.e. the vertical and time
     # dimensions only have a single coordinate
-    if len(np.atleast_1d(ds.coords['Z'].values)) != 1:
+    if len(np.atleast_1d(ds.coords[c['Z']].values)) != 1:
         raise ValueError('This function only takes 2d-horizontal datasets. Select a single Z-coordinate first.')
-    if len(np.atleast_1d(ds.coords['time'].values)) != 1:
+    if len(np.atleast_1d(ds.coords[c['time']].values)) != 1:
         raise ValueError('This function only takes 2d-horizontal datasets. Select a single time-coordinate first.')
 
     if not windstream or not hasattr(ax, "projection"):
         # reduce the number of arrows plotted by sampling every one in n coordinates
         i = sample_one_in
-        arrows = ax.quiver(ds.U.coords['lon'][::i], ds.U.coords['lat'][::i],
-                           ds.U.values[::i, ::i], ds.V.values[::i, ::i],
+        arrows = ax.quiver(ds[c['U']].coords[c['lon']][::i], ds[c['U']].coords[c['lat']][::i],
+                           ds[c['U']].values[::i, ::i], ds[c['V']].values[::i, ::i],
                            pivot='mid', color=arrowColor, **kwargs)
 
         # TODO: perhaps use quiverkey to add a legend to the arrow length
     else:
-        U, V = ds.U.values, ds.V.values
+        U, V = ds[c['U']].values, ds[c['V']].values
         speed = np.sqrt(U ** 2 + V ** 2)
         lw = (speed / speed.max()) ** 0.5
 
-        arrows = ax.streamplot(ds.U.coords['lon'], ds.U.coords['lat'], U, V, linewidth=lw,
+        arrows = ax.streamplot(ds[c['U']].coords[c['lon']], ds[c['U']].coords[c['lat']], U, V, linewidth=lw,
                        color=arrowColor,
                        density=sample_one_in, **kwargs)
 
@@ -273,7 +277,7 @@ def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorb
 
     xs, ys = [], []
     for t in ds.time:
-        x = ds[var_key].sel(time=t)
+        x = ds[var_key].sel(**{c['time']:t})
         y = ds[x.dims[0]]
         xs.append(x)
         ys.append(y)
@@ -354,11 +358,11 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
 
     # if no timestamp is given, pick the last available time
     if time == -1:
-        time = ds.time.isel(time=-1).values
+        time = ds[c['time']].isel(**{c['time']:-1}).values
     # time-slice of the dataset
     # (note: the look-up method for time is always assumed to be exact)
-    this_time = ds.time.sel(time=time).values
-    zmean = ds[var_key].sel(time=time).mean(dim='lon')
+    this_time = time
+    zmean = ds[var_key].sel(**{c['time']:time}).mean(dim=c['lon'])
 
     # Simple plot (with xarray.plot.pcolormesh)
     if contourf:
@@ -374,7 +378,13 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
 
     # set other plot qualities
     if title is None:
-        title = f'time = {this_time:.0f} {time_unit}'
+        if time_unit == 'iter':
+            # need to convert time from nanosecond like datatype to iters
+            time_string = f'{1e-9 * float(time):.0f}'
+        else:
+            time_string = f'{time}'
+
+        title = f'time = {time_string} {time_unit}'
     ax.set_title(title, fontsize=fs_labels)
 
     if add_ylabel_unit:
