@@ -15,6 +15,9 @@ Capabilities
    :maxdepth: 1
    :caption: Contents
 
+   installation
+   notebooks/demo.ipynb
+
    
 Credits
 -------

@@ -1,0 +1,18 @@
+# EXORAD PRT physics package parameters by AARON SCHNEIDER
+
+C--   Full radiative transfer input:
+# EXORAD_DAY_DT :: radiative timestep for dayside (needs to be multiple of deltaT)
+# EXORAD_NIGHT_DT :: radiative timestep for nightside (needs to be multiple of deltaT)
+# EXORAD_INTERP_STEP :: radiative Interpolation step (should be 1 or 2). 1 = No interpolation, 2 = every second column
+# EXORAD_SCATTERING  :: scattering flag. If set to False, we will not use scattering. Warning: only set to false if photon_destruct_prob = 1 and opac_scat = 0!
+
+ &EXORAD_PRT
+ EXORAD_deltaT = 300.0,
+ EXORAD_INTERP_STEP = 2,
+ EXORAD_SCATTERING = .TRUE.,
+ EXORAD_MAX_I_ITER_SCAT = 500,
+ EXORAD_MAX_REL_DELTA_S = 0.02,
+ EXORAD_MIN_TEMP = 100.0,
+ EXORAD_INTERP_METH = 1,
+ EXORAD_TINT = -1.0,
+ &

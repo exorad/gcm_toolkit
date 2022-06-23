@@ -1,0 +1,12 @@
+star:
+  Tstar: 6092.0
+  Rstar: 1.203
+  semimajoraxis: 0.04747
+
+temp_init:
+  theta_deep: 1800
+
+press_init:
+  np_log: 41
+  zero_eps: 2.0e-5
+  p0: 700

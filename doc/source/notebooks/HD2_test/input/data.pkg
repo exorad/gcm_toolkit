@@ -1,0 +1,10 @@
+#     Packages
+#     useExoRad  :: use MITgcm exoplanet extension from L. CARONE
+#     useLand :: use (simple) Land package to compute surf. BC over land
+ &PACKAGES
+ useExoRad=.TRUE.,
+# useLand=.TRUE.,
+ useSHAP_FILT=.TRUE.,
+ useDiagnostics=.FALSE.,
+#useMNC=.TRUE.,
+ &
