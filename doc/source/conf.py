@@ -33,6 +33,7 @@ release = '0.1'
 extensions = [
     'sphinx.ext.mathjax', 'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.extlinks',
     'sphinx.ext.viewcode',
     'numpydoc',
@@ -58,7 +59,7 @@ numpydoc_show_class_members = False
 
 # To avoid installing xESMF and all its dependencies when building doc
 # https://stackoverflow.com/a/15912502/8729698
-autodoc_mock_imports = ['xarray', 'scipy', 'ESMF', 'xesmf', 'xmitgcm', 'ESMPy', 'xgcm', 'matplotlib','f90nml','astropy']
+autodoc_mock_imports = ['xarray', 'scipy', 'ESMF', 'xesmf', 'xmitgcm', 'ESMPy', 'xgcm', 'matplotlib','f90nml','astropy', 'numpy','cubedsphere']
 
 # avoid automatic execution for notebooks
 nbsphinx_execute = 'never'

@@ -16,6 +16,7 @@ Capabilities
    :caption: Contents
 
    installation
+   usage
    notebooks/demo.ipynb
 
    
