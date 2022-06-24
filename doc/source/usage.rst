@@ -1,10 +1,24 @@
 Usage
 =====
 
+The functionalities of ``GCMTools`` is likely to expand in the future, since ``GCMTools`` is in active development.
+However, ``GCMTools`` can already be used to perform a variety of tasks.
+These docs explain how ``GCMTools`` can be used to load data and do plots with the data.
+
 GCMT class
 ----------
 The GCMT class is the main point of user interaction.
 It is used to load data into ``xarray`` datasets, which can then be used for analysis.
+
+.. code-block:: python
+
+        from GCMTtools import GCMT
+
+        # Load data
+        gcmt = GCMT()
+        gcmt.read_raw(..., tag='model_name')
+        # gcmt.read_raw(..., tag='model_name_2')  # if you have multiple models
+        ds = gcmt.get_models('model_name')
 
 The GCMT class can also be used for quick plotting of data, since it wraps a few plotting functions, which are outlined in :ref:`Plotting`.
 
@@ -17,7 +31,7 @@ Plotting
 ``GCMTools`` includes some very simple (but yet powerful and highly customizable) plotting functions that can be used in two different ways.
 You can either use the ``GCMT`` class to invoke these functions or call these functions directly.
 
-Here is an example:
+Example:
 
 .. code-block:: python
 
