@@ -20,5 +20,6 @@ setup(
         "scipy>=1.7.0",
         "numpy",
         "f90nml",
+        "astropy",
     ]
 )
