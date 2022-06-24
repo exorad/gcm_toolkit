@@ -19,7 +19,7 @@ class MITgcmDataParser(Parser):
         self.sparse_arrays = True
 
 
-def get_parameter(datafile, keyword):
+def get_parameter(datafile, keyword, default=None):
     """
     Function to parse the MITgcm 'data' file and return the parameter values
     of the given specific keyword.
@@ -48,7 +48,10 @@ def get_parameter(datafile, keyword):
             if key.lower() == keyword.lower():
                 return val
 
-    raise KeyError("Keyword not found")
+    if default is None:
+        raise KeyError(f"Keyword {keyword} not found in datafile.")
+    else:
+        return default
 
 
 def convert_winds_and_T(ds, T_dim, W_dim):
@@ -120,13 +123,13 @@ def exorad_postprocessing(ds, outdir=None, datafile=None):
         datafile = f'{outdir}/data'
 
     # Add metadata
-    radius = float(get_parameter(datafile, 'rSphere')) # planet radius in m
-    P_rot = float(get_parameter(datafile, 'rotationperiod')) # planet rotationperiod in m
-    attrs = {"p_ref": float(get_parameter(datafile, 'Ro_SeaLevel')),  # bottom layer pressure in pascal
-             "cp": float(get_parameter(datafile, 'atm_Cp')),  # heat capacity at constant pressure
-             "R": float(get_parameter(datafile, 'atm_Rd')),  # specific gas constant
-             "g": float(get_parameter(datafile, 'gravity')),  # surface gravity in m/s^2
-             "dt": int(get_parameter(datafile, 'deltaT')),  # time step size in s
+    radius = float(get_parameter(datafile, 'rSphere', 6370e3)) # planet radius in m
+    P_rot = float(get_parameter(datafile, 'rotationperiod', 8.6164e4)) # planet rotationperiod in m
+    attrs = {"p_ref": float(get_parameter(datafile, 'Ro_SeaLevel', 1.0e5)),  # bottom layer pressure in pascal
+             "cp": float(get_parameter(datafile, 'atm_Cp', 1.004e3)),  # heat capacity at constant pressure
+             "R": float(get_parameter(datafile, 'atm_Rd', 2.868571E2)),  # specific gas constant
+             "g": float(get_parameter(datafile, 'gravity', 9.81)),  # surface gravity in m/s^2
+             "dt": int(get_parameter(datafile, 'deltaT', 0.0)),  # time step size in s
              "R_p": radius,
              "P_rot": P_rot,
              "P_orb": P_rot,  # change, when this is available
