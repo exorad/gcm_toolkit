@@ -297,7 +297,7 @@ class GCMT:
         Parameters
         ----------
         var_key: str
-            The key of the variable quantity that should be plotted.
+            The key of the variable quantity that should be averaged.
         tag : str, optional
             The tag of the dataset that should be used. If no tag is provided,
             and multiple datasets are available, an error is raised.
@@ -314,6 +314,37 @@ class GCMT:
             ds.update({var_key_out: avg})
 
         return avg
+
+    def add_meridional_overturning(self, v_data='V', var_key_out=None, tag=None):
+        """
+        Calculate meridional overturning streamfunction.
+
+        See e.g. Carone et al. (2017), Eq. 7
+
+        Parameters
+        ----------
+        var_key: str
+            The key of the meridional velocity that should be used to calculate the outcome
+        tag : str, optional
+            The tag of the dataset that should be used. If no tag is provided,
+            and multiple datasets are available, an error is raised.
+        var_key_out: str, optional
+            variable name used to store the outcome. If not provided, this script will just
+            return the overturning circulation and not change the dataset inplace.
+        """
+        ds = self._get_one_model(tag)
+        V_integral = ds[v_data].cumulative_integrate(coord='Z')
+
+        if ds.attrs.get('p_unit') == 'bar':
+            # convert to SI, if needed
+            V_integral = V_integral / 1.0e5
+
+        psi = 2*np.pi*np.cos(ds.lat/180*np.pi)*ds.R_p/ds.g*V_integral
+
+        if var_key_out is not None:
+            ds.update({var_key_out: psi})
+
+        return psi
 
     def isobaric_slice(self, var_key, p, tag=None, **kwargs):
         """

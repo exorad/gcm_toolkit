@@ -366,9 +366,9 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
 
     # Simple plot (with xarray.plot.pcolormesh)
     if contourf:
-        plotted = zmean.plot.contourf(add_colorbar=False, ax=ax, **kwargs)
+        plotted = zmean.plot.contourf(add_colorbar=False, ax=ax, x=c['lat'], **kwargs)
     else:
-        plotted = zmean.plot.pcolormesh(add_colorbar=False, ax=ax, **kwargs)
+        plotted = zmean.plot.pcolormesh(add_colorbar=False, ax=ax, x=c['lat'], **kwargs)
 
     # make own colorbar, as the automatic colorbar is hard to customize
     if add_colorbar:

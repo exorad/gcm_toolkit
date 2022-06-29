@@ -23,7 +23,7 @@ It is used to load data into ``xarray`` datasets, which can then be used for ana
 The GCMT class can also be used for quick plotting of data, since it wraps a few plotting functions, which are outlined in :ref:`Plotting`.
 
 .. autoclass:: GCMtools.GCMT
-    :members: __init__, get_models, models, add_horizontal_average, read_raw, read_reduced, load, save
+    :members: __init__, get_models, models, add_horizontal_average, add_meridional_overturning, read_raw, read_reduced, load, save
 
 
 Plotting
