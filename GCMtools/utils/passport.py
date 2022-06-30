@@ -8,7 +8,7 @@
 #  value error if the conditions are not fulfilled.
 # ==============================================================
 
-from .const import VARNAMES as c
+from GCMtools.core.const import VARNAMES as c
 
 
 def is_the_data_basic(dataset):

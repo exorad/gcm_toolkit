@@ -12,7 +12,7 @@
 import os
 import glob
 import xarray as xr
-from GCMtools.units import convert_pressure, convert_time
+from GCMtools.core.units import convert_pressure, convert_time
 
 
 def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds = None, **kwargs):

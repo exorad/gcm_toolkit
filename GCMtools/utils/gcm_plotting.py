@@ -9,7 +9,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from .const import VARNAMES as c
+from GCMtools.core.const import VARNAMES as c
 
 def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
                    plot_windvectors=True, wind_kwargs=None, cbar_kwargs=None,
