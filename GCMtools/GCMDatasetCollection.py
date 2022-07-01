@@ -1,3 +1,4 @@
+import GCMtools.core.writer as wrt
 from collections import UserDict
 
 class GCMDatasetCollection(UserDict):
@@ -34,7 +35,7 @@ class GCMDatasetCollection(UserDict):
             return self[tag]
         # If the tag is not a string, raise an error
         else:
-            raise ValueError('The given tag is not a string.')
+            wrt.write_status('ERROR', 'The given tag is not a string.')
 
     def get_one_model(self, tag=None):
         """
@@ -55,7 +56,7 @@ class GCMDatasetCollection(UserDict):
         # if a collection is given (because multiple datasets are available, and
         # the tag is not provided), avoid ambiguity by raising an error
         if isinstance(ds, GCMDatasetCollection) and len(ds) > 1 and tag is None:
-            raise RuntimeError('Ambiguous task. Please provide a tag.')
+            wrt.write_status('ERROR', 'Ambiguous task. Please provide a tag.')
 
     def _prepare_models(self):
         """

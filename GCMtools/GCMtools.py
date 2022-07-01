@@ -15,6 +15,7 @@ import numpy as np
 from GCMtools.GCMDatasetCollection import GCMDatasetCollection
 
 # import core functionalities
+import GCMtools.core.writer as wrt
 from GCMtools.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS, convert_time, convert_pressure
 from GCMtools.core.const import VARNAMES as c
 
@@ -42,7 +43,7 @@ class GCMT:
         Read in the previously reduced GCM
     """
 
-    def __init__(self, p_unit='bar', time_unit='day'):
+    def __init__(self, p_unit='bar', time_unit='day', write='on'):
         """
         Constructor for the GCMtools class.
 
@@ -57,6 +58,7 @@ class GCMT:
         # Initialize empty dictionary to store all GCM models
         self._models = GCMDatasetCollection()
 
+        # check units
         if p_unit not in ALLOWED_PUNITS:
             raise ValueError(f"Please use a pressure unit from {ALLOWED_PUNITS}")
         self.p_unit = p_unit
@@ -64,6 +66,18 @@ class GCMT:
         if time_unit not in ALLOWED_TIMEUNITS:
             raise ValueError(f"Please use a time unit from {ALLOWED_TIMEUNITS}")
         self.time_unit = time_unit
+
+        # initialize writing function (to file or to consol)
+        wrt.writer_setup(write)
+
+        # print welcome message and information
+        wrt.write_hline()
+        hello = 'Welcome to GCMtools'
+        wrt.write_message(hello, color='WARN', spacing=(wrt._writer.line_length - len(hello))//2)
+        wrt.write_hline()
+        wrt.write_status('STAT', 'Set up GCMtools')
+        wrt.write_status('INFO', 'pressure unites: ' + self.p_unit)
+        wrt.write_status('INFO', 'time unites: ' + self.time_unit)
 
     # =============================================================================================================
     #   Data handling

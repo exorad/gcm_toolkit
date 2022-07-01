@@ -3,6 +3,7 @@ import glob
 import xarray as xr
 import numpy as np
 
+import GCMtools.core.writer as wrt
 from GCMtools.utils.passport import is_the_data_basic
 from GCMtools.core.units import convert_time, convert_pressure
 from GCMtools.core.const import VARNAMES as c
@@ -33,6 +34,9 @@ def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None
 
     # call the required GCM read-in method
     if gcm == 'MITgcm':
+        wrt.write_status('STAT', 'Read in raw MITgcm data')
+        wrt.write_status('INFO', 'Tag: ' + tag)
+        wrt.write_status('INFO', 'File path: ' + data_path)
         from GCMtools.exorad import m_read_from_mitgcm
 
         if tag is not None and load_existing:
@@ -42,8 +46,7 @@ def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None
 
         ds = m_read_from_mitgcm(gcmt, data_path, iters, loaded_ds=loaded_ds, **kwargs)
     else:
-        raise ValueError('The selected GCM type "' + gcm +
-                         '" is not supported')
+        wrt.write_status('ERROR', 'The selected GCM type "' + gcm + '" is not supported')
 
     _add_attrs_and_store(gcmt, ds, tag)
 
@@ -63,6 +66,13 @@ def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa
     tag : str
         Tag to reference the simulation in the collection of models.
     """
+    # print information
+    wrt.write_status('STAT', 'Read in reduced data')
+    wrt.write_status('INFO', 'File path: ' + data_path)
+    wrt.write_status('INFO', 'Tag: ' + tag)
+    wrt.write_status('INFO', 'Time unit of data: ' + time_unit_in)
+    wrt.write_status('INFO', 'pressure unit of data: ' + p_unit_in)
+
     # read dataset using xarray functionalities
     ds = xr.open_dataset(data_path)
 
@@ -107,6 +117,17 @@ def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
     NoneType
         None
     """
+
+    # print information
+    wrt.write_status('STAT', 'Save current GCMs within GCMtools')
+    wrt.write_status('INFO', 'File path: ' + dir)
+    if tag == None:
+        wrt.write_message('INFO', 'Tag: All tags were stored')
+    else:
+        wrt.write_status('INFO', 'Tag: ' + tag)
+    wrt.write_status('INFO', 'method: ' + method)
+    wrt.write_status('INFO', 'Update old data?: ' + update_along_time)
+
     if method not in ['nc', 'zarr']:
         raise NotImplementedError("Please use zarr or nc.")
 
@@ -151,6 +172,15 @@ def m_load(gcmt, dir, method='nc', tag=None):
     tag: str, optional
         tag of the model that should be loaded. Will load all available models by default.
     """
+
+    # print information
+    wrt.write_status('STAT', 'Save current GCMs within GCMtools')
+    wrt.write_status('INFO', 'File path: ' + dir)
+    if tag == None:
+        wrt.write_message('INFO', 'Tag: All tags were stored')
+    else:
+        wrt.write_status('INFO', 'Tag: ' + tag)
+    wrt.write_status('INFO', 'method: ' + method)
 
     if method not in ['nc', 'zarr']:
         raise NotImplementedError("Please use zarr or nc.")

@@ -12,6 +12,7 @@
 import os
 import glob
 import xarray as xr
+import GCMtools.core.writer as wrt
 from GCMtools.core.units import convert_pressure, convert_time
 
 
@@ -54,8 +55,7 @@ def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds = Non
     elif iters == 'all':
         iters = find_iters_mitgcm(data_path, prefix)
 
-    print('[INFO] Preparing to read from MITgcm data directory:' + data_path)
-    print('       Iterations: ' + ", ".join([str(i) for i in iters]))
+    wrt.write_status('INFO', 'Iterations: ' + ", ".join([str(i) for i in iters]))
 
     if loaded_ds is not None:
         to_load = list(set(iters)-set(list(loaded_ds.iter.values)))

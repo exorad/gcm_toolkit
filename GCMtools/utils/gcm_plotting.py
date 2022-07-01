@@ -8,6 +8,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import GCMtools.core.writer as wrt
 from matplotlib.collections import LineCollection
 from GCMtools.core.const import VARNAMES as c
 
@@ -63,6 +64,13 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     contourf: bool, optional
         Decide if you want to do a contourplot or a pcolormesh plot
     """
+
+    # print information
+    wrt.write_status('STAT', 'Plot Isobaric slices')
+    wrt.write_status('INFO', 'Variable to be plotted: ' + var_key)
+    wrt.write_status('INFO', 'Pressure level: ' + str(p))
+
+
     if ax is None:
         fig= plt.figure()
         ax = plt.gca()
@@ -157,6 +165,10 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k', windstrea
     arrows : matplotlib.quiver.Quiver
         Quiver object that has been plotted.
     """
+
+    # print information
+    wrt.write_status('STAT', 'Plot horizontal winds')
+
     if ax is None:
         fig = plt.figure()
         ax = plt.gca()
@@ -261,6 +273,11 @@ def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorb
         the collection of plotted lines
 
     """
+
+    # print information
+    wrt.write_status('STAT', 'Plot horizontal winds')
+    wrt.write_status('INFO', 'Variable to be plotted: ' + var_key)
+
     p_unit = ds.attrs.get('p_unit')
     time_unit = ds.attrs.get('time_unit')
 
@@ -346,6 +363,11 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
         Decide if you want to do a contourplot or a pcolormesh plot
 
     """
+
+    # print information
+    wrt.write_status('STAT', 'Plot zonal mean')
+    wrt.write_status('INFO', 'Variable to be plotted: ' + var_key)
+
     if ax is None:
         fig = plt.figure()
         ax = plt.gca()
