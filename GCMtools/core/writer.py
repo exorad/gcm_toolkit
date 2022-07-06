@@ -2,7 +2,7 @@
 #                       Writer Subroutines
 # ==============================================================
 #  This file contains all functions to handle informative and
-#  diagnostic outbut during the run. If writer.on = False, no
+#  diagnostic output during the run. If writer.on = False, no
 #  output will be produced and GCMtools will run silently. If a
 #  file_name is given, it will save the output to this file.
 # ==============================================================
@@ -13,13 +13,13 @@ class _writer:
     """
     This class saves all properties of the writing routines. In
     particular it remembers if output should be given to files
-    or the consol, the colors of the print and the layout.
+    or the console, the colors of the print and the layout.
     """
 
     # Set whether output is muted or not
     on = False
 
-    # set wheter output is to consol (None) or to file
+    # set wheter output is to console (None) or to file
     file_name = None
 
     # color settings
@@ -47,7 +47,7 @@ class _writer:
 def writer_setup(typ):
     """
     Set-Up class for all writer function. Sets the correct
-    properties in the _writer class. Carefull: if called mid
+    properties in the _writer class. Careful: if called mid
     run, it overwrites the log file.
 
     Parameters
@@ -55,7 +55,7 @@ def writer_setup(typ):
     typ : str
         Type of output, can either be:
         'off': no output
-        'on': output to consol
+        'on': output to console
         str: file path to where log should be saved
     """
 
@@ -64,7 +64,7 @@ def writer_setup(typ):
         _writer.on = False
         _writer.file_name = None
 
-    # enable all outputs to consol
+    # enable all outputs to console
     elif typ == 'on':
         _writer.on = True
         _writer.file_name = None
@@ -198,7 +198,7 @@ def write_message(message, color=None, spacing=0):
 
 def write_hline(character='=', color=None):
     """
-    Write a single horizontal line
+    Write a single horizontal line.
 
     Parameters
     ----------
@@ -206,9 +206,9 @@ def write_hline(character='=', color=None):
         line character (If given a string, only the first
         character will be used.)
     color : str
-        Color of the message, only options availble are:
+        Color of the message, only options available are:
         'WARN', 'ERROR'
-        Otherwise, the default color will be used
+        Otherwise, the default color will be used.
     """
 
     # check if verbosity is whished
