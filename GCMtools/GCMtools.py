@@ -67,7 +67,7 @@ class GCMT:
             raise ValueError(f"Please use a time unit from {ALLOWED_TIMEUNITS}")
         self.time_unit = time_unit
 
-        # initialize writing function (to file or to consol)
+        # initialize writing function (to file or to console)
         wrt.writer_setup(write)
 
         # print welcome message and information
@@ -76,8 +76,8 @@ class GCMT:
         wrt.write_message(hello, color='WARN', spacing=(wrt._writer.line_length - len(hello))//2)
         wrt.write_hline()
         wrt.write_status('STAT', 'Set up GCMtools')
-        wrt.write_status('INFO', 'pressure unites: ' + self.p_unit)
-        wrt.write_status('INFO', 'time unites: ' + self.time_unit)
+        wrt.write_status('INFO', 'pressure units: ' + self.p_unit)
+        wrt.write_status('INFO', 'time units: ' + self.time_unit)
 
     # =============================================================================================================
     #   Data handling
@@ -106,7 +106,7 @@ class GCMT:
     def add_horizontal_average(self, var_key, var_key_out=None, area_key='area_c', tag=None):
         """
         Calculate horizontal averaged quantities. Horizontal averages
-        are calculated as:
+        are calculated as area-weighted quantities q, so that:
 
             \bar q = \int{q dA}/\int{dA}
 
@@ -114,21 +114,41 @@ class GCMT:
         ----------
         var_key: str
             The key of the variable quantity that should be plotted.
-        tag : str, optional
-            The tag of the dataset that should be used. If no tag is provided,
-            and multiple datasets are available, an error is raised.
         var_key_out: str, optional
             variable name used to store the outcome. If not provided, this script will just
             return the averages and not change the dataset inplace.
         area_key: str, optional
             Variable key in the dataset for the area of grid cells
+        tag : str, optional
+            The tag of the dataset that should be used. If no tag is provided,
+            and multiple datasets are available, an error is raised.
 
         Returns
         -------
         TODO
         """
-        return mani.m_add_horizontal_average(self, var_key, var_key_out=None, area_key='area_c', tag=None)
+        return mani.m_add_horizontal_average(self, var_key, var_key_out=var_key_out, area_key=area_key, tag=tag)
 
+    def add_meridional_overturning(self, v_data='V', var_key_out=None, tag=None):
+        """
+        Calculate meridional overturning streamfunction.
+
+        See e.g. Carone et al. (2017), Eq. 7
+
+        Parameters
+        ----------
+        var_key: str
+            The key of the meridional velocity that should be used to calculate the outcome
+        tag : str, optional
+            The tag of the dataset that should be used. If no tag is provided,
+            and multiple datasets are available, an error is raised.
+        var_key_out: str, optional
+            variable name used to store the outcome. If not provided, this script will just
+            return the overturning circulation and not change the dataset inplace.
+        """
+        ds = self._get_one_model(tag)
+        return mani.m_add_meridional_overturning(ds, v_data=v_data, var_key_out=var_key_out, tag=tag)
+    
     # =============================================================================================================
     #   Reading and writing functions
     # =============================================================================================================
@@ -173,7 +193,7 @@ class GCMT:
         tag : str
             Tag to reference the simulation in the collection of models.
         """
-        return raw.m_read_reduced(self, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa')
+        return raw.m_read_reduced(self, data_path, tag=tag, time_unit_in=time_unit_in, p_unit_in=p_unit_in)
 
     def save(self, dir, method='nc', update_along_time=False, tag=None):
         """
@@ -212,10 +232,10 @@ class GCMT:
         tag: str, optional
             tag of the model that should be loaded. Will load all available models by default.
         """
-        return raw.m_load(self, dir, method='nc', tag=None)
+        return raw.m_load(self, dir, method=method, tag=tag)
 
     # =============================================================================================================
-    #   Plotting functions
+    #   Plotting Functions
     # =============================================================================================================
 
     def isobaric_slice(self, var_key, p, tag=None, **kwargs):
