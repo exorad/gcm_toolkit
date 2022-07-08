@@ -310,7 +310,7 @@ def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorb
 
 
 def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
-               fs_labels=None, xlabel='Longitude (deg)', ylabel='Z', add_ylabel_unit=True,
+               fs_labels=None, xlabel='Latitude (deg)', ylabel='Z', add_ylabel_unit=True,
                title=None, add_colorbar=True, contourf=False,
                **kwargs):
     """
