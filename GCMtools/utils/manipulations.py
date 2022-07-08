@@ -33,7 +33,7 @@ def m_add_horizontal_average(gcmt, var_key, var_key_out=None, area_key='area_c',
     wrt.write_status('INFO', 'Output variable: ' + var_key_out)
     wrt.write_status('INFO', 'Area of grid cells: ' + area_key)
 
-    ds = self._get_one_model(tag)
+    ds = gcmt._get_one_model(tag)
     avg = (ds[area_key]*ds[var_key]).sum(dim=[c['lon'],c['lat']])/ds[area_key].sum(dim=[c['lon'],c['lat']])
 
     if var_key_out is not None:

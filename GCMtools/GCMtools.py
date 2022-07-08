@@ -98,7 +98,7 @@ class GCMT:
         selected_models : GCMDatasetCollection or xarray Dataset
             All models in self._models, or only the one with the right tag.
         """
-        return self._models.get_models()
+        return self._models.get_models(tag)
 
     # =============================================================================================================
     #   Data manipulation
