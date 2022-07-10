@@ -1,6 +1,7 @@
 import GCMtools.core.writer as wrt
 from collections import UserDict
 
+
 class GCMDatasetCollection(UserDict):
     """
     This class represents a collection of 3D GCM Datasets.
@@ -10,7 +11,6 @@ class GCMDatasetCollection(UserDict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
     def get_models(self, tag=None):
         """

@@ -16,8 +16,7 @@ from GCMtools.GCMDatasetCollection import GCMDatasetCollection
 
 # import core functionalities
 import GCMtools.core.writer as wrt
-from GCMtools.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS, convert_time, convert_pressure
-from GCMtools.core.const import VARNAMES as c
+from GCMtools.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
 
 # import utility functions
 import GCMtools.utils.read_and_write as raw
@@ -83,6 +82,23 @@ class GCMT:
     #   Data handling
     # =============================================================================================================
 
+    @property
+    def models(self):
+        """
+        Shortcut to return all GCMs in memory.
+
+        Parameters
+        ----------
+        tag : str
+            Name of the model that should be returned.
+
+        Returns
+        -------
+        selected_models : GCMDatasetCollection or xarray Dataset
+            All models in self._models, or only the one with the right tag.
+        """
+        return self._models.get_models()
+
     def get_models(self, tag=None):
         """
         Function return all GCMs in memory. If a tag is given, only return this
@@ -146,7 +162,7 @@ class GCMT:
             variable name used to store the outcome. If not provided, this script will just
             return the overturning circulation and not change the dataset inplace.
         """
-        ds = self._get_one_model(tag)
+        ds = self._models.get_one_model(tag)
         return mani.m_add_meridional_overturning(ds, v_data=v_data, var_key_out=var_key_out, tag=tag)
     
     # =============================================================================================================
@@ -217,7 +233,7 @@ class GCMT:
         NoneType
             None
         """
-        return raw.m_save(self, dir, method='nc', update_along_time=False, tag=None)
+        return raw.m_save(self, dir, method=method, update_along_time=update_along_time, tag=tag)
 
     def load(self, dir, method='nc', tag=None):
         """
