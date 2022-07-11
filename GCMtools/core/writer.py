@@ -7,7 +7,7 @@
 #  file_name is given, it will save the output to this file.
 # ==============================================================
 
-class _writer:
+class Writer:
     """
     This class saves all properties of the writing routines. In
     particular it remembers if output should be given to files
@@ -58,22 +58,23 @@ def writer_setup(typ):
         str: file path to where log should be saved
     """
 
-    # mute all outputs
     if typ == 'off':
-        _writer.on = False
-        _writer.file_name = None
-
-    # enable all outputs to console
+        # mute all outputs
+        Writer.on = False
+        Writer.file_name = None
     elif typ == 'on':
-        _writer.on = True
-        _writer.file_name = None
-
-    # enable all outputs to file
-    else:
-        _writer.on = True
-        _writer.file_name = typ
+        # enable all outputs to console
+        Writer.on = True
+        Writer.file_name = None
+    elif isinstance(typ, str):
+        # enable all outputs to file
+        Writer.on = True
+        Writer.file_name = typ
         f = open(typ, 'w')
         f.close()
+    else:
+        Writer.on = False
+        Writer.file_name = None
 
 
 def write_status(tag, message):
@@ -92,48 +93,48 @@ def write_status(tag, message):
     """
 
     # check if verbosity is whished
-    if not _writer.on:
+    if not Writer.on:
         return
 
     # define colors and layout according to tags
-    color = _writer.DEFAULT
+    color = Writer.DEFAULT
     space = ""
     if tag == 'STAT':
-        color = _writer.DEFAULT
+        color = Writer.DEFAULT
     if tag == 'INFO':
-        color = _writer.DEFAULT
-        space = _writer.spacer
+        color = Writer.DEFAULT
+        space = Writer.spacer
     if tag == 'E-INFO':
-        color = _writer.ERROR
+        color = Writer.ERROR
     if tag == 'WARN':
-        color = _writer.WARN
+        color = Writer.WARN
     if tag == 'ERROR':
-        color = _writer.ERROR
+        color = Writer.ERROR
 
     # add line breaks after _writer.line_length characters
     line = space + "[" + tag + "] " + message
     tag_length = ' ' * (len(space + "[" + tag + "] "))
     liner = ""
     no_loop = True
-    while len(line) > _writer.line_length:
+    while len(line) > Writer.line_length:
         no_loop = False
-        for i in range(_writer.line_maxoff):
-            if line[_writer.line_length - i] == " ":
-                liner += line[:_writer.line_length - i + 1] + "\n"
-                line = tag_length + line[_writer.line_length - i + 1:]
+        for i in range(Writer.line_maxoff):
+            if line[Writer.line_length - i] == " ":
+                liner += line[:Writer.line_length - i + 1] + "\n"
+                line = tag_length + line[Writer.line_length - i + 1:]
                 break
         else:
-            liner += line[:_writer.line_length + 1] + "\n"
-            line = tag_length + line[_writer.line_length + 1:]
+            liner += line[:Writer.line_length + 1] + "\n"
+            line = tag_length + line[Writer.line_length + 1:]
     liner += line
 
     # write message to terminal
-    if _writer.file_name == None:
-        print(color + liner + _writer.ENDC)
+    if Writer.file_name is None:
+        print(color + liner + Writer.ENDC)
 
     # write message to file
     else:
-        f = open(_writer.file_name, 'a')
+        f = open(Writer.file_name, 'a')
         f.write(liner + "\n")
         f.close()
 
@@ -160,40 +161,40 @@ def write_message(message, color=None, spacing=0):
     """
 
     # check if verbosity is whished
-    if not _writer.on:
+    if not Writer.on:
         return
 
     # set color scheme
-    col = _writer.DEFAULT
+    col = Writer.DEFAULT
     if color == 'WARN':
-        col = _writer.WARN
+        col = Writer.WARN
     elif color == 'ERROR':
-        col = _writer.ERROR
+        col = Writer.ERROR
 
     # add line breaks after _writer.line_length characters
     tag_length = ' ' * spacing
     line = tag_length + message
     liner = ""
     no_loop = True
-    while len(line) > _writer.line_length:
+    while len(line) > Writer.line_length:
         no_loop = False
-        for i in range(_writer.line_maxoff):
-            if line[_writer.line_length - i] == " ":
-                liner += line[:_writer.line_length - i + 1] + "\n"
-                line = tag_length + line[_writer.line_length - i + 1:]
+        for i in range(Writer.line_maxoff):
+            if line[Writer.line_length - i] == " ":
+                liner += line[:Writer.line_length - i + 1] + "\n"
+                line = tag_length + line[Writer.line_length - i + 1:]
                 break
         else:
-            liner += line[:_writer.line_length + 1] + "\n"
-            line = tag_length + line[_writer.line_length + 1:]
+            liner += line[:Writer.line_length + 1] + "\n"
+            line = tag_length + line[Writer.line_length + 1:]
     liner += line
 
     # write message to terminal
-    if _writer.file_name == None:
-        print(col + liner + _writer.ENDC)
+    if Writer.file_name is None:
+        print(col + liner + Writer.ENDC)
 
     # write message to file
     else:
-        f = open(_writer.file_name, 'a')
+        f = open(Writer.file_name, 'a')
         f.write(liner + "\n")
         f.close()
 
@@ -214,25 +215,25 @@ def write_hline(character='=', color=None):
     """
 
     # check if verbosity is whished
-    if not _writer.on:
+    if not Writer.on:
         return
 
     # set color scheme
-    col = _writer.DEFAULT
+    col = Writer.DEFAULT
     if color == 'WARN':
-        col = _writer.WARN
+        col = Writer.WARN
     elif color == 'ERROR':
-        col = _writer.ERROR
+        col = Writer.ERROR
 
     # define output
-    liner = character[0] * _writer.line_length
+    liner = character[0] * Writer.line_length
 
     # write message to terminal
-    if _writer.file_name == None:
-        print(col + liner + _writer.ENDC)
+    if Writer.file_name is None:
+        print(col + liner + Writer.ENDC)
 
     # write message to file
     else:
-        f = open(_writer.file_name, 'a')
+        f = open(Writer.file_name, 'a')
         f.write(liner + "\n")
         f.close()

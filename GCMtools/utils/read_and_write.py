@@ -42,7 +42,7 @@ def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None
         from GCMtools.exorad import m_read_from_mitgcm
 
         if tag is not None and load_existing:
-            loaded_ds = gcmt._models.get(tag)
+            loaded_ds = gcmt.get_models(tag)
         else:
             loaded_ds = None
 
@@ -88,8 +88,9 @@ def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa
 def _add_attrs_and_store(gcmt, ds, tag):
     # if no tag is given, models are just numbered as they get added
     if tag is None:
-        print('[WARN] -- No tag provided. This model is stored with tag: ' + str(len(gcmt._models)))
-        tag = str(len(gcmt._models))
+        tag = str(len(gcmt.get_models(always_dict=True)))
+        print('[WARN] -- No tag provided. This model is stored with tag: ' + tag)
+
     # store tag in the dataset attributes
     ds.attrs['tag'] = tag
     # check if the dataset has all necessary GCMtools attributes
@@ -97,7 +98,7 @@ def _add_attrs_and_store(gcmt, ds, tag):
         raise ValueError('This dataset is not supported by GCMtools\n')
 
     # store dataset
-    gcmt._models[tag] = ds
+    gcmt.replace_model(ds, tag)
 
 
 def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
@@ -126,17 +127,17 @@ def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
     # print information
     wrt.write_status('STAT', 'Save current GCMs within GCMtools')
     wrt.write_status('INFO', 'File path: ' + dir)
-    if tag == None:
+    if tag is None:
         wrt.write_message('INFO', 'Tag: All tags were stored')
     else:
         wrt.write_status('INFO', 'Tag: ' + tag)
     wrt.write_status('INFO', 'method: ' + method)
-    wrt.write_status('INFO', 'Update old data?: ' + update_along_time)
+    wrt.write_status('INFO', 'Update old data?: ' + str(update_along_time))
 
     if method not in ['nc', 'zarr']:
         raise NotImplementedError("Please use zarr or nc.")
 
-    for key, model in gcmt._models.items():
+    for key, model in gcmt.get_models(always_dict=True).items():
         if tag is not None and tag != key:
             continue
 
@@ -180,9 +181,9 @@ def m_load(gcmt, dir, method='nc', tag=None):
     """
 
     # print information
-    wrt.write_status('STAT', 'Save current GCMs within GCMtools')
+    wrt.write_status('STAT', 'Load saved GCMs to GCMtools')
     wrt.write_status('INFO', 'File path: ' + dir)
-    if tag == None:
+    if tag is None:
         wrt.write_message('INFO', 'Tag: All tags were stored')
     else:
         wrt.write_status('INFO', 'Tag: ' + tag)
@@ -210,4 +211,4 @@ def m_load(gcmt, dir, method='nc', tag=None):
         ds = convert_time(ds, current_unit=ds.attrs.get('time_unit'), goal_unit=gcmt.time_unit)
         ds = convert_pressure(ds, current_unit=ds.attrs.get('p_unit'), goal_unit=gcmt.p_unit)
 
-        gcmt._models[tag] = ds
+        gcmt.replace_model(ds, tag)

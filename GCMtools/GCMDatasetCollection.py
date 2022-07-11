@@ -13,7 +13,7 @@ class GCMDatasetCollection(UserDict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def get_models(self, tag=None):
+    def get_models(self, tag=None, always_dict=False):
         """
         Function return all GCMs in memory. If a tag is given, only return this
         one.
@@ -22,21 +22,27 @@ class GCMDatasetCollection(UserDict):
         ----------
         tag : str
             Name of the model that should be returned.
+        always_dict: bool
+            Force result to be a dictionary
 
         Returns
         -------
         selected_models : GCMDatasetCollection or xarray Dataset
             All models in self._models, or only the one with the right tag.
+            Will definetly be GCMDatasetCollection if always_dict=True
         """
+        if isinstance(tag, str):
+            return self[tag]
+
         # If no tag is given, return all models
         if tag is None:
-            return self._prepare_models()
-        # If the tag is valid, return the corresponding model
-        elif isinstance(tag, str):
-            return self[tag]
+            if len(self) > 1 or always_dict:
+                return self
+            else:
+                return list(self.values())[0]
+
         # If the tag is not a string, raise an error
-        else:
-            wrt.write_status('ERROR', 'The given tag is not a string.')
+        wrt.write_status('ERROR', 'The given tag is not a string.')
 
     def get_one_model(self, tag=None):
         """
@@ -59,11 +65,4 @@ class GCMDatasetCollection(UserDict):
         if isinstance(ds, GCMDatasetCollection) and len(ds) > 1 and tag is None:
             wrt.write_status('ERROR', 'Ambiguous task. Please provide a tag.')
 
-    def _prepare_models(self):
-        """
-        returns dataset if only one model is loaded, otherwise collection of datasets.
-        """
-        if len(self) > 1:
-            return self
-        else:
-            return list(self.values())[0]
+        return ds

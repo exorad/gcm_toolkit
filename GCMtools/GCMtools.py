@@ -43,6 +43,8 @@ class GCMT:
             Set the unit that is used internally for pressure related things
         time_unit: str, optional
             Set the unit that is used internally for time related things
+        write: str, optional
+            Set the level of logging information. Check core.writer for more infos
         """
 
         # Initialize empty dictionary to store all GCM models
@@ -63,7 +65,7 @@ class GCMT:
         # print welcome message and information
         wrt.write_hline()
         hello = 'Welcome to GCMtools'
-        wrt.write_message(hello, color='WARN', spacing=(wrt._writer.line_length - len(hello)) // 2)
+        wrt.write_message(hello, color='WARN', spacing=(wrt.Writer.line_length - len(hello)) // 2)
         wrt.write_hline()
         wrt.write_status('STAT', 'Set up GCMtools')
         wrt.write_status('INFO', 'pressure units: ' + self.p_unit)
@@ -85,7 +87,22 @@ class GCMT:
         """
         return self._models.get_models()
 
-    def get_models(self, tag=None):
+    def get_one_model(self, tag=None):
+        """
+        Like get_models, but raises an error, if more than one model is selected.
+
+        Parameters
+        ----------
+        tag: str, optional
+            Name of the model that should be returned
+        Returns
+        -------
+        ds: xarray Dataset
+            Selected model
+        """
+        return self._models.get_one_model(tag)
+
+    def get_models(self, tag=None, always_dict=False):
         """
         Function return all GCMs in memory. If a tag is given, only return this
         one.
@@ -94,13 +111,29 @@ class GCMT:
         ----------
         tag : str
             Name of the model that should be returned.
+        always_dict: bool
+            Force result to be a dictionary
 
         Returns
         -------
         selected_models : GCMDatasetCollection or xarray Dataset
             All models in self._models, or only the one with the right tag.
+            Will definetly be GCMDatasetCollection if always_dict=True
         """
-        return self._models.get_models(tag)
+        return self._models.get_models(tag, always_dict)
+
+    def replace_model(self, ds, tag):
+        """
+        Function that adds or replaces a dataset
+
+        Parameters
+        ----------
+        ds: xarray Dataset
+           Dataset to add
+        tag: str
+           Tag at which the model should be stored
+        """
+        self._models[tag] = ds
 
     # =============================================================================================================
     #   Data manipulation
@@ -148,7 +181,7 @@ class GCMT:
             variable name used to store the outcome. If not provided, this script will just
             return the overturning circulation and not change the dataset inplace.
         """
-        ds = self._models.get_one_model(tag)
+        ds = self.get_one_model(tag)
         return mani.m_add_meridional_overturning(ds, v_data=v_data, var_key_out=var_key_out, tag=tag)
 
     # =============================================================================================================
@@ -258,7 +291,7 @@ class GCMT:
             and multiple datasets are available, an error is raised.
         """
         # select the appropriate dataset
-        ds = self._models.get_one_model(tag)
+        ds = self.get_one_model(tag)
         return gcmplt.isobaric_slice(ds, var_key, p, **kwargs)
 
     def time_evol(self, var_key, tag=None, **kwargs):
@@ -277,7 +310,7 @@ class GCMT:
             The tag of the dataset that should be plotted. If no tag is provided
             and multiple datasets are available, an error is raised.
         """
-        ds = self._models.get_one_model(tag)
+        ds = self.get_one_model(tag)
         return gcmplt.time_evol(ds, var_key, **kwargs)
 
     def zonal_mean(self, var_key, tag=None, **kwargs):
@@ -295,5 +328,5 @@ class GCMT:
             and multiple datasets are available, an error is raised.
         """
         # select the appropriate dataset
-        ds = self._models.get_one_model(tag)
+        ds = self.get_one_model(tag)
         return gcmplt.zonal_mean(ds, var_key, **kwargs)
