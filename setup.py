@@ -21,5 +21,6 @@ setup(
         "numpy",
         "f90nml",
         "astropy",
+        "xarray"
     ]
 )

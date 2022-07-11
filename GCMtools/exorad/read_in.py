@@ -9,13 +9,16 @@
 #  xESMF and xgcm.
 # ==============================================================
 
-import os
 import glob
+import os
+
 import xarray as xr
-from GCMtools.units import convert_pressure, convert_time
+
+import GCMtools.core.writer as wrt
+from GCMtools.core.units import convert_pressure, convert_time
 
 
-def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds = None, **kwargs):
+def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds=None, **kwargs):
     """
     Data read in for MITgcm output.
 
@@ -45,7 +48,7 @@ def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds = Non
     from .utils import exorad_postprocessing
 
     # determine the prefixes that should be loaded
-    prefix = kwargs.pop('prefix', ["T","U","V","W"])
+    prefix = kwargs.pop('prefix', ["T", "U", "V", "W"])
 
     # determine the final iteration if needed
     if iters == 'last':
@@ -54,16 +57,14 @@ def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds = Non
     elif iters == 'all':
         iters = find_iters_mitgcm(data_path, prefix)
 
-    print('[INFO] Preparing to read from MITgcm data directory:' + data_path)
-    print('       Iterations: ' + ", ".join([str(i) for i in iters]))
+    wrt.write_status('INFO', 'Iterations: ' + ", ".join([str(i) for i in iters]))
 
     if loaded_ds is not None:
-        to_load = list(set(iters)-set(list(loaded_ds.iter.values)))
+        to_load = list(set(iters) - set(list(loaded_ds.iter.values)))
         if len(to_load) == 0:
             return loaded_ds
     else:
         to_load = iters
-
 
     # Currently, the read-in method is built using the wrapper functionality of
     # the cubedsphere package (Aaron Schneider)
@@ -103,7 +104,7 @@ def find_iters_mitgcm(data_path, prefixes):
     """
     iters_list = []
     for prefix in prefixes:
-        files = glob.glob(os.path.join(data_path,"{}.*.data".format(prefix)))
+        files = glob.glob(os.path.join(data_path, "{}.*.data".format(prefix)))
 
         iters = [int(f.split('.')[-2]) for f in files]
         iters_list.append(iters)

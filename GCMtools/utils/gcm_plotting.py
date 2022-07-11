@@ -6,16 +6,19 @@
 #  plotting routines for the most common GCM data visualizations.
 # ==============================================================
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.collections import LineCollection
-from .const import VARNAMES as c
+
+import GCMtools.core.writer as wrt
+from GCMtools.core.const import VARNAMES as c
+
 
 def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
                    plot_windvectors=True, wind_kwargs=None, cbar_kwargs=None,
-                   add_colorbar = True, fs_labels=None, fs_ticks=None, title=None,
+                   add_colorbar=True, fs_labels=None, fs_ticks=None, title=None,
                    xlabel='Longitude (deg)', ylabel='Latitude (deg)',
-                   contourf = False,
+                   contourf=False,
                    **kwargs):
     """
     Plot an isobaric slice of the dataset and quantity at the given pressure
@@ -63,8 +66,14 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     contourf: bool, optional
         Decide if you want to do a contourplot or a pcolormesh plot
     """
+
+    # print information
+    wrt.write_status('STAT', 'Plot Isobaric slices')
+    wrt.write_status('INFO', 'Variable to be plotted: ' + var_key)
+    wrt.write_status('INFO', 'Pressure level: ' + str(p))
+
     if ax is None:
-        fig= plt.figure()
+        fig = plt.figure()
         ax = plt.gca()
     if wind_kwargs is None:
         wind_kwargs = {}
@@ -114,12 +123,12 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     # set other plot qualities
     if not hasattr(ax, "projection"):
         ax.set_aspect('equal')
-        xt=np.arange(-180, 181, 45)
-        yt=np.arange(-90, 91, 45)
+        xt = np.arange(-180, 181, 45)
+        yt = np.arange(-90, 91, 45)
         ax.set_xticks(xt)
         ax.set_yticks(yt)
-        ax.set_xticklabels([str(n)+r'$^\circ$' for n in xt], fontsize=fs_ticks)
-        ax.set_yticklabels([str(n) + r'$^\circ$' for n in yt], fontsize = fs_ticks)
+        ax.set_xticklabels([str(n) + r'$^\circ$' for n in xt], fontsize=fs_ticks)
+        ax.set_yticklabels([str(n) + r'$^\circ$' for n in yt], fontsize=fs_ticks)
 
     ax.set_xlabel(xlabel, fontsize=fs_labels)
     ax.set_ylabel(ylabel, fontsize=fs_labels)
@@ -157,6 +166,10 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k', windstrea
     arrows : matplotlib.quiver.Quiver
         Quiver object that has been plotted.
     """
+
+    # print information
+    wrt.write_status('STAT', 'Plot horizontal winds')
+
     if ax is None:
         fig = plt.figure()
         ax = plt.gca()
@@ -182,8 +195,8 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k', windstrea
         lw = (speed / speed.max()) ** 0.5
 
         arrows = ax.streamplot(ds[c['U']].coords[c['lon']], ds[c['U']].coords[c['lat']], U, V, linewidth=lw,
-                       color=arrowColor,
-                       density=sample_one_in, **kwargs)
+                               color=arrowColor,
+                               density=sample_one_in, **kwargs)
 
     return arrows
 
@@ -226,7 +239,8 @@ def _multiline(xs, ys, c, ax=None, **kwargs):
     return lc
 
 
-def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorbar=True, title=None, xlabel=None, ylabel='Z', add_ylabel_unit=True, **kwargs):
+def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorbar=True, title=None, xlabel=None,
+              ylabel='Z', add_ylabel_unit=True, **kwargs):
     """
     Function that plots the time evolution of a quantity in a 1D line collection plot, where the colorscale can be related to the time evolution.
     Note: var_key needs to contain data that is 2D in time and pressure.
@@ -261,6 +275,11 @@ def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorb
         the collection of plotted lines
 
     """
+
+    # print information
+    wrt.write_status('STAT', 'Plot horizontal winds')
+    wrt.write_status('INFO', 'Variable to be plotted: ' + var_key)
+
     p_unit = ds.attrs.get('p_unit')
     time_unit = ds.attrs.get('time_unit')
 
@@ -277,7 +296,7 @@ def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorb
 
     xs, ys = [], []
     for t in ds.time:
-        x = ds[var_key].sel(**{c['time']:t})
+        x = ds[var_key].sel(**{c['time']: t})
         y = ds[x.dims[0]]
         xs.append(x)
         ys.append(y)
@@ -309,7 +328,7 @@ def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorb
     return l
 
 
-def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
+def zonal_mean(ds, var_key, time=-1, ax=None, cbar_kwargs=None,
                fs_labels=None, xlabel='Latitude (deg)', ylabel='Z', add_ylabel_unit=True,
                title=None, add_colorbar=True, contourf=False,
                **kwargs):
@@ -346,6 +365,11 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
         Decide if you want to do a contourplot or a pcolormesh plot
 
     """
+
+    # print information
+    wrt.write_status('STAT', 'Plot zonal mean')
+    wrt.write_status('INFO', 'Variable to be plotted: ' + var_key)
+
     if ax is None:
         fig = plt.figure()
         ax = plt.gca()
@@ -358,11 +382,11 @@ def zonal_mean(ds, var_key, time=-1, ax=None,cbar_kwargs=None,
 
     # if no timestamp is given, pick the last available time
     if time == -1:
-        time = ds[c['time']].isel(**{c['time']:-1}).values
+        time = ds[c['time']].isel(**{c['time']: -1}).values
     # time-slice of the dataset
     # (note: the look-up method for time is always assumed to be exact)
     this_time = time
-    zmean = ds[var_key].sel(**{c['time']:time}).mean(dim=c['lon'])
+    zmean = ds[var_key].sel(**{c['time']: time}).mean(dim=c['lon'])
 
     # Simple plot (with xarray.plot.pcolormesh)
     if contourf:
