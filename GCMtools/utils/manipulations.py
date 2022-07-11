@@ -1,5 +1,6 @@
 import numpy as np
 
+import GCMtools.core.writer as wrt
 from GCMtools.core.const import VARNAMES as c
 
 
