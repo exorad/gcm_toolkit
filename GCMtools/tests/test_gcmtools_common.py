@@ -2,7 +2,6 @@ import pytest
 import os
 import fnmatch
 import tarfile
-import numpy as np
 from contextlib import contextmanager
 import py
 import tempfile

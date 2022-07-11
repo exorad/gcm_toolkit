@@ -3,18 +3,10 @@ channels:
   - conda-forge
 dependencies:
   - python=3.8
-  - numpy==1.21
   - cubedsphere
-  - xarray
   - pytest
-  - future
-  - zarr
-  - cftime
-  - aiohttp
-  - pytest-cov
   - codecov
-  - fsspec
-  - cachetools
+  - pytest-cov
   - pip
   - pip:
       - git+https://github.com/MITgcm/xmitgcm.git
