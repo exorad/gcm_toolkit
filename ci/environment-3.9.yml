@@ -15,3 +15,7 @@ dependencies:
   - codecov
   - fsspec
   - cachetools
+  - pip
+  - pip:
+      - git+https://github.com/MITgcm/xmitgcm.git
+      - git+https://github.com/pydata/xarray.git
