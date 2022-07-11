@@ -6,22 +6,13 @@
 #  environment for new users of GCMs while allowing direct
 #  access to the data for more experienced users.
 # ==============================================================
-import os.path
-import glob
-import xarray as xr
-import numpy as np
 
-# import GCMDatasetCollection class
-from GCMtools.GCMDatasetCollection import GCMDatasetCollection
-
-# import core functionalities
 import GCMtools.core.writer as wrt
-from GCMtools.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
-
-# import utility functions
-import GCMtools.utils.read_and_write as raw
 import GCMtools.utils.gcm_plotting as gcmplt
 import GCMtools.utils.manipulations as mani
+import GCMtools.utils.read_and_write as raw
+from GCMtools.GCMDatasetCollection import GCMDatasetCollection
+from GCMtools.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
 
 
 class GCMT:
@@ -72,7 +63,7 @@ class GCMT:
         # print welcome message and information
         wrt.write_hline()
         hello = 'Welcome to GCMtools'
-        wrt.write_message(hello, color='WARN', spacing=(wrt._writer.line_length - len(hello))//2)
+        wrt.write_message(hello, color='WARN', spacing=(wrt._writer.line_length - len(hello)) // 2)
         wrt.write_hline()
         wrt.write_status('STAT', 'Set up GCMtools')
         wrt.write_status('INFO', 'pressure units: ' + self.p_unit)
@@ -87,15 +78,10 @@ class GCMT:
         """
         Shortcut to return all GCMs in memory.
 
-        Parameters
-        ----------
-        tag : str
-            Name of the model that should be returned.
-
         Returns
         -------
         selected_models : GCMDatasetCollection or xarray Dataset
-            All models in self._models, or only the one with the right tag.
+            All models in self._models
         """
         return self._models.get_models()
 
@@ -164,7 +150,7 @@ class GCMT:
         """
         ds = self._models.get_one_model(tag)
         return mani.m_add_meridional_overturning(ds, v_data=v_data, var_key_out=var_key_out, tag=tag)
-    
+
     # =============================================================================================================
     #   Reading and writing functions
     # =============================================================================================================

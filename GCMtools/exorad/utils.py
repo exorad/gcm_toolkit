@@ -1,12 +1,12 @@
-import numpy as np
 import os
-from f90nml import Parser
-import xarray as xr
-import xgcm
-from xgcm.autogenerate import generate_grid_ds
 
 import cubedsphere as cs
 import cubedsphere.const as c
+import numpy as np
+import xarray as xr
+import xgcm
+from f90nml import Parser
+from xgcm.autogenerate import generate_grid_ds
 
 
 class MITgcmDataParser(Parser):
@@ -123,8 +123,8 @@ def exorad_postprocessing(ds, outdir=None, datafile=None):
         datafile = f'{outdir}/data'
 
     # Add metadata
-    radius = float(get_parameter(datafile, 'rSphere', 6370e3)) # planet radius in m
-    P_rot = float(get_parameter(datafile, 'rotationperiod', 8.6164e4)) # planet rotationperiod in m
+    radius = float(get_parameter(datafile, 'rSphere', 6370e3))  # planet radius in m
+    P_rot = float(get_parameter(datafile, 'rotationperiod', 8.6164e4))  # planet rotationperiod in m
     attrs = {"p_ref": float(get_parameter(datafile, 'Ro_SeaLevel', 1.0e5)),  # bottom layer pressure in pascal
              "cp": float(get_parameter(datafile, 'atm_Cp', 1.004e3)),  # heat capacity at constant pressure
              "R": float(get_parameter(datafile, 'atm_Rd', 2.868571E2)),  # specific gas constant
@@ -145,7 +145,7 @@ def exorad_postprocessing(ds, outdir=None, datafile=None):
 
     # Add metrics to dataset
     if c.FACEDIM not in ds.dims:
-        ds = add_distances(ds, radius = radius)
+        ds = add_distances(ds, radius=radius)
 
     return ds
 
@@ -163,6 +163,7 @@ def add_distances(ds, radius):
     ds  : xarray.DataArray distance inferred from dlon
     dy  : xarray.DataArray distance inferred from dlat
     """
+
     def dll_dist(dlon, dlat, lon, lat, radius):
         """Converts lat/lon differentials into distances in meters
 
@@ -179,7 +180,7 @@ def add_distances(ds, radius):
         dx  : xarray.DataArray distance inferred from dlon
         dy  : xarray.DataArray distance inferred from dlat
         """
-        distance_1deg_equator = 2.0*np.pi*radius*1.0/360.0
+        distance_1deg_equator = 2.0 * np.pi * radius * 1.0 / 360.0
         dx = dlon * xr.ufuncs.cos(xr.ufuncs.deg2rad(lat)) * distance_1deg_equator
         dy = ((lon * 0) + 1) * dlat * distance_1deg_equator
         return dx, dy

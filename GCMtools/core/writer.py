@@ -7,8 +7,6 @@
 #  file_name is given, it will save the output to this file.
 # ==============================================================
 
-import os, tempfile
-
 class _writer:
     """
     This class saves all properties of the writing routines. In
@@ -44,6 +42,7 @@ class _writer:
     # spacing for 1 unite of indent
     spacer = "   "
 
+
 def writer_setup(typ):
     """
     Set-Up class for all writer function. Sets the correct
@@ -75,6 +74,7 @@ def writer_setup(typ):
         _writer.file_name = typ
         f = open(typ, 'w')
         f.close()
+
 
 def write_status(tag, message):
     """
@@ -140,6 +140,7 @@ def write_status(tag, message):
     if tag == 'ERROR':
         raise ValueError(liner)
 
+
 def write_message(message, color=None, spacing=0):
     """
     Write a status output that is auto layouted according to
@@ -195,6 +196,7 @@ def write_message(message, color=None, spacing=0):
         f = open(_writer.file_name, 'a')
         f.write(liner + "\n")
         f.close()
+
 
 def write_hline(character='=', color=None):
     """

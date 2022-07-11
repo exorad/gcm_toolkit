@@ -1,6 +1,7 @@
-import numpy as np
-from .const import VARNAMES as c
 import astropy.units as u
+import numpy as np
+
+from .const import VARNAMES as c
 
 ALLOWED_PUNITS = ['bar', 'Pa']
 ALLOWED_TIMEUNITS = ['day', 'iter']
@@ -32,7 +33,7 @@ def convert_pressure(ds, current_unit, goal_unit):
     for dim in {c['Z'], c['Z_l'], c['Z_p1'], c['Z_u']}:
         if dim in ds.dims:
             ds[dim] = (np.array(ds[dim]) * u.Unit(current_unit)).to(u.Unit(goal_unit)).value
-    ds.attrs.update({'p_ref':(ds.p_ref * u.Unit(current_unit)).to(u.Unit(goal_unit)).value})
+    ds.attrs.update({'p_ref': (ds.p_ref * u.Unit(current_unit)).to(u.Unit(goal_unit)).value})
 
     # store the units in the dataset attributes
     ds.attrs['p_unit'] = goal_unit

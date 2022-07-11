@@ -1,12 +1,14 @@
 import glob
+import os
 
-import xarray as xr
 import numpy as np
+import xarray as xr
 
 import GCMtools.core.writer as wrt
-from GCMtools.utils.passport import is_the_data_basic
-from GCMtools.core.units import convert_time, convert_pressure
 from GCMtools.core.const import VARNAMES as c
+from GCMtools.core.units import convert_time, convert_pressure
+from GCMtools.utils.passport import is_the_data_basic
+
 
 def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None, **kwargs):
     """
@@ -50,6 +52,7 @@ def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None
 
     _add_attrs_and_store(gcmt, ds, tag)
 
+
 def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa'):
     """
     Read in function for GCM data that has been reduced and saved according
@@ -81,6 +84,7 @@ def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa
 
     _add_attrs_and_store(gcmt, ds, tag)
 
+
 def _add_attrs_and_store(gcmt, ds, tag):
     # if no tag is given, models are just numbered as they get added
     if tag is None:
@@ -94,6 +98,7 @@ def _add_attrs_and_store(gcmt, ds, tag):
 
     # store dataset
     gcmt._models[tag] = ds
+
 
 def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
     """
@@ -158,6 +163,7 @@ def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
                     model.isel(time=region_new).to_zarr(filename, append_dim=c['time'], compute=True)
             else:
                 model.to_zarr(filename, mode='w')
+
 
 def m_load(gcmt, dir, method='nc', tag=None):
     """

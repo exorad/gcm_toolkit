@@ -1,5 +1,6 @@
-import GCMtools.core.writer as wrt
 from collections import UserDict
+
+import GCMtools.core.writer as wrt
 
 
 class GCMDatasetCollection(UserDict):
