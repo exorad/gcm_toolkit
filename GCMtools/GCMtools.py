@@ -160,9 +160,12 @@ class GCMT:
 
         Returns
         -------
-        TODO
+        avg: xarray.DataArray
+            Averaged data
+
         """
-        return mani.m_add_horizontal_average(self, var_key, var_key_out=var_key_out, area_key=area_key, tag=tag)
+        ds = self.get_one_model(tag)
+        return mani.m_add_horizontal_average(ds, var_key, var_key_out=var_key_out, area_key=area_key)
 
     def add_meridional_overturning(self, v_data='V', var_key_out=None, tag=None):
         """
@@ -172,17 +175,22 @@ class GCMT:
 
         Parameters
         ----------
-        var_key: str
-            The key of the meridional velocity that should be used to calculate the outcome
+        v_data: str
+            The key that holds the data to meridional velocity
         tag : str, optional
             The tag of the dataset that should be used. If no tag is provided,
             and multiple datasets are available, an error is raised.
         var_key_out: str, optional
             variable name used to store the outcome. If not provided, this script will just
             return the overturning circulation and not change the dataset inplace.
+
+        Returns
+        -------
+        psi: xarray.DataArray
+            Horizontal overturning
         """
         ds = self.get_one_model(tag)
-        return mani.m_add_meridional_overturning(ds, v_data=v_data, var_key_out=var_key_out, tag=tag)
+        return mani.m_add_meridional_overturning(ds, v_data=v_data, var_key_out=var_key_out)
 
     # =============================================================================================================
     #   Reading and writing functions
