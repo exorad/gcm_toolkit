@@ -61,7 +61,7 @@ Both ways are equally powerful and flexible.
 Interface
 ---------
 ``GCMTools`` comes with some interfaces to other codes.
-We currently have support for ``petitRADTRANS`` to calculate spectra and phasecurves.
+We currently have support for ``petitRADTRANS`` to calculate spectra and phasecurves with ``prt_phasecure``.
 
 .. autoclass:: GCMtools.utils.interface.Interface
     :members: chem_from_poorman
