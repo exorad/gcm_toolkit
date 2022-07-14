@@ -207,7 +207,7 @@ class pRTInterface(Interface):
         """
         self.pRT = pRT
 
-    def calc_phase_spectrum(self, mmw, filename=None, normalize=True, **prt_args):
+    def calc_phase_spectrum(self, mmw, Rstar, Tstar, semimajoraxis, gravity=None, filename=None, normalize=True, **prt_args):
         """
         Calculate the spectrum for a phasecurve.
 
@@ -215,6 +215,14 @@ class pRTInterface(Interface):
         ----------
         mmw: float or 1D-array
             Mean molecular weight (in atomic units). Will be globally uniform if float or horizonatally uniform if 1D.
+        Rstar: float
+            stellar radius in !cm!.
+        Tstar: float
+            Temperature of the hoststar.
+        semimajoraxis: float
+            The distance between hoststar and planet in !cm!
+        gravity: float
+            surface gravity in !cgs!. Will default to the value provided by GCMT.
         filename: str
             path at which the output should be stored.
         normalize: bool
@@ -224,8 +232,6 @@ class pRTInterface(Interface):
         prt_args:
             All the args that should be parsed to calc_spectra.
             See the docs of prt_phasecurve for more info on the arguments.
-            Needed args:
-                Rstar, gravity
 
         Returns
         -------
@@ -253,17 +259,15 @@ class pRTInterface(Interface):
             temp_list.append(abus[c['T']].sel(lon=lon_i, lat=lat_i).values)
             abunds_list.append({sp: abus[sp].sel(lon=lon_i, lat=lat_i).values for sp in pRT_abu_keys})
 
-        gravity_cgs = prt_args.pop('gravity', self.ds.attrs.get(c['g']) * 100)
+        if gravity is None:
+            gravity = self.ds.attrs.get(c['g']) * 100
+
         wlen = nc.c / self.pRT.freq / 1e-4
-        stellar_spectrum = self._get_stellar_spec(wlen=wlen, **prt_args)
+        stellar_spectrum = self._get_stellar_spec(wlen=wlen, Tstar=Tstar)
         mmw = np.ones_like(self.pRT.press) * mmw  # broadcast if needed
 
-        spectra_raw = calc_spectra(self.pRT, temp=temp_list, gravity=gravity_cgs, mmw=mmw, abunds=abunds_list,
-                                   theta_star=theta_list, **prt_args)
-
-        R_star = prt_args.get('Rstar')
-        if R_star is None:
-            raise ValueError('pRT needs Rstar, please set Rstar to the stellar radius in cm.')
+        spectra_raw = calc_spectra(self.pRT, temp=temp_list, gravity=gravity, mmw=mmw, abunds=abunds_list,
+                                   theta_star=theta_list, Tstar=Tstar, Rstar=Rstar, semimajoraxis=semimajoraxis, **prt_args)
 
         R_p = self.ds.attrs.get(c['R_p'])
         if R_p is None:
@@ -272,7 +276,7 @@ class pRTInterface(Interface):
 
         if normalize:
             # correct by (R_p/R_s)**2 and norm to stellar spectrum:
-            spectra_raw = np.array(spectra_raw) * ((R_p * 100) / (R_star)) ** 2
+            spectra_raw = np.array(spectra_raw) * ((R_p * 100) / (Rstar)) ** 2
             spectra_raw = spectra_raw / stellar_spectrum[np.newaxis, np.newaxis, :]
 
         Nmus = spectra_raw.shape[1]
@@ -337,7 +341,7 @@ class pRTInterface(Interface):
             coords={'phase': phases,
                     'wlen': spectra.wlen})
 
-    def _get_stellar_spec(self, wlen, Tstar, **kwargs):
+    def _get_stellar_spec(self, wlen, Tstar):
         """
         Helperfunction from petitRADTRANS that calculates the stellar spectrum from the phoenix spectrum
         """
@@ -345,6 +349,4 @@ class pRTInterface(Interface):
         if Tstar != None:
             spec, _ = get_PHOENIX_spec_rad(Tstar)
             stellar_intensity = np.interp(wlen * 1e-4, spec[:, 0], spec[:, 1])
-            # stellar_intensity = stellar_intensity * (Rstar / semimajoraxis) ** 2
-
             return stellar_intensity
