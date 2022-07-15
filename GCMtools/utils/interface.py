@@ -268,6 +268,7 @@ class pRTInterface(Interface):
 
         spectra_raw = calc_spectra(self.pRT, temp=temp_list, gravity=gravity, mmw=mmw, abunds=abunds_list,
                                    theta_star=theta_list, Tstar=Tstar, Rstar=Rstar, semimajoraxis=semimajoraxis, **prt_args)
+        spectra_raw = np.array(spectra_raw)
 
         R_p = self.ds.attrs.get(c['R_p'])
         if R_p is None:
@@ -276,7 +277,7 @@ class pRTInterface(Interface):
 
         if normalize:
             # correct by (R_p/R_s)**2 and norm to stellar spectrum:
-            spectra_raw = np.array(spectra_raw) * ((R_p * 100) / (Rstar)) ** 2
+            spectra_raw = spectra_raw * ((R_p * 100) / (Rstar)) ** 2
             spectra_raw = spectra_raw / stellar_spectrum[np.newaxis, np.newaxis, :]
 
         Nmus = spectra_raw.shape[1]
