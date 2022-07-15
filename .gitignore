@@ -3,6 +3,8 @@
 *.nc
 *.idea
 !example_dataset.nc
+doc/source/notebooks/HD2.tar.gz
+doc/source/notebooks/HD2_test/
 
 # Created by https://www.gitignore.io/api/osx,latex,python,jupyternotebooks
 # Edit at https://www.gitignore.io/?templates=osx,latex,python,jupyternotebooks
