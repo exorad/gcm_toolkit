@@ -18,7 +18,7 @@ import GCMtools.core.writer as wrt
 from GCMtools.core.units import convert_pressure, convert_time
 
 
-def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds=None, **kwargs):
+def m_read_from_mitgcm(gcmt, data_path, iters, exclude_iters=None, d_lon=5, d_lat=4, loaded_ds=None, **kwargs):
     """
     Data read in for MITgcm output.
 
@@ -33,6 +33,10 @@ def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds=None,
         If None, no data will be read.
         If 'last' (default), only the last iteration will be read.
         If 'all', all iterations will be read.
+    exclude_iters: list, int, None
+        List iterations that you don't want to load
+        if None, no iterations from the list of iters will be excluded
+        if list: exclude from iters
     data_file : str
         Full path to the 'data' input file of MITgcm. If None, the default
         location of the file is assumed to be: data_path/data
@@ -56,6 +60,11 @@ def m_read_from_mitgcm(gcmt, data_path, iters, d_lon=5, d_lat=4, loaded_ds=None,
         iters = [max(all_iters)]
     elif iters == 'all':
         iters = find_iters_mitgcm(data_path, prefix)
+
+    if exclude_iters is not None:
+        if isinstance(exclude_iters, int):
+            exclude_iters = [exclude_iters]
+        iters = set(iters) - set(exclude_iters)
 
     wrt.write_status('INFO', 'Iterations: ' + ", ".join([str(i) for i in iters]))
 

@@ -1,0 +1,72 @@
+#!/usr/bin/python
+
+"""
+A Command line script that converts raw data to gcmt data
+"""
+import os
+import argparse
+import yaml
+
+from GCMtools import GCMT
+import GCMtools.core.writer as wrt
+
+wdir = os.getcwd()
+
+################
+# Default values
+################
+DEFAULT_CONFIG = os.path.join(wdir, 'convert.yaml')
+DEFAUT_PREFIXES = ["T","U","V","W"]
+DEFAULT_ITERATIONS = "all"
+DEFAULT_LOAD_EXISTING = False
+DEFAULT_GCM = "MITgcm"
+DEFAULT_TAG = "nc_convert"
+DEFAULT_DATA_PATH = os.path.join(wdir, 'run')
+DEFAULT_SAVE_PATH = os.path.join(wdir, 'results')
+DEFAULT_SAVE_METHOD = "nc"
+DEFAULT_UPDATE_ALONG_TIME = False
+
+########################
+# Command line arguments
+########################
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-c",
+    "--config",
+    help="specify the path to the config file that holds the config for converting to xarray",
+    default=DEFAULT_CONFIG,
+)
+args = parser.parse_args()
+
+###################################
+# Load config
+###################################
+gcmt = GCMT(write='on')
+
+if not os.path.isfile(args.config):
+    wrt.write_status('WARN', "Conversion to gcmt: no config file found, using defaults instead")
+    config = {}
+else:
+    with open(args.config) as f:
+         config = yaml.load(f, Loader=yaml.FullLoader)
+
+################
+# Set parameters
+################
+iterations = config.pop("iters", DEFAULT_ITERATIONS)
+prefixes = config.pop("prefix", DEFAUT_PREFIXES)
+tag = config.pop("tag", DEFAULT_TAG)
+gcm = config.pop("gcm", DEFAULT_GCM)
+load_existing = config.pop("load_existing", DEFAULT_LOAD_EXISTING)
+data_path = config.pop("data_path", DEFAULT_DATA_PATH)
+save_path = config.pop("save_path", DEFAULT_SAVE_PATH)
+method = config.pop("method", DEFAULT_SAVE_METHOD)
+update_along_time = config.pop("update_along_time", DEFAULT_UPDATE_ALONG_TIME)
+
+###############
+# Do conversion
+###############
+if load_existing:
+    gcmt.load(save_path, tag=tag, method=method)
+gcmt.read_raw(gcm=gcm, data_path=data_path, iters=iterations, prefix=prefixes, load_existing=load_existing, tag=tag, **config)
+gcmt.save(save_path, tag=tag, method=method, update_along_time=update_along_time)
