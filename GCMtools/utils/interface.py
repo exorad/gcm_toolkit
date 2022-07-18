@@ -20,7 +20,11 @@ class Chemistry:
     """
     Chemistry class used to deal with different kinds of chemical models.
     """
-    abunds = xr.Dataset()
+    def __init__(self):
+        """
+        Constructor for the Chemistry class
+        """
+        self.abunds = xr.Dataset()
 
     def set_data(self, ds):
         """
@@ -128,8 +132,11 @@ class Interface:
     -------
     set_data: Function that handles the input from GCMT
     """
-
-    chemistry = Chemistry()
+    def __init__(self):
+        """
+        Constructor for the Interface class
+        """
+        self.chemistry = Chemistry()
 
     def set_data(self, ds, regrid_lowres = False):
         """
@@ -175,27 +182,10 @@ class Interface:
         return self.chemistry.chem_from_poorman(temp_key=temp_key, CO=CO, FeH=FeH)
 
 
-
-class PACInterface(Interface):
-    def to_2D_PAC(self, ds):
-        """
-        Transform the given GCM dataset to a pseudo-2D PAC
-        input file.
-
-        Parameters
-        ----------
-        ds: DataSet
-            A GCMtools-compatible dataset of a 3D climate simulation.
-
-        """
-        pass
-
-
 class pRTInterface(Interface):
     """
     Interface with petitRADTRANS
     """
-
     def __init__(self, pRT):
         """
         Constructs the Interface and links to pRT.
@@ -205,6 +195,7 @@ class pRTInterface(Interface):
         pRT: petitRADTRANS.Radtrans
             A pRT Radtrans object
         """
+        super().__init__()
         self.pRT = pRT
 
     def calc_phase_spectrum(self, mmw, Rstar, Tstar, semimajoraxis, gravity=None, filename=None, normalize=True, **prt_args):
@@ -351,3 +342,18 @@ class pRTInterface(Interface):
             spec, _ = get_PHOENIX_spec_rad(Tstar)
             stellar_intensity = np.interp(wlen * 1e-4, spec[:, 0], spec[:, 1])
             return stellar_intensity
+
+
+# class PACInterface(Interface):
+#     def to_2D_PAC(self, ds):
+#         """
+#         Transform the given GCM dataset to a pseudo-2D PAC
+#         input file.
+#
+#         Parameters
+#         ----------
+#         ds: DataSet
+#             A GCMtools-compatible dataset of a 3D climate simulation.
+#
+#         """
+#         pass
