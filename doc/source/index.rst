@@ -40,6 +40,7 @@ Capabilities
 
    installation
    usage
+   cli
    notebooks/demo.ipynb
 
    
