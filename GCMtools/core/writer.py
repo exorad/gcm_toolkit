@@ -92,10 +92,6 @@ def write_status(tag, message):
         The message to be printed.
     """
 
-    # check if verbosity is whished
-    if not Writer.on:
-        return
-
     # define colors and layout according to tags
     color = Writer.DEFAULT
     space = ""
@@ -128,15 +124,17 @@ def write_status(tag, message):
             line = tag_length + line[Writer.line_length + 1:]
     liner += line
 
-    # write message to terminal
-    if Writer.file_name is None:
-        print(color + liner + Writer.ENDC)
+    # check if verbosity is whished
+    if Writer.on:
+        # write message to terminal
+        if Writer.file_name is None:
+            print(color + liner + Writer.ENDC)
 
-    # write message to file
-    else:
-        f = open(Writer.file_name, 'a')
-        f.write(liner + "\n")
-        f.close()
+        # write message to file
+        else:
+            f = open(Writer.file_name, 'a')
+            f.write(liner + "\n")
+            f.close()
 
     if tag == 'ERROR':
         raise ValueError(liner)

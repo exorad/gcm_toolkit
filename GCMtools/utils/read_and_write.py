@@ -41,7 +41,10 @@ def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None
         from GCMtools.exorad import m_read_from_mitgcm
 
         if tag is not None and load_existing:
-            loaded_ds = gcmt.get_models(tag)
+            try:
+                loaded_ds = gcmt.get_models(tag)
+            except KeyError:
+                loaded_ds = None
         else:
             loaded_ds = None
 

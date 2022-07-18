@@ -11,7 +11,8 @@ INSTALL_REQUIRES = [
         "numpy",
         "f90nml",
         "astropy",
-        "xarray"
+        "xarray",
+        "pyyaml"
     ]
 
 setup(
@@ -19,6 +20,7 @@ setup(
     version='v0.1.1',
     packages=find_packages(),
     include_package_data=True,
+    scripts=['bin/convert_to_gcmt'],
     url='https://github.com/exorad/GCMtools',
     license='MIT',
     author='Aaron David Schneider',
