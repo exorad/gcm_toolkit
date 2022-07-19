@@ -32,7 +32,7 @@ class GCMDatasetCollection(UserDict):
             Will definetly be GCMDatasetCollection if always_dict=True
         """
         if isinstance(tag, str):
-            return self[tag]
+            return self.get(tag)
 
         # If no tag is given, return all models
         if tag is None:
@@ -44,7 +44,7 @@ class GCMDatasetCollection(UserDict):
         # If the tag is not a string, raise an error
         wrt.write_status('ERROR', 'The given tag is not a string.')
 
-    def get_one_model(self, tag=None):
+    def get_one_model(self, tag=None, raise_error=True):
         """
         Helper Function that raises an error, if more than one model is selected.
 
@@ -52,6 +52,9 @@ class GCMDatasetCollection(UserDict):
         ----------
         tag: str, optional
             Name of the model that should be returned
+        raise_error: bool, optional
+            If true, function will raise error, else will return None if not one model is selected
+
         Returns
         -------
         ds: xarray Dataset
@@ -60,6 +63,9 @@ class GCMDatasetCollection(UserDict):
 
         # select the appropriate dataset
         ds = self.get_models(tag=tag)
+        # Raise error, if key not in collection and raise error is specified
+        if ds is None and raise_error:
+            raise KeyError('No dataset for given key available.')
         # if a collection is given (because multiple datasets are available, and
         # the tag is not provided), avoid ambiguity by raising an error
         if isinstance(ds, GCMDatasetCollection) and len(ds) > 1 and tag is None:

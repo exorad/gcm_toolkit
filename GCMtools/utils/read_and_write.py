@@ -101,7 +101,7 @@ def _add_attrs_and_store(gcmt, ds, tag):
         raise ValueError('This dataset is not supported by GCMtools\n')
 
     # store dataset
-    gcmt.replace_model(ds, tag)
+    gcmt[tag] = ds
 
 
 def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
@@ -214,4 +214,4 @@ def m_load(gcmt, dir, method='nc', tag=None):
         ds = convert_time(ds, current_unit=ds.attrs.get('time_unit'), goal_unit=gcmt.time_unit)
         ds = convert_pressure(ds, current_unit=ds.attrs.get('p_unit'), goal_unit=gcmt.p_unit)
 
-        gcmt.replace_model(ds, tag)
+        gcmt[tag] = ds
