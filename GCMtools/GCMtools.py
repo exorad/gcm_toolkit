@@ -181,7 +181,7 @@ class GCMT:
         tag : str
             Name of the model that should be returned.
         always_dict: bool
-            Force result to be a dictionary
+            Force result to be a dictionary (if tag is None)
 
         Returns
         -------

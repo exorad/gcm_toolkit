@@ -23,7 +23,7 @@ class GCMDatasetCollection(UserDict):
         tag : str
             Name of the model that should be returned.
         always_dict: bool
-            Force result to be a dictionary
+            Force result to be a dictionary (if tag is None)
 
         Returns
         -------
@@ -46,7 +46,7 @@ class GCMDatasetCollection(UserDict):
 
     def get_one_model(self, tag=None, raise_error=True):
         """
-        Helper Function that raises an error, if more than one model is selected.
+        Helper Function that raises an error or returns None, if more than one model is selected.
 
         Parameters
         ----------
