@@ -242,8 +242,15 @@ class pRTInterface(Interface):
         """
         self._set_data_common(time, tag=tag, regrid_lowres=False)
 
-        p_center = np.sort(self.ds.Z.values)  # be careful here: petitRADTRANS operates top->bot
-        self.pRT.setup_opa_structure(p_center)
+        if self.ds.p_unit == 'bar':
+            press = self.ds.Z.values
+        elif self.ds.p_unit == 'Pa':
+            press = self.ds.Z.values/1e5
+        else:
+            raise NotImplementedError('only pressure units in Pa and bar are implemented at the moment')
+
+        # be careful here: petitRADTRANS operates top->bot in bar
+        self.pRT.setup_opa_structure(np.sort(press))
 
     def calc_phase_spectrum(self, mmw, Rstar, Tstar, semimajoraxis, gravity=None, filename=None, normalize=True,
                             **prt_args):
