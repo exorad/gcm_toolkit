@@ -16,10 +16,11 @@ import xarray as xr
 from ..core.const import VARNAMES as c
 
 
-class Chemistry:
+class _Chemistry:
     """
     Chemistry class used to deal with different kinds of chemical models.
     """
+
     def __init__(self):
         """
         Constructor for the Chemistry class
@@ -131,25 +132,50 @@ class Interface:
     Methods
     -------
     set_data: Function that handles the input from GCMT
+    chem_from_poorman: Function that calculates chemistry based on the poorman code from pRT
     """
-    def __init__(self):
+
+    def __init__(self, gcmt):
         """
         Constructor for the Interface class
-        """
-        self.chemistry = Chemistry()
 
-    def set_data(self, ds, regrid_lowres = False):
+        Parameters
+        ----------
+        gcmt: GCMTools Object
+        """
+        self.gcmt = gcmt
+        self.chemistry = _Chemistry()
+
+    def set_data(self, time, tag=None, regrid_lowres=False):
         """
         Set the data to be used for the interface
 
         Parameters
         ----------
-        ds: DataSet
-            A GCMtools-compatible dataset of a 3D climate simulation.
-            Should not include a time coordinate!
+        time: int
+            timestep to be used
+        tag: str
+            tag of the model to be used
         regrid_lowres: bool, optional
             Can be useful, if your GCMT uses a very detailed grid
         """
+        self._set_data_common(time, tag=tag, regrid_lowres=False)
+
+    def _set_data_common(self, time, tag=None, regrid_lowres=False):
+        """
+        Set the data to be used for the interface
+
+        Parameters
+        ----------
+        time: int
+            timestep to be used
+        tag: str
+            tag of the model to be used
+        regrid_lowres: bool, optional
+            Can be useful, if your GCMT uses a very detailed grid
+        """
+        ds = self.gcmt.get_one_model(tag).sel(time=time)
+
         if regrid_lowres:
             dlon = 15
             dlat = 15
@@ -186,19 +212,41 @@ class pRTInterface(Interface):
     """
     Interface with petitRADTRANS
     """
-    def __init__(self, pRT):
+
+    def __init__(self, gcmt, pRT):
         """
         Constructs the Interface and links to pRT.
 
         Parameters
         ----------
+        gcmt: GCMTools Object
+            A GCMTools object that is linked to the interface
         pRT: petitRADTRANS.Radtrans
             A pRT Radtrans object
         """
-        super().__init__()
+        super().__init__(gcmt)
         self.pRT = pRT
 
-    def calc_phase_spectrum(self, mmw, Rstar, Tstar, semimajoraxis, gravity=None, filename=None, normalize=True, **prt_args):
+    def set_data(self, time, tag=None, regrid_lowres=False):
+        """
+        Set the data to be used for the interface
+
+        Parameters
+        ----------
+        time: int
+            timestep to be used
+        tag: str
+            tag of the model to be used
+        regrid_lowres: bool, optional
+            Can be useful, if your GCMT uses a very detailed grid
+        """
+        self._set_data_common(time, tag=tag, regrid_lowres=False)
+
+        p_center = np.sort(self.ds.Z.values)  # be careful here: petitRADTRANS operates top->bot
+        self.pRT.setup_opa_structure(p_center)
+
+    def calc_phase_spectrum(self, mmw, Rstar, Tstar, semimajoraxis, gravity=None, filename=None, normalize=True,
+                            **prt_args):
         """
         Calculate the spectrum for a phasecurve.
 
@@ -240,8 +288,9 @@ class pRTInterface(Interface):
 
         lon, lat = np.meshgrid(abus[c['lon']], abus[c['lat']])
 
-        if (lon.shape[0]*lon.shape[1]) > 300:
-            print('WARNING: Calculating a phasecurve on a fine grid takes very long. A resolution of 15 degrees is usually sufficient.')
+        if (lon.shape[0] * lon.shape[1]) > 300:
+            print(
+                'WARNING: Calculating a phasecurve on a fine grid takes very long. A resolution of 15 degrees is usually sufficient.')
 
         theta_list, temp_list, abunds_list = [], [], []
         for i, lon_i in enumerate(np.array(lon).flat):
@@ -258,7 +307,8 @@ class pRTInterface(Interface):
         mmw = np.ones_like(self.pRT.press) * mmw  # broadcast if needed
 
         spectra_raw = calc_spectra(self.pRT, temp=temp_list, gravity=gravity, mmw=mmw, abunds=abunds_list,
-                                   theta_star=theta_list, Tstar=Tstar, Rstar=Rstar, semimajoraxis=semimajoraxis, **prt_args)
+                                   theta_star=theta_list, Tstar=Tstar, Rstar=Rstar, semimajoraxis=semimajoraxis,
+                                   **prt_args)
         spectra_raw = np.array(spectra_raw)
 
         R_p = self.ds.attrs.get(c['R_p'])
@@ -342,7 +392,6 @@ class pRTInterface(Interface):
             spec, _ = get_PHOENIX_spec_rad(Tstar)
             stellar_intensity = np.interp(wlen * 1e-4, spec[:, 0], spec[:, 1])
             return stellar_intensity
-
 
 # class PACInterface(Interface):
 #     def to_2D_PAC(self, ds):

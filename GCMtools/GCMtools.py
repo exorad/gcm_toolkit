@@ -15,6 +15,7 @@ import GCMtools.utils.read_and_write as raw
 from GCMtools.utils.passport import is_the_data_basic
 from GCMtools.GCMDatasetCollection import GCMDatasetCollection
 from GCMtools.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
+from GCMtools.utils.interface import pRTInterface
 
 
 class GCMT:
@@ -412,3 +413,23 @@ class GCMT:
         # select the appropriate dataset
         ds = self.get_one_model(tag)
         return gcmplt.zonal_mean(ds, var_key, **kwargs)
+
+    # =============================================================================================================
+    #   Interfaces
+    # =============================================================================================================
+
+    def get_prt_interface(self, pRT):
+        """
+        Constructs the interface to petitRADTRANS
+
+        Parameters
+        ----------
+        pRT: petitRADTRANS.Radtrans
+            A fully initialized radtrans object to be used for the calculations
+
+        Returns
+        -------
+        Interface: pRTInterface
+            The interface object that is used to create phasecurves/spectra/etc
+        """
+        return pRTInterface(self, pRT)
