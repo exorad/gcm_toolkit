@@ -18,12 +18,12 @@ It is used to load data into ``xarray`` datasets, which can then be used for ana
         gcmt = GCMT()
         gcmt.read_raw(..., tag='model_name')
         # gcmt.read_raw(..., tag='model_name_2')  # if you have multiple models
-        ds = gcmt.get_models('model_name')
+        ds = gcmt['model_name']
 
 The GCMT class can also be used for quick plotting of data, since it wraps a few plotting functions, which are outlined in :ref:`Plotting`.
 
 .. autoclass:: GCMtools.GCMT
-    :members: __init__, get_models, models, add_horizontal_average, add_meridional_overturning, read_raw, read_reduced, load, save
+    :members: __init__, get, get_models, models, add_horizontal_average, add_meridional_overturning, read_raw, read_reduced, load, save
 
 
 Plotting
@@ -41,7 +41,7 @@ Example:
         # Load data
         gcmt = GCMT()
         gcmt.read_raw(..., tag='model_name')
-        ds = gcmt.get_models('model_name')
+        ds = gcmt['model_name']
 
         # Plot data with GCMT
         gcmt.isobaric_slice(tag = 'model_name', p=1e-2, lookup_method='nearest', var_key='T', wind_kwargs={'windstream':False, 'sample_one_in':2})

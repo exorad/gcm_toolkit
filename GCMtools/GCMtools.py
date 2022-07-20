@@ -6,11 +6,13 @@
 #  environment for new users of GCMs while allowing direct
 #  access to the data for more experienced users.
 # ==============================================================
+import xarray
 
 import GCMtools.core.writer as wrt
 import GCMtools.utils.gcm_plotting as gcmplt
 import GCMtools.utils.manipulations as mani
 import GCMtools.utils.read_and_write as raw
+from GCMtools.utils.passport import is_the_data_basic
 from GCMtools.GCMDatasetCollection import GCMDatasetCollection
 from GCMtools.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
 
@@ -85,22 +87,89 @@ class GCMT:
         selected_models : GCMDatasetCollection or xarray Dataset
             All models in self._models
         """
-        return self._models.get_models()
+        return self.get_models()
 
-    def get_one_model(self, tag=None):
+    def __iter__(self):
         """
-        Like get_models, but raises an error, if more than one model is selected.
+        Returns an iterator of GCMT
+        """
+        return iter(self.get_models(always_dict=True).items())
+
+    def __getitem__(self, tag):
+        """
+        Access models of this dataset
+
+        Parameters:
+        -----------
+        tag: str
+            Tag of the model that should be returned
+
+        Returns
+        -------
+        selected_model : xarray Dataset
+        """
+        if tag not in self._models.keys():
+            raise ValueError('The provided tag does not exist in the collection')
+        if isinstance(tag, str):
+            return self.get_one_model(tag=tag, raise_error=True)
+        raise ValueError('key needs to be a string.')
+
+    def __setitem__(self, tag, ds):
+        """
+        Add or replaces a dataset
+
+        Parameters
+        ----------
+        tag: str
+           Tag at which the model should be stored
+        ds: xarray Dataset
+           Dataset to add
+        """
+        self._replace_model(tag, ds)
+
+    def __len__(self) -> int:
+        return len(self._models)
+
+    def __bool__(self) -> bool:
+        return bool(self._models)
+
+    def get(self, tag, default = None):
+        """
+        Pythonic get, will return default if tag is not available.
+
+        Parameters
+        ----------
+        tag: str
+            Name of the model that should be returned
+        default: Any
+            Default value in case that the tag is not available in the dataset
+
+        Returns
+        -------
+        ds or default, depending on whether ds is available
+        """
+        if ds := self.get_one_model(tag, raise_error=False):
+            return ds
+        else:
+            return default
+
+    def get_one_model(self, tag=None, raise_error=True):
+        """
+        Like get_models, but raises an error or return None, if more than one model is selected.
 
         Parameters
         ----------
         tag: str, optional
             Name of the model that should be returned
+        raise_error: bool, optional
+            If true, function will raise error, else will return None if not one model is selected
+
         Returns
         -------
         ds: xarray Dataset
             Selected model
         """
-        return self._models.get_one_model(tag)
+        return self._models.get_one_model(tag, raise_error)
 
     def get_models(self, tag=None, always_dict=False):
         """
@@ -112,7 +181,7 @@ class GCMT:
         tag : str
             Name of the model that should be returned.
         always_dict: bool
-            Force result to be a dictionary
+            Force result to be a dictionary (if tag is None)
 
         Returns
         -------
@@ -122,17 +191,30 @@ class GCMT:
         """
         return self._models.get_models(tag, always_dict)
 
-    def replace_model(self, ds, tag):
+    def _replace_model(self, tag, ds):
         """
-        Function that adds or replaces a dataset
+        Add or replaces a dataset. Do some checks beforehand.
 
         Parameters
         ----------
-        ds: xarray Dataset
-           Dataset to add
         tag: str
            Tag at which the model should be stored
+        ds: xarray Dataset
+           Dataset to add
         """
+        if not isinstance(tag, str):
+            raise ValueError("The provided tag needs to be a string.")
+        if not isinstance(ds, xarray.Dataset):
+            raise ValueError("The provided input dataset needs to be a xarray Dataset.")
+        if not is_the_data_basic(ds):
+            raise ValueError("The provided input dataset is not compatible.")
+
+        if ds.attrs.get('p_unit') != self.p_unit:
+            raise NotImplementedError('Unit conversion is needed and not yet implemented')
+        if ds.attrs.get('time_unit') != self.time_unit:
+            raise NotImplementedError('Unit conversion is needed and not yet implemented')
+
+        ds.attrs.update({'tag': tag})
         self._models[tag] = ds
 
     # =============================================================================================================
