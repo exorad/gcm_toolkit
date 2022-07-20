@@ -26,6 +26,7 @@ class _Chemistry:
         Constructor for the Chemistry class
         """
         self.abunds = xr.Dataset()
+        self.ds = None
 
     def set_data(self, ds):
         """
@@ -55,6 +56,9 @@ class _Chemistry:
             The metalicity ratio. Currently only one global value allowed. Defaults to 0.0.
         """
         from petitRADTRANS.poor_mans_nonequ_chem import interpol_abundances
+
+        if self.ds is None:
+            raise ValueError("Data is missing. Use interface.set_data() first.")
 
         if c['time'] in self.ds.dims:
             raise ValueError('Dataset should not have a timedimension. Select the timestamp beforehand.')
@@ -145,6 +149,7 @@ class Interface:
         """
         self.gcmt = gcmt
         self.chemistry = _Chemistry()
+        self.ds = None
 
     def set_data(self, time, tag=None, regrid_lowres=False):
         """
@@ -205,6 +210,9 @@ class Interface:
         FeH: float, optional
             The metalicity ratio. Currently only one global value allowed. Defaults to 0.0.
         """
+        if self.ds is None:
+            raise ValueError("Data is missing. Use interface.set_data() first.")
+
         return self.chemistry.chem_from_poorman(temp_key=temp_key, CO=CO, FeH=FeH)
 
 
