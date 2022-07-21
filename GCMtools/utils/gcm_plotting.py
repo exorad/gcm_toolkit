@@ -80,6 +80,9 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     if cbar_kwargs is None:
         cbar_kwargs = {}
 
+    font_labels = dict(fontsize = fs_labels) if fs_labels is not None else {}
+    font_ticks = dict(fontsize=fs_ticks) if fs_ticks is not None else {}
+
     # retrieve default units
     p_unit = ds.attrs.get('p_unit')
     time_unit = ds.attrs.get('time_unit')
@@ -114,7 +117,7 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     if add_colorbar:
         cbar = plt.colorbar(plotted, ax=ax, **cbar_kwargs)
         cbar_label = cbar_kwargs.get('label', var_key)
-        cbar.set_label(cbar_label, fontsize=fs_labels)
+        cbar.set_label(cbar_label, **font_labels)
 
     # Overplot the wind vectors if needed
     if plot_windvectors:
@@ -127,11 +130,11 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
         yt = np.arange(-90, 91, 45)
         ax.set_xticks(xt)
         ax.set_yticks(yt)
-        ax.set_xticklabels([str(n) + r'$^\circ$' for n in xt], fontsize=fs_ticks)
-        ax.set_yticklabels([str(n) + r'$^\circ$' for n in yt], fontsize=fs_ticks)
+        ax.set_xticklabels([str(n) + r'$^\circ$' for n in xt], **font_ticks)
+        ax.set_yticklabels([str(n) + r'$^\circ$' for n in yt], **font_ticks)
 
-    ax.set_xlabel(xlabel, fontsize=fs_labels)
-    ax.set_ylabel(ylabel, fontsize=fs_labels)
+    ax.set_xlabel(xlabel, **font_labels)
+    ax.set_ylabel(ylabel, **font_labels)
     if title is None:
         if time_unit == 'iter':
             # need to convert time from nanosecond like datatype to iters
@@ -139,7 +142,7 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
         else:
             time_string = f'{time}'
         title = f'p = {this_p:.2e} {p_unit}, time = {time_string} {time_unit}'
-    ax.set_title(title, fontsize=fs_labels)
+    ax.set_title(title, **font_labels)
 
 
 def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k', windstream=False, **kwargs):
@@ -286,6 +289,8 @@ def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorb
     if cbar_kwargs is None:
         cbar_kwargs = {}
 
+    font_labels = dict(fontsize = fs_labels) if fs_labels is not None else {}
+
     if ax is None:
         fig = plt.figure()
         ax = plt.gca()
@@ -307,20 +312,20 @@ def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorb
     if add_colorbar:
         cbar = plt.colorbar(l, ax=ax, **cbar_kwargs)
         cbar_label = cbar_kwargs.get('label', f'time ({time_unit})')
-        cbar.set_label(cbar_label, fontsize=fs_labels)
+        cbar.set_label(cbar_label, **font_labels)
 
     # set other plot qualities
     if title is None:
         title = f'timeevolution of {var_key}'
-    ax.set_title(title, fontsize=fs_labels)
+    ax.set_title(title, **font_labels)
 
     if add_ylabel_unit:
         ylabel = ylabel + f' ({p_unit})'
     if xlabel is None:
         xlabel = var_key
 
-    ax.set_xlabel(xlabel, fontsize=fs_labels)
-    ax.set_ylabel(ylabel, fontsize=fs_labels)
+    ax.set_xlabel(xlabel, **font_labels)
+    ax.set_ylabel(ylabel, **font_labels)
 
     # Invert y-axis and set scale to log
     ax.set_yscale('log')
@@ -376,6 +381,8 @@ def zonal_mean(ds, var_key, time=-1, ax=None, cbar_kwargs=None,
     if cbar_kwargs is None:
         cbar_kwargs = {}
 
+    font_labels = dict(fontsize=fs_labels) if fs_labels is not None else {}
+
     # retrieve default units
     p_unit = ds.attrs.get('p_unit')
     time_unit = ds.attrs.get('time_unit')
@@ -398,7 +405,7 @@ def zonal_mean(ds, var_key, time=-1, ax=None, cbar_kwargs=None,
     if add_colorbar:
         cbar = plt.colorbar(plotted, ax=ax, **cbar_kwargs)
         cbar_label = cbar_kwargs.get('label', var_key)
-        cbar.set_label(cbar_label, fontsize=fs_labels)
+        cbar.set_label(cbar_label, **font_labels)
 
     # set other plot qualities
     if title is None:
@@ -409,13 +416,13 @@ def zonal_mean(ds, var_key, time=-1, ax=None, cbar_kwargs=None,
             time_string = f'{time}'
 
         title = f'time = {time_string} {time_unit}'
-    ax.set_title(title, fontsize=fs_labels)
+    ax.set_title(title, **font_labels)
 
     if add_ylabel_unit:
         ylabel = ylabel + f' ({p_unit})'
 
-    ax.set_xlabel(xlabel, fontsize=fs_labels)
-    ax.set_ylabel(ylabel, fontsize=fs_labels)
+    ax.set_xlabel(xlabel, **font_labels)
+    ax.set_ylabel(ylabel, **font_labels)
 
     # Invert y-axis and set scale to log
     ax.set_yscale('log')
