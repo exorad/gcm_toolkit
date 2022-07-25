@@ -16,7 +16,7 @@ INSTALL_REQUIRES = [
     ]
 
 setup(
-    name='GCMtools',
+    name='gcmt',
     version='v0.1.1',
     packages=find_packages(),
     include_package_data=True,
