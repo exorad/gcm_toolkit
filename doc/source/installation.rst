@@ -36,4 +36,4 @@ Install ``gcmt``.
     .. code-block:: bash
 
         git clone https://github.com/exorad/gcmt.git
-        pip install -e GCMtools
+        pip install -e gcmt

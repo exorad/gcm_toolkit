@@ -7,8 +7,8 @@ import os
 import argparse
 import yaml
 
-from GCMtools import GCMT
-import GCMtools.core.writer as wrt
+from gcmt import GCMT
+import gcmt.core.writer as wrt
 
 wdir = os.getcwd()
 
