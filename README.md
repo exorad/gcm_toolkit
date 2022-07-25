@@ -31,6 +31,8 @@ Read the [docs](https://gcmt.readthedocs.io/en/latest/)
 
 ### Packages needed
 
+Please install the following packages beforehand:
+
 **general:**
 xarray, netcdf4
 
