@@ -12,10 +12,10 @@ import gcmt.core.writer as wrt
 import gcmt.utils.gcm_plotting as gcmplt
 import gcmt.utils.manipulations as mani
 import gcmt.utils.read_and_write as raw
-from gcmt.utils.passport import is_the_data_basic
 from gcmt.GCMDatasetCollection import GCMDatasetCollection
 from gcmt.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
 from gcmt.utils.interface import pRTInterface
+from gcmt.utils.passport import is_the_data_basic
 
 
 class GCMT:
@@ -134,7 +134,7 @@ class GCMT:
     def __bool__(self) -> bool:
         return bool(self._models)
 
-    def get(self, tag, default = None):
+    def get(self, tag, default=None):
         """
         Pythonic get, will return default if tag is not available.
 

@@ -83,7 +83,7 @@ def m_read_from_mitgcm(gcmt, data_path, iters, exclude_iters=None, d_lon=5, d_la
     # regrid the dataset
     filename = 'tmp_gcmt_reg_weights_xya'  # generate random filename for weights to be deleted afterwards
     regrid = cs.Regridder(ds=ds_ascii, cs_grid=grid, d_lon=d_lon, d_lat=d_lat, filename=filename)
-    [os.remove(f) for f in glob.glob(filename+"*.nc")]  # delete aux weights
+    [os.remove(f) for f in glob.glob(filename + "*.nc")]  # delete aux weights
     ds = regrid()
 
     # convert wind, vertical dimension, time, ...
