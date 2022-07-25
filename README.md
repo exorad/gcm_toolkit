@@ -35,8 +35,8 @@ Read the [docs](https://gcmt.readthedocs.io/en/latest/)
 xarray, netcdf4
 
 **exPERT/MITgcm:**
-xmitgcm, xgcm, f90nml, 
-cubedsphere (see https://cubedsphere.readthedocs.io/en/latest/index.html)
+xmitgcm, xgcm, f90nml,
+[cubedsphere](https://cubedsphere.readthedocs.io/en/latest/index.html)
 
 ### Running the first example
 
@@ -53,4 +53,4 @@ Check the get started in the [docs](https://gcmt.readthedocs.io/en/latest/notebo
 
 Feel free to contact one of the main authors: **[Aaron Schneider](https://aaron-schneider.de)**, **[Sven Kiefer](https://kiefersv.github.io/)**, or **[Robin Baeyens](https://www.linkedin.com/in/robin-baeyens/)**.
 
-Project url: https://github.com/exorad/gcmt
+Project url: [https://github.com/exorad/gcmt](https://github.com/exorad/gcmt)
