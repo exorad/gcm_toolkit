@@ -37,7 +37,6 @@ def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None
     # call the required GCM read-in method
     if gcm == 'MITgcm':
         wrt.write_status('STAT', 'Read in raw MITgcm data')
-        wrt.write_status('INFO', 'Tag: ' + tag)
         wrt.write_status('INFO', 'File path: ' + data_path)
         from GCMtools.exorad import m_read_from_mitgcm
 
@@ -54,7 +53,6 @@ def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None
         wrt.write_status('ERROR', 'The selected GCM type "' + gcm + '" is not supported')
 
     _add_attrs_and_store(gcmt, ds, tag)
-
 
 def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa'):
     """
@@ -75,7 +73,6 @@ def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa
     # print information
     wrt.write_status('STAT', 'Read in reduced data')
     wrt.write_status('INFO', 'File path: ' + data_path)
-    wrt.write_status('INFO', 'Tag: ' + tag)
     wrt.write_status('INFO', 'Time unit of data: ' + time_unit_in)
     wrt.write_status('INFO', 'pressure unit of data: ' + p_unit_in)
 
@@ -87,12 +84,16 @@ def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa
 
     _add_attrs_and_store(gcmt, ds, tag)
 
+    wrt.write_status('INFO', 'Tag: ' + tag)
+
 
 def _add_attrs_and_store(gcmt, ds, tag):
     # if no tag is given, models are just numbered as they get added
     if tag is None:
         tag = str(len(gcmt.get_models(always_dict=True)))
         print('[WARN] -- No tag provided. This model is stored with tag: ' + tag)
+
+    wrt.write_status('INFO', 'Tag: ' + tag)
 
     # store tag in the dataset attributes
     ds.attrs['tag'] = tag

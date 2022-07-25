@@ -1,0 +1,13 @@
+name: test_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - cubedsphere
+  - pytest
+  - codecov
+  - pytest-cov
+  - pip
+  - pip:
+      - git+https://github.com/MITgcm/xmitgcm.git
+      - git+https://github.com/pydata/xarray.git

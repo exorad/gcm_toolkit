@@ -3,7 +3,6 @@ import os
 import cubedsphere as cs
 import cubedsphere.const as c
 import numpy as np
-import xarray as xr
 import xgcm
 from f90nml import Parser
 from xgcm.autogenerate import generate_grid_ds
@@ -181,7 +180,7 @@ def add_distances(ds, radius):
         dy  : xarray.DataArray distance inferred from dlat
         """
         distance_1deg_equator = 2.0 * np.pi * radius * 1.0 / 360.0
-        dx = dlon * xr.ufuncs.cos(xr.ufuncs.deg2rad(lat)) * distance_1deg_equator
+        dx = dlon * np.cos(lat/180*np.pi) * distance_1deg_equator
         dy = ((lon * 0) + 1) * dlat * distance_1deg_equator
         return dx, dy
 

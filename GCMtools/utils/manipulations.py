@@ -4,7 +4,7 @@ import GCMtools.core.writer as wrt
 from GCMtools.core.const import VARNAMES as c
 
 
-def m_add_horizontal_average(gcmt, var_key, var_key_out=None, area_key='area_c', tag=None):
+def m_add_horizontal_average(ds, var_key, var_key_out=None, area_key='area_c'):
     """
     Calculate horizontal averaged quantities. Horizontal averages
     are calculated as area-weighted averages of quantity q:
@@ -13,11 +13,10 @@ def m_add_horizontal_average(gcmt, var_key, var_key_out=None, area_key='area_c',
 
     Parameters
     ----------
+    ds: xarray.Dataset
+        The dataset for which the calculation should be performed
     var_key: str
         The key of the variable quantity that should be plotted.
-    tag : str, optional
-        The tag of the dataset that should be used. If no tag is provided,
-        and multiple datasets are available, an error is raised.
     var_key_out: str, optional
         variable name used to store the outcome. If not provided, this script will just
         return the averages and not change the dataset inplace.
@@ -32,14 +31,11 @@ def m_add_horizontal_average(gcmt, var_key, var_key_out=None, area_key='area_c',
     """
     # print information
     wrt.write_status('STAT', 'Calculate horizontal average')
-    if tag is not None:
-        wrt.write_status('INFO', 'Tag: ' + tag)
     wrt.write_status('INFO', 'Variable to be plotted: ' + var_key)
     if var_key_out is not None:
         wrt.write_status('INFO', 'Output variable: ' + var_key_out)
     wrt.write_status('INFO', 'Area of grid cells: ' + area_key)
 
-    ds = gcmt.get_one_model(tag)
     avg = (ds[area_key] * ds[var_key]).sum(dim=[c['lon'], c['lat']]) / ds[area_key].sum(dim=[c['lon'], c['lat']])
 
     if var_key_out is not None:
@@ -48,7 +44,7 @@ def m_add_horizontal_average(gcmt, var_key, var_key_out=None, area_key='area_c',
     return avg
 
 
-def m_add_meridional_overturning(ds, v_data='V', var_key_out=None, tag=None):
+def m_add_meridional_overturning(ds, v_data='V', var_key_out=None):
     """
     Calculate meridional overturning streamfunction. This quantity psi is 
     computed by integrating the zonal-mean meridional velocity \bar V along
@@ -61,11 +57,10 @@ def m_add_meridional_overturning(ds, v_data='V', var_key_out=None, tag=None):
 
     Parameters
     ----------
-    var_key: str
-        The key of the meridional velocity that should be used to calculate the outcome
-    tag : str, optional
-        The tag of the dataset that should be used. If no tag is provided,
-        and multiple datasets are available, an error is raised.
+    ds: xarray.Dataset
+        The dataset for which the calculation should be performed
+    v_data: str
+        The key that holds the data to meridional velocity
     var_key_out: str, optional
         variable name used to store the outcome. If not provided, this script will just
         return the overturning circulation and not change the dataset inplace.
@@ -73,8 +68,6 @@ def m_add_meridional_overturning(ds, v_data='V', var_key_out=None, tag=None):
 
     # print information
     wrt.write_status('STAT', 'Calculate meridional overturning streamfunction')
-    if tag is not None:
-        wrt.write_status('INFO', 'Tag: ' + tag)
     if var_key_out is not None:
         wrt.write_status('INFO', 'Output variable: ' + var_key_out)
 
