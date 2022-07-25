@@ -1,15 +1,16 @@
-# ==============================================================
-#                       gcmt Interface Class
-# ==============================================================
-#  This class incorporates interfacing methods for gcmt
-#  datasets. The interfacing options are driven by the frequent
-#  needs of users to transform GCM output to formats readable by
-#  e.g.: - petitRADTRANS            (Molliere+2019)
-#        - gCMCRT                   (Lee+2022)
-#        - 1D and pseudo-2D PAC     (Agundez+2014)
-#        - ...
-# ==============================================================
-
+"""
+==============================================================
+                      gcmt Interface Class
+==============================================================
+ This class incorporates interfacing methods for gcmt
+ datasets. The interfacing options are driven by the frequent
+ needs of users to transform GCM output to formats readable by
+ e.g.: - petitRADTRANS            (Molliere+2019)
+       - gCMCRT                   (Lee+2022)
+       - 1D and pseudo-2D PAC     (Agundez+2014)
+       - ...
+==============================================================
+"""
 import numpy as np
 import xarray as xr
 
