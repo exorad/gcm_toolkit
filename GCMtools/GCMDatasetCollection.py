@@ -62,13 +62,13 @@ class GCMDatasetCollection(UserDict):
         """
 
         # select the appropriate dataset
-        ds = self.get_models(tag=tag)
+        ds = self.get_models(tag=tag, always_dict=False)
         # Raise error, if key not in collection and raise error is specified
         if ds is None and raise_error:
             raise KeyError('No dataset for given key available.')
         # if a collection is given (because multiple datasets are available, and
         # the tag is not provided), avoid ambiguity by raising an error
-        if isinstance(ds, GCMDatasetCollection) and len(ds) > 1 and tag is None:
+        if isinstance(ds, GCMDatasetCollection):
             wrt.write_status('ERROR', 'Ambiguous task. Please provide a tag.')
 
         return ds

@@ -56,3 +56,14 @@ Both ways are equally powerful and flexible.
 .. autofunction:: GCMtools.gcm_plotting.zonal_mean
 
 .. autofunction:: GCMtools.gcm_plotting.time_evol
+
+
+Interface
+---------
+``GCMTools`` comes with some interfaces to other codes.
+We currently have support for ``petitRADTRANS`` to calculate spectra and phasecurves with ``prt_phasecure``.
+
+.. autoclass:: GCMtools.utils.interface.pRTInterface
+    :members: __init__, set_data, chem_from_poorman, calc_phase_spectrum, phase_curve
+
+

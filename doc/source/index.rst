@@ -28,10 +28,10 @@ Capabilities
 - Plotting (isobaric slices, zonal means, etc.)
 - readin capabilities for exorad
 - load and save capabilities of the ``GCMTools`` abstraction
+- interface to ``petitRADTRANS`` for phasecurves, etc.
 
 **Planned functionality:**
 
-- interface to ``petitRADTRANS`` for phasecurves, etc.
 - interface to ``gCMCRT`` for complex radiative transfer calculations
 
 .. toctree::
@@ -42,6 +42,7 @@ Capabilities
    usage
    cli
    notebooks/demo.ipynb
+   notebooks/petitRADTRANS.ipynb
 
    
 Contributers
