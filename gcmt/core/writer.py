@@ -3,7 +3,7 @@
 # ==============================================================
 #  This file contains all functions to handle informative and
 #  diagnostic output during the run. If writer.on = False, no
-#  output will be produced and GCMtools will run silently. If a
+#  output will be produced and gcmt will run silently. If a
 #  file_name is given, it will save the output to this file.
 # ==============================================================
 

@@ -57,12 +57,12 @@ def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None
 def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa'):
     """
     Read in function for GCM data that has been reduced and saved according
-    to the GCMtools GCMDataset format.
+    to the gcmt GCMDataset format.
 
     Parameters
     ----------
     data_path : str
-        Folder path to the reduced (GCMtools) data.
+        Folder path to the reduced (gcmt) data.
     time_unit_in: str
         units of time dimension in input dataset
     p_unit_in: str
@@ -97,9 +97,9 @@ def _add_attrs_and_store(gcmt, ds, tag):
 
     # store tag in the dataset attributes
     ds.attrs['tag'] = tag
-    # check if the dataset has all necessary GCMtools attributes
+    # check if the dataset has all necessary gcmt attributes
     if not is_the_data_basic(ds):
-        raise ValueError('This dataset is not supported by GCMtools\n')
+        raise ValueError('This dataset is not supported by gcmt\n')
 
     # store dataset
     gcmt[tag] = ds
@@ -112,7 +112,7 @@ def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
     Parameters
     ----------
     dir : str
-        directory at which the GCMtools datasets should be stored.
+        directory at which the gcmt datasets should be stored.
     method : str, optional
         Datasets can be stored as '.zarr' or '.nc'. Decide which type you prefer.
         Defaults to '.nc'.
@@ -129,7 +129,7 @@ def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
     """
 
     # print information
-    wrt.write_status('STAT', 'Save current GCMs within GCMtools')
+    wrt.write_status('STAT', 'Save current GCMs within gcmt')
     wrt.write_status('INFO', 'File path: ' + dir)
     if tag is None:
         wrt.write_message('INFO', 'Tag: All tags were stored')
@@ -177,7 +177,7 @@ def m_load(gcmt, dir, method='nc', tag=None):
     Parameters
     ----------
     dir : str
-        directory at which the GCMtools datasets are stored
+        directory at which the gcmt datasets are stored
     method : str, optional
         Should be the same method with which you stored the data
     tag: str, optional
@@ -185,7 +185,7 @@ def m_load(gcmt, dir, method='nc', tag=None):
     """
 
     # print information
-    wrt.write_status('STAT', 'Load saved GCMs to GCMtools')
+    wrt.write_status('STAT', 'Load saved GCMs to gcmt')
     wrt.write_status('INFO', 'File path: ' + dir)
     if tag is None:
         wrt.write_message('INFO', 'Tag: All tags were stored')

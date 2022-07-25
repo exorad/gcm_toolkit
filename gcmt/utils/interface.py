@@ -1,7 +1,7 @@
 # ==============================================================
-#                       GCMtools Interface Class
+#                       gcmt Interface Class
 # ==============================================================
-#  This class incorporates interfacing methods for GCMtools
+#  This class incorporates interfacing methods for gcmt
 #  datasets. The interfacing options are driven by the frequent
 #  needs of users to transform GCM output to formats readable by
 #  e.g.: - petitRADTRANS            (Molliere+2019)
@@ -35,7 +35,7 @@ class _Chemistry:
         Parameters
         ----------
         ds: DataSet
-            A GCMtools-compatible dataset of a 3D climate simulation.
+            A gcmt-compatible dataset of a 3D climate simulation.
             Should not have a time coordinate anymore.
 
         """
@@ -130,7 +130,7 @@ class _Chemistry:
 
 class Interface:
     """
-    The GCMtools interfacing class which implements common
+    The gcmt interfacing class which implements common
     interfacing functionalities to different codes.
 
     Methods
@@ -417,7 +417,7 @@ class pRTInterface(Interface):
 #         Parameters
 #         ----------
 #         ds: DataSet
-#             A GCMtools-compatible dataset of a 3D climate simulation.
+#             A gcmt-compatible dataset of a 3D climate simulation.
 #
 #         """
 #         pass

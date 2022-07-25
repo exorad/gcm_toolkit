@@ -15,7 +15,7 @@ from gcmt.core.const import VARNAMES as c
 def is_the_data_basic(dataset):
     """
     Check if the dataset fulfills the minimal requirements for
-    a dataset to be used with GCMtools. If not, this function
+    a dataset to be used with gcmt. If not, this function
     raises a Value error.
 
     Parameters
@@ -109,7 +109,7 @@ def is_the_data_basic(dataset):
 def is_the_data_cloudy(dataset):
     """
     Check if the dataset fulfills the minimal requirements for
-    a dataset to be used with GCMtools.
+    a dataset to be used with gcmt.
 
     Parameters
     ----------

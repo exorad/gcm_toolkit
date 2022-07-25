@@ -1,7 +1,7 @@
 import cubedsphere.const as cc
 
 # ==============================================================
-#                       GCMtools const
+#                       gcmt const
 # ==============================================================
 # Consistent namings of variables
 #

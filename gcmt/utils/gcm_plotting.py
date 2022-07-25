@@ -1,7 +1,7 @@
 # ==============================================================
-#                   GCMtools Plotting Library
+#                   gcmt Plotting Library
 # ==============================================================
-#  This library incorporates all of GCMtools plotting
+#  This library incorporates all of gcmt plotting
 #  functionalities. We aim to have flexible and easy-to-use
 #  plotting routines for the most common GCM data visualizations.
 # ==============================================================
@@ -27,7 +27,7 @@ def isobaric_slice(ds, var_key, p, time=-1, lookup_method='exact', ax=None,
     Parameters
     ----------
     ds : DataSet
-        A GCMtools-compatible dataset of a 3D climate simulation.
+        A gcmt-compatible dataset of a 3D climate simulation.
     var_key : str
         The key of the variable quantity that should be plotted.
     p : float
@@ -152,7 +152,7 @@ def plot_horizontal_wind(ds, ax=None, sample_one_in=1, arrowColor='k', windstrea
     Parameters
     ----------
     ds : DataSet
-        A GCMtools-compatible dataset where only latitude and longitude are
+        A gcmt-compatible dataset where only latitude and longitude are
         non-singleton dimensions.
     ax : matplotlib.axes.Axes, optional
         The axis on which you want your plot to appear.
@@ -251,7 +251,7 @@ def time_evol(ds, var_key, ax=None, fs_labels=None, cbar_kwargs=None, add_colorb
     Parameters
     ----------
     ds : DataSet
-        A GCMtools-compatible dataset of a 3D climate simulation.
+        A gcmt-compatible dataset of a 3D climate simulation.
     var_key : str
         The key of the variable quantity that should be plotted.
     ax : matplotlib.axes.Axes, optional
@@ -343,7 +343,7 @@ def zonal_mean(ds, var_key, time=-1, ax=None, cbar_kwargs=None,
     Parameters
     ----------
     ds : DataSet
-        A GCMtools-compatible dataset of a 3D climate simulation.
+        A gcmt-compatible dataset of a 3D climate simulation.
     var_key : str
         The key of the variable quantity that should be plotted.
     time : int, optional

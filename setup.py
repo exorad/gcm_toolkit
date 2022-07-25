@@ -17,11 +17,11 @@ INSTALL_REQUIRES = [
 
 setup(
     name='gcmt',
-    version='v0.1.1',
+    version='v0.1.2',
     packages=find_packages(),
     include_package_data=True,
     scripts=['bin/convert_to_gcmt'],
-    url='https://github.com/exorad/GCMtools',
+    url='https://github.com/exorad/gcmt',
     license='MIT',
     author='Aaron David Schneider',
     author_email='aarondavid.schneider@nbi.ku.dk',

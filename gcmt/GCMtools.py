@@ -1,7 +1,7 @@
 # ==============================================================
-#                       GCMtools Main Class
+#                       gcmt Main Class
 # ==============================================================
-#  This class is the user interace of the GCMtools
+#  This class is the user interace of the gcmt
 #  functionalities. The goal is to have a clean and easy to use
 #  environment for new users of GCMs while allowing direct
 #  access to the data for more experienced users.
@@ -20,7 +20,7 @@ from gcmt.utils.interface import pRTInterface
 
 class GCMT:
     """
-    The main GCMtools class with which the user can interact.
+    The main gcmt class with which the user can interact.
 
     Attributes
     ----------
@@ -38,7 +38,7 @@ class GCMT:
 
     def __init__(self, p_unit='bar', time_unit='day', write='on'):
         """
-        Constructor for the GCMtools class.
+        Constructor for the gcmt class.
 
         Parameters
         ----------
@@ -67,10 +67,10 @@ class GCMT:
 
         # print welcome message and information
         wrt.write_hline()
-        hello = 'Welcome to GCMtools'
+        hello = 'Welcome to gcmt'
         wrt.write_message(hello, color='WARN', spacing=(wrt.Writer.line_length - len(hello)) // 2)
         wrt.write_hline()
-        wrt.write_status('STAT', 'Set up GCMtools')
+        wrt.write_status('STAT', 'Set up gcmt')
         wrt.write_status('INFO', 'pressure units: ' + self.p_unit)
         wrt.write_status('INFO', 'time units: ' + self.time_unit)
 
@@ -306,12 +306,12 @@ class GCMT:
     def read_reduced(self, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa'):
         """
         Read in function for GCM data that has been reduced and saved according
-        to the GCMtools GCMDataset format.
+        to the gcmt GCMDataset format.
 
         Parameters
         ----------
         data_path : str
-            Folder path to the reduced (GCMtools) data.
+            Folder path to the reduced (gcmt) data.
         time_unit_in: str
             units of time dimension in input dataset
         p_unit_in: str
@@ -328,7 +328,7 @@ class GCMT:
         Parameters
         ----------
         dir : str
-            directory at which the GCMtools datasets should be stored.
+            directory at which the gcmt datasets should be stored.
         method : str, optional
             Datasets can be stored as '.zarr' or '.nc'. Decide which type you prefer.
             Defaults to '.nc'.
@@ -352,7 +352,7 @@ class GCMT:
         Parameters
         ----------
         dir : str
-            directory at which the GCMtools datasets are stored
+            directory at which the gcmt datasets are stored
         method : str, optional
             Should be the same method with which you stored the data
         tag: str, optional
@@ -394,7 +394,7 @@ class GCMT:
         Parameters
         ----------
         ds : DataSet
-            A GCMtools-compatible dataset of a 3D climate simulation.
+            A gcmt-compatible dataset of a 3D climate simulation.
         var_key : str
             The key of the variable quantity that should be plotted.
         tag : str, optional
@@ -411,7 +411,7 @@ class GCMT:
         Parameters
         ----------
         ds : DataSet
-            A GCMtools-compatible dataset of a 3D climate simulation.
+            A gcmt-compatible dataset of a 3D climate simulation.
         var_key : str
             The key of the variable quantity that should be plotted.
         tag : str, optional
