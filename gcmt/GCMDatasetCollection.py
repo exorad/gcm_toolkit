@@ -1,5 +1,5 @@
+""" GCM dataset collection class to deal with GCM data """
 from collections import UserDict
-
 import gcmt.core.writer as wrt
 
 
@@ -38,8 +38,7 @@ class GCMDatasetCollection(UserDict):
         if tag is None:
             if len(self) > 1 or always_dict:
                 return self
-            else:
-                return list(self.values())[0]
+            return list(self.values())[0]
 
         # If the tag is not a string, raise an error
         wrt.write_status('ERROR', 'The given tag is not a string.')
@@ -62,13 +61,13 @@ class GCMDatasetCollection(UserDict):
         """
 
         # select the appropriate dataset
-        ds = self.get_models(tag=tag, always_dict=False)
+        dsi = self.get_models(tag=tag, always_dict=False)
         # Raise error, if key not in collection and raise error is specified
-        if ds is None and raise_error:
+        if dsi is None and raise_error:
             raise KeyError('No dataset for given key available.')
         # if a collection is given (because multiple datasets are available, and
         # the tag is not provided), avoid ambiguity by raising an error
-        if isinstance(ds, GCMDatasetCollection):
+        if isinstance(dsi, GCMDatasetCollection):
             wrt.write_status('ERROR', 'Ambiguous task. Please provide a tag.')
 
-        return ds
+        return dsi

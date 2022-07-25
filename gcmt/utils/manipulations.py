@@ -1,15 +1,17 @@
+"""
+Functions to manipulate GCM data
+"""
 import numpy as np
-
 import gcmt.core.writer as wrt
 from gcmt.core.const import VARNAMES as c
 
 
-def m_add_horizontal_average(ds, var_key, var_key_out=None, area_key='area_c'):
+def m_add_horizontal_average(dsi, var_key, var_key_out=None, area_key='area_c'):
     """
     Calculate horizontal averaged quantities. Horizontal averages
     are calculated as area-weighted averages of quantity q:
 
-        \bar q = \int{q dA}/\int{dA}
+        bar q = int{q dA}/int{dA}
 
     Parameters
     ----------
@@ -26,7 +28,7 @@ def m_add_horizontal_average(ds, var_key, var_key_out=None, area_key='area_c'):
     Returns
     -------
     avg : xarray.DataArray
-        A dataArray with reduced dimensionality, containing the horizontally 
+        A dataArray with reduced dimensionality, containing the horizontally
         averaged quantity.
     """
     # print information
@@ -36,28 +38,29 @@ def m_add_horizontal_average(ds, var_key, var_key_out=None, area_key='area_c'):
         wrt.write_status('INFO', 'Output variable: ' + var_key_out)
     wrt.write_status('INFO', 'Area of grid cells: ' + area_key)
 
-    avg = (ds[area_key] * ds[var_key]).sum(dim=[c['lon'], c['lat']]) / ds[area_key].sum(dim=[c['lon'], c['lat']])
+    avg = ((dsi[area_key] * dsi[var_key]).sum(dim=[c['lon'], c['lat']]) /
+           dsi[area_key].sum(dim=[c['lon'], c['lat']]))
 
     if var_key_out is not None:
-        ds.update({var_key_out: avg})
+        dsi.update({var_key_out: avg})
 
     return avg
 
 
-def m_add_meridional_overturning(ds, v_data='V', var_key_out=None):
+def m_add_meridional_overturning(dsi, v_data='V', var_key_out=None):
     """
-    Calculate meridional overturning streamfunction. This quantity psi is 
+    Calculate meridional overturning streamfunction. This quantity psi is
     computed by integrating the zonal-mean meridional velocity \bar V along
     pressure, and weighting with 2*pi*R_p / g times the cosine of latitude,
     where R_p is the planetary radius and g is the surface gravity:
-    
-    \bar \psi = 2 \pi R_p / g \cos{lat} \int{\bar V dp'}
+
+    bar{psi} = 2 pi R_p / g cos{lat} int{bar{V} dp'}
 
     (see e.g. Carone et al. (2018), Eq. 7)
 
     Parameters
     ----------
-    ds: xarray.Dataset
+    dsi: xarray.Dataset
         The dataset for which the calculation should be performed
     v_data: str
         The key that holds the data to meridional velocity
@@ -71,15 +74,15 @@ def m_add_meridional_overturning(ds, v_data='V', var_key_out=None):
     if var_key_out is not None:
         wrt.write_status('INFO', 'Output variable: ' + var_key_out)
 
-    V_integral = ds[v_data].cumulative_integrate(coord='Z')
+    v_integral = dsi[v_data].cumulative_integrate(coord='Z')
 
-    if ds.attrs.get('p_unit') == 'bar':
+    if dsi.attrs.get('p_unit') == 'bar':
         # convert to SI, if needed
-        V_integral = V_integral / 1.0e5
+        v_integral = v_integral / 1.0e5
 
-    psi = 2 * np.pi * np.cos(ds.lat / 180 * np.pi) * ds.R_p / ds.g * V_integral
+    psi = 2 * np.pi * np.cos(dsi.lat / 180 * np.pi) * dsi.R_p / dsi.g * v_integral
 
     if var_key_out is not None:
-        ds.update({var_key_out: psi})
+        dsi.update({var_key_out: psi})
 
     return psi

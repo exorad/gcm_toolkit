@@ -1,14 +1,15 @@
-# ==============================================================
-#                    GCM read in functionalities
-# ==============================================================
-#  This file contains all functionalities to read in from
-#  different GCMs.
-#
-#  For MITgcm, we lean heavily on Aaron Schneider's cubedsphere
-#  package, which in turn borrows functionality from xmitgcm and
-#  xESMF and xgcm.
-# ==============================================================
+"""
+==============================================================
+                   GCM read in functionalities
+==============================================================
+ This file contains all functionalities to read in from
+ different GCMs.
 
+ For MITgcm, we lean heavily on Aaron Schneider's cubedsphere
+ package, which in turn borrows functionality from xmitgcm and
+ xESMF and xgcm.
+==============================================================
+"""
 import glob
 import os
 
@@ -18,7 +19,8 @@ import gcmt.core.writer as wrt
 from gcmt.core.units import convert_pressure, convert_time
 
 
-def m_read_from_mitgcm(gcmt, data_path, iters, exclude_iters=None, d_lon=5, d_lat=4, loaded_ds=None, **kwargs):
+def m_read_from_mitgcm(gcmt, data_path, iters, exclude_iters=None, d_lon=5, d_lat=4,
+                       loaded_dsi=None, **kwargs):
     """
     Data read in for MITgcm output.
 
@@ -68,34 +70,34 @@ def m_read_from_mitgcm(gcmt, data_path, iters, exclude_iters=None, d_lon=5, d_la
 
     wrt.write_status('INFO', 'Iterations: ' + ", ".join([str(i) for i in iters]))
 
-    if loaded_ds is not None:
-        to_load = list(set(iters) - set(list(loaded_ds.iter.values)))
+    if loaded_dsi is not None:
+        to_load = list(set(iters) - set(list(loaded_dsi.iter.values)))
         if len(to_load) == 0:
-            return loaded_ds
+            return loaded_dsi
     else:
         to_load = iters
 
     # Currently, the read-in method is built using the wrapper functionality of
     # the cubedsphere package (Aaron Schneider)
     # see: https://cubedsphere.readthedocs.io/en/latest/index.html
-    ds_ascii, grid = cs.open_ascii_dataset(data_path, iters=to_load, prefix=prefix, **kwargs)
+    dsi_ascii, grid = cs.open_ascii_dataset(data_path, iters=to_load, prefix=prefix, **kwargs)
 
     # regrid the dataset
-    filename = 'tmp_gcmt_reg_weights_xya'  # generate random filename for weights to be deleted afterwards
-    regrid = cs.Regridder(ds=ds_ascii, cs_grid=grid, d_lon=d_lon, d_lat=d_lat, filename=filename)
-    [os.remove(f) for f in glob.glob(filename + "*.nc")]  # delete aux weights
-    ds = regrid()
+    filename = 'tmp_gcmt_reg_weights_xya'  # generate random filename for weights to be deleted
+    regrid = cs.Regridder(ds=dsi_ascii, cs_grid=grid, d_lon=d_lon, d_lat=d_lat, filename=filename)
+    _ = [os.remove(f) for f in glob.glob(filename + "*.nc")]  # delete aux weights
+    dsi = regrid()
 
     # convert wind, vertical dimension, time, ...
-    ds = exorad_postprocessing(ds, outdir=data_path)
+    dsi = exorad_postprocessing(dsi, outdir=data_path)
 
-    convert_pressure(ds, current_unit='Pa', goal_unit=gcmt.p_unit)
-    convert_time(ds, current_unit='iter', goal_unit=gcmt.time_unit)
+    convert_pressure(dsi, current_unit='Pa', goal_unit=gcmt.p_unit)
+    convert_time(dsi, current_unit='iter', goal_unit=gcmt.time_unit)
 
-    if loaded_ds is not None:
-        ds = xr.merge([ds, loaded_ds])
+    if loaded_dsi is not None:
+        dsi = xr.merge([dsi, loaded_dsi])
 
-    return ds
+    return dsi
 
 
 def find_iters_mitgcm(data_path, prefixes):

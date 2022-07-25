@@ -1,3 +1,4 @@
+""" init function """
 from .GCMtools import GCMT
 from .utils import gcm_plotting
 

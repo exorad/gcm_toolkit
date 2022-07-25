@@ -1,13 +1,14 @@
-# ==============================================================
-#                         Passport file
-# ==============================================================
-#  This file is used to classify input data. All functionalities
-#  here return a boolean which states True if the given input
-#  dataset fulfills all the classification requirements of the
-#  given function. The check for a basic function will raise a
-#  value error if the conditions are not fulfilled.
-# ==============================================================
-
+"""
+==============================================================
+                        Passport file
+==============================================================
+ This file is used to classify input data. All functionalities
+ here return a boolean which states True if the given input
+ dataset fulfills all the classification requirements of the
+ given function. The check for a basic function will raise a
+ value error if the conditions are not fulfilled.
+==============================================================
+"""
 import gcmt.core.writer as wrt
 from gcmt.core.const import VARNAMES as c
 
@@ -29,9 +30,6 @@ def is_the_data_basic(dataset):
         Returns true if the dataset fulfills the basic
         requirements or raises a Value error if not.
     """
-
-    # general information
-    __author__ = 'Sven Kiefer'
 
     # set up trigger variable
     is_the_data_ok = True
@@ -122,9 +120,6 @@ def is_the_data_cloudy(dataset):
         Returns true if the dataset fulfills the basic
         requirements or False if not.
     """
-
-    # general information
-    __author__ = 'Sven Kiefer'
 
     # check first if the dataset fulfills the basic requirements
     is_the_data_basic(dataset)
