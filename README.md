@@ -23,7 +23,7 @@
 
 ## Get Started
 
-Check the docs [docs](https://gcmt.readthedocs.io/en/latest/notebooks/demo.html)!
+Read the [docs](https://gcmt.readthedocs.io/en/latest/)
 
 ### Installation
 
@@ -40,7 +40,7 @@ cubedsphere (see https://cubedsphere.readthedocs.io/en/latest/index.html)
 
 ### Running the first example
 
-Check the docs []
+Check the get started in the [docs](https://gcmt.readthedocs.io/en/latest/notebooks/demo.html)
 
 ## Miscellaneous Documentation
 
@@ -51,6 +51,6 @@ Check the docs []
 
 ## Contact
 
-Feel free to contact one of the main authors: **Aaron Schneider**, **Sven Kiefer**, or **[Robin Baeyens](https://www.linkedin.com/in/robin-baeyens/)**.
+Feel free to contact one of the main authors: **[Aaron Schneider](https://aaron-schneider.de)**, **[Sven Kiefer](https://kiefersv.github.io/)**, or **[Robin Baeyens](https://www.linkedin.com/in/robin-baeyens/)**.
 
 Project url: https://github.com/exorad/gcmt
