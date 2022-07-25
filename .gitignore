@@ -2,7 +2,6 @@
 *.npy
 *.nc
 *.idea
-!example_dataset.nc
 doc/source/notebooks/HD2.tar.gz
 doc/source/notebooks/HD2_test/
 

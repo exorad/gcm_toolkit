@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'GCMTools'
+project = 'gcmt'
 copyright = '2022, Aaron Schneider'
 author = 'Aaron Schneider'
 

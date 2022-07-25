@@ -1,8 +1,8 @@
 Command Line Interface
 ======================
 
-``GCMtools`` also provides some functionality to be used from the command line.
-The functionalites explained below are scripts, which are automatically installed into your environment, when installing ``GCMtools``.
+``gcmt`` also provides some functionality to be used from the command line.
+The functionalites explained below are scripts, which are automatically installed into your environment, when installing ``gcmt``.
 You can use them in your terminal by hitting the name of the script (e.g.:).
 Information on the required arguments can be found below, or by using the ``-h`` flag.
 
@@ -17,7 +17,7 @@ The script could be used in the following way:
 
 1. Do climate simulation (remotely on cluster)
 2. Run ``convert_to_gcmt`` to convert the data to netcdf
-3. Download the netcdf data and load it into GCMtools
+3. Download the netcdf data and load it into ``GCMT``
 4. Work on the data
 
 **Usage:**
@@ -48,9 +48,9 @@ The following options are available in the ``convert.yaml`` file:
     data_path: "run"             # Path to the raw data
     save_path: "results"         # Path at which the converted data should be stored
     method: "nc"                 # Output format used for the conversion
-    update_along_time: False     # Only relevant if method == "zarr". Checkout GCMtools.GCMT.save for more info
-    # (anything else to be passed to GCMtools.GCMT.read_raw)
+    update_along_time: False     # Only relevant if method == "zarr". Checkout gcmt.GCMT.save for more info
+    # (anything else to be passed to gcmt.GCMT.read_raw)
 
-.. Note:: All of the other arguments are input for :meth:`GCMtools.GCMT.read_raw`
+.. Note:: All of the other arguments are input for :meth:`gcmt.GCMT.read_raw`
 
-Checkout :meth:`GCMtools.GCMT.read_raw`, :meth:`GCMtools.GCMT.load` and :meth:`GCMtools.GCMT.save` to understand the usage of the above parameters.
+Checkout :meth:`gcmt.GCMT.read_raw`, :meth:`gcmt.GCMT.load` and :meth:`gcmt.GCMT.save` to understand the usage of the above parameters.
