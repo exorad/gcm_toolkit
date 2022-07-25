@@ -81,7 +81,7 @@ def isobaric_slice(dsi, var_key, pres, time=-1, lookup_method='exact', axs=None,
     if cbar_kwargs is None:
         cbar_kwargs = {}
 
-    font_labels = dict(fontsize = fs_labels) if fs_labels is not None else {}
+    font_labels = dict(fontsize=fs_labels) if fs_labels is not None else {}
     font_ticks = dict(fontsize=fs_ticks) if fs_ticks is not None else {}
 
     # retrieve default units
@@ -297,7 +297,7 @@ def time_evol(dsi, var_key, axs=None, fs_labels=None, cbar_kwargs=None,
     if cbar_kwargs is None:
         cbar_kwargs = {}
 
-    font_labels = dict(fontsize = fs_labels) if fs_labels is not None else {}
+    font_labels = dict(fontsize=fs_labels) if fs_labels is not None else {}
 
     if axs is None:
         plt.figure()

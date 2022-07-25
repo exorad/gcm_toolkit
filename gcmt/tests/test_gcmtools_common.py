@@ -1,13 +1,13 @@
-import pytest
-import os
 import fnmatch
-import tarfile
-from contextlib import contextmanager
-import py
-import tempfile
 import hashlib
+import os
+import tarfile
+import tempfile
 import urllib.request as req
+from contextlib import contextmanager
 
+import py
+import pytest
 from xmitgcm.file_utils import clear_cache
 
 
@@ -35,21 +35,20 @@ def hide_file(origdir, *basenames):
 
 dlroot = 'https://ndownloader.figshare.com/files/'
 
-
 # parameterized fixture are complicated
 # http://docs.pytest.org/en/latest/fixture.html#fixture-parametrize
 
 # dictionary of archived experiments and some expected properties
 _experiments = {
     'HD2_test': {'dlink': dlroot + '36234516',
-            'md5': '20a49edac60f905cffdd1300916e978c',
-            'gcm': 'MITgcm',
-            'rel_data_dir': '{}/run',
-            'p_domain': [1e-5, 650],  # expected pressure domain in bar
-            'times': [12000],  # expected timestamps in days
-            'area_key': 'area_c',
-            'v_data': 'V'
-            },
+                 'md5': '20a49edac60f905cffdd1300916e978c',
+                 'gcm': 'MITgcm',
+                 'rel_data_dir': '{}/run',
+                 'p_domain': [1e-5, 650],  # expected pressure domain in bar
+                 'times': [12000],  # expected timestamps in days
+                 'area_key': 'area_c',
+                 'v_data': 'V'
+                 },
 }
 
 
@@ -119,7 +118,7 @@ def untar(data_dir, basename, target_dir):
     # https://unix.stackexchange.com/questions/9665/create-tar-archive-of-a-directory-except-for-hidden-files
     # https://superuser.com/questions/259703/get-mac-tar-to-stop-putting-filenames-in-tar-archives
     bad_files = [f for f in os.listdir(fulldir)
-                 if fnmatch.fnmatch(f, '._*') ]
+                 if fnmatch.fnmatch(f, '._*')]
     for f in bad_files:
         os.remove(os.path.join(fulldir, f))
 
@@ -138,6 +137,7 @@ def file_md5_checksum(fname):
 @pytest.fixture(scope='module', params=_experiments.keys())
 def all_raw_testdata(tmpdir_factory, request):
     return setup_mds_dir(tmpdir_factory, request, _experiments)
+
 
 @pytest.fixture(scope='module', params=['HD2_test'])
 def exorad_testdata(tmpdir_factory, request):

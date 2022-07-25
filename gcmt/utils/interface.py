@@ -254,7 +254,7 @@ class pRTInterface(Interface):
         if self.ds.p_unit == 'bar':
             press = self.ds.Z.values
         elif self.ds.p_unit == 'Pa':
-            press = self.ds.Z.values/1e5
+            press = self.ds.Z.values / 1e5
         else:
             raise NotImplementedError('only pressure units in Pa and bar are implemented at the moment')
 
