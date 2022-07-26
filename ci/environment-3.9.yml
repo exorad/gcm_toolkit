@@ -7,8 +7,8 @@ dependencies:
   - pytest
   - codecov
   - pytest-cov
-  - pylint=2.14.5
-  - astroid=2.11.7
+  - pylint==2.14.5
+  - astroid==2.11.7
   - pip
   - pip:
       - git+https://github.com/MITgcm/xmitgcm.git
