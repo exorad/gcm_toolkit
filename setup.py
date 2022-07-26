@@ -6,7 +6,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
     long_description = fh.read()
 
 SETUP_REQUIRES = ['pytest-runner']
-TESTS_REQUIRE = ['pytest >= 4.0', 'coverage']
+TESTS_REQUIRE = ['pytest >= 4.0', 'coverage', "pylint"]
 INSTALL_REQUIRES = [
         "scipy>=1.7.0",
         "numpy",
