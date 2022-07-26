@@ -266,7 +266,8 @@ class PrtInterface(Interface):
         # be careful here: petitRADTRANS operates top->bot in bar
         self.prt.setup_opa_structure(np.sort(press))
 
-    def calc_phase_spectrum(self, mmw, r_star, t_star, semimajoraxis, gravity=None,
+    # pylint: disable=C0103
+    def calc_phase_spectrum(self, mmw, Rstar, Tstar, semimajoraxis, gravity=None,
                             filename=None, normalize=True,
                             **prt_args):
         """
@@ -277,9 +278,9 @@ class PrtInterface(Interface):
         mmw: float or 1D-array
             Mean molecular weight (in atomic units). Will be globally uniform if
             float or horizonatally uniform if 1D.
-        r_star: float
+        Rstar: float
             stellar radius in !cm!.
-        t_star: float
+        Tstar: float
             Temperature of the hoststar.
         semimajoraxis: float
             The distance between hoststar and planet in !cm!
@@ -327,24 +328,24 @@ class PrtInterface(Interface):
             gravity = self.dsi.attrs.get(c['g']) * 100
 
         wlen = nc.c / self.prt.freq / 1e-4
-        stellar_spectrum = self._get_stellar_spec(wlen=wlen, t_star=t_star)
+        stellar_spectrum = self._get_stellar_spec(wlen=wlen, t_star=Tstar)
         mmw = np.ones_like(self.prt.press) * mmw  # broadcast if needed
 
         spectra_raw = calc_spectra(self.prt, temp=temp_list, gravity=gravity, mmw=mmw,
-                                   abunds=abunds_list, theta_star=theta_list, Tstar=t_star,
-                                   Rstar=r_star, semimajoraxis=semimajoraxis,
+                                   abunds=abunds_list, theta_star=theta_list, Tstar=Tstar,
+                                   Rstar=Rstar, semimajoraxis=semimajoraxis,
                                    **prt_args)
         spectra_raw = np.array(spectra_raw)
 
         r_p = self.dsi.attrs.get(c['R_p'])
         if r_p is None:
             raise ValueError(
-                f'pRT needs the planetary radius [in m]. Please use this function ' +
+                'pRT needs the planetary radius [in m]. Please use this function ' +
                 'only with a GCMT processed dataset.')
 
         if normalize:
             # correct by (r_p/R_s)**2 and norm to stellar spectrum:
-            spectra_raw = spectra_raw * ((r_p * 100) / (r_star)) ** 2
+            spectra_raw = spectra_raw * ((r_p * 100) / (Rstar)) ** 2
             spectra_raw = spectra_raw / stellar_spectrum[np.newaxis, np.newaxis, :]
 
         nmus = spectra_raw.shape[1]
@@ -420,6 +421,8 @@ class PrtInterface(Interface):
             spec, _ = get_PHOENIX_spec_rad(t_star)
             stellar_intensity = np.interp(wlen * 1e-4, spec[:, 0], spec[:, 1])
             return stellar_intensity
+
+        raise ValueError('Tstar is need to define a stellar spectra.')
 
 # class PACInterface(Interface):
 #     def to_2D_PAC(self, dsi):

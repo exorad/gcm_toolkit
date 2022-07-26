@@ -10,9 +10,6 @@ class GCMDatasetCollection(UserDict):
     with a tag.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def get_models(self, tag=None, always_dict=False):
         """
         Function return all GCMs in memory. If a tag is given, only return this
@@ -41,7 +38,7 @@ class GCMDatasetCollection(UserDict):
             return list(self.values())[0]
 
         # If the tag is not a string, raise an error
-        wrt.write_status('ERROR', 'The given tag is not a string.')
+        return wrt.write_status('ERROR', 'The given tag is not a string.')
 
     def get_one_model(self, tag=None, raise_error=True):
         """

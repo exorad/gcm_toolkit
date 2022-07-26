@@ -14,7 +14,7 @@ from matplotlib.collections import LineCollection
 import gcmt.core.writer as wrt
 from gcmt.core.const import VARNAMES as c
 
-
+# pylint: disable=R0915,R0912
 def isobaric_slice(dsi, var_key, pres, time=-1, lookup_method='exact', axs=None,
                    plot_windvectors=True, wind_kwargs=None, cbar_kwargs=None,
                    add_colorbar=True, fs_labels=None, fs_ticks=None, title=None,

@@ -117,7 +117,7 @@ def find_iters_mitgcm(data_path, prefixes):
     """
     iters_list = []
     for prefix in prefixes:
-        files = glob.glob(os.path.join(data_path, "{}.*.data".format(prefix)))
+        files = glob.glob(os.path.join(data_path, f"{prefix}.*.data"))
 
         iters = [int(f.split('.')[-2]) for f in files]
         iters_list.append(iters)
