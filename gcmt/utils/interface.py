@@ -221,7 +221,7 @@ class Interface:
                                                 feh_ratio=feh_ratio)
 
 
-class Prt_interface(Interface):
+class PrtInterface(Interface):
     """
     Interface with petitRADTRANS
     """

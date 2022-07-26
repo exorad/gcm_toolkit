@@ -1,6 +1,6 @@
 """testing manipulations functions"""
 from gcmt import GCMT
-# from gcmt.tests.test_gcmtools_common import all_raw_testdata
+from gcmt.tests.test_gcmtools_common import all_raw_testdata
 
 
 def test_horizontal_average(all_raw_testdata):

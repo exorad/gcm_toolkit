@@ -5,7 +5,7 @@ import numpy as np
 import xarray
 from gcmt import GCMT
 from gcmt.GCMDatasetCollection import GCMDatasetCollection
-# from gcmt.tests.test_gcmtools_common import all_raw_testdata
+from gcmt.tests.test_gcmtools_common import all_raw_testdata
 
 
 def test_create_gcmt_minimal(all_raw_testdata):
