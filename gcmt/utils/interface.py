@@ -331,8 +331,8 @@ class PrtInterface(Interface):
         mmw = np.ones_like(self.prt.press) * mmw  # broadcast if needed
 
         spectra_raw = calc_spectra(self.prt, temp=temp_list, gravity=gravity, mmw=mmw,
-                                   abunds=abunds_list, theta_star=theta_list, t_star=t_star,
-                                   r_star=r_star, semimajoraxis=semimajoraxis,
+                                   abunds=abunds_list, theta_star=theta_list, Tstar=t_star,
+                                   Rstar=r_star, semimajoraxis=semimajoraxis,
                                    **prt_args)
         spectra_raw = np.array(spectra_raw)
 
