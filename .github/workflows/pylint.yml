@@ -19,7 +19,7 @@ jobs:
         python -m pip install -e .
         pip install pylint
         pip install matplotlib
-        pip install cubedsphere
+        pip install cubedsphere==0.2
         pip install xgcm
         pip install prt_phasecurve
     - name: Analysing the code with pylint
