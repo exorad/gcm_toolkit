@@ -16,7 +16,6 @@ import gcmt.utils.manipulations as mani
 import gcmt.utils.read_and_write as raw
 from gcmt.GCMDatasetCollection import GCMDatasetCollection
 from gcmt.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
-from gcmt.utils.interface import PrtInterface
 from gcmt.utils.passport import is_the_data_basic
 
 

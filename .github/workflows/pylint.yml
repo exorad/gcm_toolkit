@@ -18,6 +18,10 @@ jobs:
       run: |
         python -m pip install -e .
         pip install pylint
+        pip install matplotlib
+        pip install cubedsphere
+        pip install xgcm
+        pip install prt_phasecurve
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py') --fail-under=9 --ignore-paths=doc,gcmt/tests
