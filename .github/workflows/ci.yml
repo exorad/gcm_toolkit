@@ -58,11 +58,11 @@ jobs:
           env_vars: OS,PYTHON
           name: codecov-umbrella
           fail_ci_if_error: false
-#      - name: Analysing the code with pylint
-#        shell: bash -l {0}
-#        run: |
-#          pip install pylint
-#          pylint $(git ls-files '*.py') --fail-under=9.5 --ignore-paths=doc,gcmt/tests --disable=R0913,R0914,C0415
+      - name: Analysing the code with pylint
+        shell: bash -l {0}
+        run: |
+          pip install pylint=2.14.5
+          pylint $(git ls-files '*.py') --fail-under=9.5 --ignore-paths=doc,gcmt/tests --disable=R0913,R0914,C0415
 
   xarray-master:
     name: Build xarray-master
