@@ -4,7 +4,7 @@ General GCMT tests
 import numpy as np
 import xarray
 from gcmt import GCMT
-from gcmt.GCMDatasetCollection import GCMDatasetCollection
+from gcmt.gcmDatasetCollection import GCMDatasetCollection
 from gcmt.tests.test_gcmtools_common import all_raw_testdata
 
 

@@ -14,9 +14,10 @@ import gcmt.core.writer as wrt
 import gcmt.utils.gcm_plotting as gcmplt
 import gcmt.utils.manipulations as mani
 import gcmt.utils.read_and_write as raw
-from gcmt.GCMDatasetCollection import GCMDatasetCollection
+from gcmt.gcmDatasetCollection import GCMDatasetCollection
 from gcmt.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
 from gcmt.utils.passport import is_the_data_basic
+from gcmt.utils.interface import  PrtInterface
 
 
 class GCMT:
@@ -443,4 +444,4 @@ class GCMT:
         Interface: pRTInterface
             The interface object that is used to create phasecurves/spectra/etc
         """
-        return pRTInterface(self, prt)
+        return PrtInterface(self, prt)
