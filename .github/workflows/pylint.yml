@@ -14,14 +14,14 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install -e .
-        pip install pylint
-        pip install matplotlib
-        pip install cubedsphere==0.2
-        pip install xgcm
-        pip install prt_phasecurve
+#    - name: Install dependencies
+#      run: |
+#        python -m pip install -e .
+#        pip install pylint
+#        pip install matplotlib
+#        pip install cubedsphere==0.2
+#        pip install xgcm
+#        pip install prt_phasecurve
 #    - name: Analysing the code with pylint
 #      run: |
 #        pylint $(git ls-files '*.py') --fail-under=9.5 --ignore-paths=doc,gcmt/tests --disable=R0913,R0914,C0415

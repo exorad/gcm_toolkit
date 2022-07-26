@@ -45,7 +45,7 @@ jobs:
         shell: bash -l {0}
         run: |
           python -m pip install -e .
-          conda install pylint
+          conda install -c anaconda pylint
           conda list
       - name: Run Tests
         shell: bash -l {0}
