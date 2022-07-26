@@ -7,7 +7,6 @@ dependencies:
   - pytest
   - codecov
   - pytest-cov
-  - pylint
   - pip
   - pip:
       - git+https://github.com/MITgcm/xmitgcm.git
