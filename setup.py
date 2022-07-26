@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r", encoding='utf-8') as fh:
     long_description = fh.read()
 
-SETUP_REQUIRES = ['pytest-runner', 'pylint']
+SETUP_REQUIRES = ['pytest-runner']
 TESTS_REQUIRE = ['pytest >= 4.0', 'coverage']
 INSTALL_REQUIRES = [
         "scipy>=1.7.0",
