@@ -58,7 +58,7 @@ def get_parameter(datafile, keyword, default=None):
     return default
 
 
-def convert_winds_and_t(dsi, t_dim, w_dim):
+def convert_winds_and_t(dsi, temp_dim, w_dim):
     """
     Convert winds and temperature in dataset.
     Winds are converted from Pa/s to m/s.
@@ -68,7 +68,7 @@ def convert_winds_and_t(dsi, t_dim, w_dim):
     ----------
     dsi: Dataset
         dataset to be converted
-    t_dim: str
+    temp_dim: str
         temperature datadimension to be converted
     w_dim: str
         vertical wind datadimension to be converted
@@ -79,10 +79,10 @@ def convert_winds_and_t(dsi, t_dim, w_dim):
         dataset with converted dimension
     """
     kappa = dsi.attrs["R"] / dsi.attrs["cp"]
-    dsi[t_dim] = dsi[t_dim] * (dsi[c.Z] / dsi.attrs["p_ref"]) ** kappa
+    dsi[temp_dim] = dsi[temp_dim] * (dsi[c.Z] / dsi.attrs["p_ref"]) ** kappa
 
     # calculate scale height
-    h_val = dsi.attrs["R"] / dsi.attrs["g"] * dsi[t_dim]
+    h_val = dsi.attrs["R"] / dsi.attrs["g"] * dsi[temp_dim]
 
     # calculate geometric height
     dsi[c.Z_geo] = - h_val * np.log(dsi[c.Z] / dsi.attrs["p_ref"])
