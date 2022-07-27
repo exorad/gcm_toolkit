@@ -18,7 +18,7 @@ INSTALL_REQUIRES = [
 
 setup(
     name='gcmt',
-    version='v0.1.2',
+    version='v0.1.3',
     packages=find_packages(),
     include_package_data=True,
     scripts=['bin/convert_to_gcmt'],
