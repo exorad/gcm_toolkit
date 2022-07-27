@@ -1,13 +1,17 @@
-import pytest
-import os
-import fnmatch
-import tarfile
-from contextlib import contextmanager
-import py
-import tempfile
-import hashlib
-import urllib.request as req
+"""
+Common functions for gcmt testing
+"""
 
+import fnmatch
+import hashlib
+import os
+import tarfile
+import tempfile
+import urllib.request as req
+from contextlib import contextmanager
+
+import py
+import pytest
 from xmitgcm.file_utils import clear_cache
 
 
@@ -33,30 +37,29 @@ def hide_file(origdir, *basenames):
             newpath.rename(oldpath)
 
 
-dlroot = 'https://ndownloader.figshare.com/files/'
-
+DLROOT = 'https://ndownloader.figshare.com/files/'
 
 # parameterized fixture are complicated
 # http://docs.pytest.org/en/latest/fixture.html#fixture-parametrize
 
 # dictionary of archived experiments and some expected properties
 _experiments = {
-    'HD2_test': {'dlink': dlroot + '36234516',
-            'md5': '20a49edac60f905cffdd1300916e978c',
-            'gcm': 'MITgcm',
-            'rel_data_dir': '{}/run',
-            'p_domain': [1e-5, 650],  # expected pressure domain in bar
-            'times': [12000],  # expected timestamps in days
-            'area_key': 'area_c',
-            'v_data': 'V'
-            },
+    'HD2_test': {'dlink': DLROOT + '36234516',
+                 'md5': '20a49edac60f905cffdd1300916e978c',
+                 'gcm': 'MITgcm',
+                 'rel_data_dir': '{}/run',
+                 'p_domain': [1e-5, 650],  # expected pressure domain in bar
+                 'times': [12000],  # expected timestamps in days
+                 'area_key': 'area_c',
+                 'v_data': 'V'
+                 },
 }
 
 
-def setup_mds_dir(tmpdir_factory, request, db):
+def setup_mds_dir(tmpdir_factory, request, dbs):
     """Helper function for setting up test cases."""
     expt_name = request.param
-    expected_results = db[expt_name]
+    expected_results = dbs[expt_name]
     target_dir = str(tmpdir_factory.mktemp('mdsdata'))
     try:
         # user-defined directory for test datasets
@@ -96,7 +99,6 @@ def download_archive(url, filename):
     """
 
     req.urlretrieve(url, filename)
-    return None
 
 
 def untar(data_dir, basename, target_dir):
@@ -104,32 +106,32 @@ def untar(data_dir, basename, target_dir):
     directory."""
     datafile = os.path.join(data_dir, basename + '.tar.gz')
     if not os.path.exists(datafile):
-        raise IOError('Could not find data file %s' % datafile)
-    tar = tarfile.open(datafile)
-    tar.extractall(target_dir)
-    tar.close()
+        raise IOError('Could not find data file ' + datafile)
+    with tarfile.open(datafile) as tar:
+        tar.extractall(target_dir)
     # subdirectory where file should have been untarred.
     # assumes the directory is the same name as the tar file itself.
     # e.g. testdata.tar.gz --> testdata/
     fulldir = os.path.join(target_dir, basename)
     if not os.path.exists(fulldir):
-        raise IOError('Could not find tar file output dir %s' % fulldir)
+        raise IOError(r'Could not find tar file output dir ' + fulldir)
     # the actual data lives in a file called testdata
     # clean up ugly weird hidden files that mac-os sometimes puts in the archive
     # https://unix.stackexchange.com/questions/9665/create-tar-archive-of-a-directory-except-for-hidden-files
     # https://superuser.com/questions/259703/get-mac-tar-to-stop-putting-filenames-in-tar-archives
     bad_files = [f for f in os.listdir(fulldir)
-                 if fnmatch.fnmatch(f, '._*') ]
-    for f in bad_files:
-        os.remove(os.path.join(fulldir, f))
+                 if fnmatch.fnmatch(f, '._*')]
+    for fil in bad_files:
+        os.remove(os.path.join(fulldir, fil))
 
     return fulldir
 
 
 def file_md5_checksum(fname):
+    """update md5 file"""
     hash_md5 = hashlib.md5()
-    with open(fname, "rb") as f:
-        hash_md5.update(f.read())
+    with open(fname, "rb") as fil:
+        hash_md5.update(fil.read())
     return hash_md5.hexdigest()
 
 
@@ -137,8 +139,11 @@ def file_md5_checksum(fname):
 # http://stackoverflow.com/questions/29627341/pytest-where-to-store-expected-data
 @pytest.fixture(scope='module', params=_experiments.keys())
 def all_raw_testdata(tmpdir_factory, request):
+    """setup test data"""
     return setup_mds_dir(tmpdir_factory, request, _experiments)
+
 
 @pytest.fixture(scope='module', params=['HD2_test'])
 def exorad_testdata(tmpdir_factory, request):
+    """set up test data"""
     return setup_mds_dir(tmpdir_factory, request, _experiments)

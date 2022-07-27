@@ -1,21 +1,23 @@
-# ==============================================================
-#                       gcmt Main Class
-# ==============================================================
-#  This class is the user interace of the gcmt
-#  functionalities. The goal is to have a clean and easy to use
-#  environment for new users of GCMs while allowing direct
-#  access to the data for more experienced users.
-# ==============================================================
+"""
+==============================================================
+                      gcmt Main Class
+==============================================================
+ This class is the user interace of the gcmt
+ functionalities. The goal is to have a clean and easy to use
+ environment for new users of GCMs while allowing direct
+ access to the data for more experienced users.
+==============================================================
+"""
 import xarray
 
 import gcmt.core.writer as wrt
 import gcmt.utils.gcm_plotting as gcmplt
 import gcmt.utils.manipulations as mani
 import gcmt.utils.read_and_write as raw
-from gcmt.utils.passport import is_the_data_basic
-from gcmt.GCMDatasetCollection import GCMDatasetCollection
+from gcmt.gcm_dataset_collection import GCMDatasetCollection
 from gcmt.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
-from gcmt.utils.interface import pRTInterface
+from gcmt.utils.passport import is_the_data_basic
+from gcmt.utils.interface import  PrtInterface
 
 
 class GCMT:
@@ -74,9 +76,9 @@ class GCMT:
         wrt.write_status('INFO', 'pressure units: ' + self.p_unit)
         wrt.write_status('INFO', 'time units: ' + self.time_unit)
 
-    # =============================================================================================================
+    # ==============================================================================================
     #   Data handling
-    # =============================================================================================================
+    # ==============================================================================================
 
     @property
     def models(self):
@@ -115,7 +117,7 @@ class GCMT:
             return self.get_one_model(tag=tag, raise_error=True)
         raise ValueError('key needs to be a string.')
 
-    def __setitem__(self, tag, ds):
+    def __setitem__(self, tag, dsi):
         """
         Add or replaces a dataset
 
@@ -123,10 +125,10 @@ class GCMT:
         ----------
         tag: str
            Tag at which the model should be stored
-        ds: xarray Dataset
+        dsi: xarray Dataset
            Dataset to add
         """
-        self._replace_model(tag, ds)
+        self._replace_model(tag, dsi)
 
     def __len__(self) -> int:
         return len(self._models)
@@ -134,7 +136,7 @@ class GCMT:
     def __bool__(self) -> bool:
         return bool(self._models)
 
-    def get(self, tag, default = None):
+    def get(self, tag, default=None):
         """
         Pythonic get, will return default if tag is not available.
 
@@ -147,12 +149,11 @@ class GCMT:
 
         Returns
         -------
-        ds or default, depending on whether ds is available
+        dsi or default, depending on whether dsi is available
         """
-        if ds := self.get_one_model(tag, raise_error=False):
-            return ds
-        else:
-            return default
+        if dsi := self.get_one_model(tag, raise_error=False):
+            return dsi
+        return default
 
     def get_one_model(self, tag=None, raise_error=True):
         """
@@ -167,7 +168,7 @@ class GCMT:
 
         Returns
         -------
-        ds: xarray Dataset
+        dsi: xarray Dataset
             Selected model
         """
         return self._models.get_one_model(tag, raise_error)
@@ -192,7 +193,7 @@ class GCMT:
         """
         return self._models.get_models(tag, always_dict)
 
-    def _replace_model(self, tag, ds):
+    def _replace_model(self, tag, dsi):
         """
         Add or replaces a dataset. Do some checks beforehand.
 
@@ -200,33 +201,33 @@ class GCMT:
         ----------
         tag: str
            Tag at which the model should be stored
-        ds: xarray Dataset
+        dsi: xarray Dataset
            Dataset to add
         """
         if not isinstance(tag, str):
             raise ValueError("The provided tag needs to be a string.")
-        if not isinstance(ds, xarray.Dataset):
+        if not isinstance(dsi, xarray.Dataset):
             raise ValueError("The provided input dataset needs to be a xarray Dataset.")
-        if not is_the_data_basic(ds):
+        if not is_the_data_basic(dsi):
             raise ValueError("The provided input dataset is not compatible.")
 
-        if ds.attrs.get('p_unit') != self.p_unit:
+        if dsi.attrs.get('p_unit') != self.p_unit:
             raise NotImplementedError('Unit conversion is needed and not yet implemented')
-        if ds.attrs.get('time_unit') != self.time_unit:
+        if dsi.attrs.get('time_unit') != self.time_unit:
             raise NotImplementedError('Unit conversion is needed and not yet implemented')
 
-        ds.attrs.update({'tag': tag})
-        self._models[tag] = ds
+        dsi.attrs.update({'tag': tag})
+        self._models[tag] = dsi
 
-    # =============================================================================================================
+    # ==============================================================================================
     #   Data manipulation
-    # =============================================================================================================
+    # ==============================================================================================
     def add_horizontal_average(self, var_key, var_key_out=None, area_key='area_c', tag=None):
         """
         Calculate horizontal averaged quantities. Horizontal averages
         are calculated as area-weighted quantities q, so that:
 
-            \bar q = \int{q dA}/\int{dA}
+            bar{q} = int{q dA}/int{dA}
 
         Parameters
         ----------
@@ -247,8 +248,9 @@ class GCMT:
             Averaged data
 
         """
-        ds = self.get_one_model(tag)
-        return mani.m_add_horizontal_average(ds, var_key, var_key_out=var_key_out, area_key=area_key)
+        dsi = self.get_one_model(tag)
+        return mani.m_add_horizontal_average(dsi, var_key, var_key_out=var_key_out,
+                                             area_key=area_key)
 
     def add_meridional_overturning(self, v_data='V', var_key_out=None, tag=None):
         """
@@ -272,12 +274,12 @@ class GCMT:
         psi: xarray.DataArray
             Horizontal overturning
         """
-        ds = self.get_one_model(tag)
-        return mani.m_add_meridional_overturning(ds, v_data=v_data, var_key_out=var_key_out)
+        dsi = self.get_one_model(tag)
+        return mani.m_add_meridional_overturning(dsi, v_data=v_data, var_key_out=var_key_out)
 
-    # =============================================================================================================
+    # ==============================================================================================
     #   Reading and writing functions
-    # =============================================================================================================
+    # ==============================================================================================
     def read_raw(self, gcm, data_path, iters='last', load_existing=False, tag=None, **kwargs):
         """
         General read in function for GCM data
@@ -301,7 +303,8 @@ class GCMT:
         kwargs: dict
             Additional options passed down to read functions
         """
-        return raw.m_read_raw(self, gcm, data_path, iters=iters, load_existing=load_existing, tag=tag, **kwargs)
+        return raw.m_read_raw(self, gcm, data_path, iters=iters, load_existing=load_existing,
+                              tag=tag, **kwargs)
 
     def read_reduced(self, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa'):
         """
@@ -319,15 +322,16 @@ class GCMT:
         tag : str
             Tag to reference the simulation in the collection of models.
         """
-        return raw.m_read_reduced(self, data_path, tag=tag, time_unit_in=time_unit_in, p_unit_in=p_unit_in)
+        return raw.m_read_reduced(self, data_path, tag=tag, time_unit_in=time_unit_in,
+                                  p_unit_in=p_unit_in)
 
-    def save(self, dir, method='nc', update_along_time=False, tag=None):
+    def save(self, direct, method='nc', update_along_time=False, tag=None):
         """
         Save function to store current member variables.
 
         Parameters
         ----------
-        dir : str
+        direct : str
             directory at which the gcmt datasets should be stored.
         method : str, optional
             Datasets can be stored as '.zarr' or '.nc'. Decide which type you prefer.
@@ -343,28 +347,28 @@ class GCMT:
         NoneType
             None
         """
-        return raw.m_save(self, dir, method=method, update_along_time=update_along_time, tag=tag)
+        return raw.m_save(self, direct, method=method, update_along_time=update_along_time, tag=tag)
 
-    def load(self, dir, method='nc', tag=None):
+    def load(self, direct, method='nc', tag=None):
         """
         Load function to load stored member variables.
 
         Parameters
         ----------
-        dir : str
+        direct : str
             directory at which the gcmt datasets are stored
         method : str, optional
             Should be the same method with which you stored the data
         tag: str, optional
             tag of the model that should be loaded. Will load all available models by default.
         """
-        return raw.m_load(self, dir, method=method, tag=tag)
+        return raw.m_load(self, direct, method=method, tag=tag)
 
-    # =============================================================================================================
+    # ==============================================================================================
     #   Plotting Functions
-    # =============================================================================================================
+    # ==============================================================================================
 
-    def isobaric_slice(self, var_key, p, tag=None, **kwargs):
+    def isobaric_slice(self, var_key, pres, tag=None, **kwargs):
         """
         Plot an isobaric slice of the given quantity at the given pressure
         level. The user can specify the DataSet to be plotted by providing the
@@ -374,7 +378,7 @@ class GCMT:
         ----------
         var_key : str
             The key of the variable quantity that should be plotted.
-        p : float
+        pres : float
             Pressure level for the isobaric slice to be plotted, expressed in
             the units specified in the dataset attributes (e.g., init of GCMT object).
         tag : str, optional
@@ -382,8 +386,8 @@ class GCMT:
             and multiple datasets are available, an error is raised.
         """
         # select the appropriate dataset
-        ds = self.get_one_model(tag)
-        return gcmplt.isobaric_slice(ds, var_key, p, **kwargs)
+        dsi = self.get_one_model(tag)
+        return gcmplt.isobaric_slice(dsi, var_key, pres, **kwargs)
 
     def time_evol(self, var_key, tag=None, **kwargs):
         """
@@ -393,7 +397,7 @@ class GCMT:
 
         Parameters
         ----------
-        ds : DataSet
+        dsi : DataSet
             A gcmt-compatible dataset of a 3D climate simulation.
         var_key : str
             The key of the variable quantity that should be plotted.
@@ -401,8 +405,8 @@ class GCMT:
             The tag of the dataset that should be plotted. If no tag is provided
             and multiple datasets are available, an error is raised.
         """
-        ds = self.get_one_model(tag)
-        return gcmplt.time_evol(ds, var_key, **kwargs)
+        dsi = self.get_one_model(tag)
+        return gcmplt.time_evol(dsi, var_key, **kwargs)
 
     def zonal_mean(self, var_key, tag=None, **kwargs):
         """
@@ -410,7 +414,7 @@ class GCMT:
 
         Parameters
         ----------
-        ds : DataSet
+        dsi : DataSet
             A gcmt-compatible dataset of a 3D climate simulation.
         var_key : str
             The key of the variable quantity that should be plotted.
@@ -419,20 +423,20 @@ class GCMT:
             and multiple datasets are available, an error is raised.
         """
         # select the appropriate dataset
-        ds = self.get_one_model(tag)
-        return gcmplt.zonal_mean(ds, var_key, **kwargs)
+        dsi = self.get_one_model(tag)
+        return gcmplt.zonal_mean(dsi, var_key, **kwargs)
 
-    # =============================================================================================================
+    # ==============================================================================================
     #   Interfaces
-    # =============================================================================================================
+    # ==============================================================================================
 
-    def get_prt_interface(self, pRT):
+    def get_prt_interface(self, prt):
         """
         Constructs the interface to petitRADTRANS
 
         Parameters
         ----------
-        pRT: petitRADTRANS.Radtrans
+        prt: petitRADTRANS.Radtrans
             A fully initialized radtrans object to be used for the calculations
 
         Returns
@@ -440,4 +444,4 @@ class GCMT:
         Interface: pRTInterface
             The interface object that is used to create phasecurves/spectra/etc
         """
-        return pRTInterface(self, pRT)
+        return PrtInterface(self, prt)

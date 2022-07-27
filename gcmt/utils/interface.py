@@ -1,19 +1,20 @@
-# ==============================================================
-#                       gcmt Interface Class
-# ==============================================================
-#  This class incorporates interfacing methods for gcmt
-#  datasets. The interfacing options are driven by the frequent
-#  needs of users to transform GCM output to formats readable by
-#  e.g.: - petitRADTRANS            (Molliere+2019)
-#        - gCMCRT                   (Lee+2022)
-#        - 1D and pseudo-2D PAC     (Agundez+2014)
-#        - ...
-# ==============================================================
-
+"""
+==============================================================
+                      gcmt Interface Class
+==============================================================
+ This class incorporates interfacing methods for gcmt
+ datasets. The interfacing options are driven by the frequent
+ needs of users to transform GCM output to formats readable by
+ e.g.: - petitRADTRANS            (Molliere+2019)
+       - gCMCRT                   (Lee+2022)
+       - 1D and pseudo-2D PAC     (Agundez+2014)
+       - ...
+==============================================================
+"""
 import numpy as np
 import xarray as xr
 
-from ..core.const import VARNAMES as c
+from gcmt.core.const import VARNAMES as c
 
 
 class _Chemistry:
@@ -26,22 +27,22 @@ class _Chemistry:
         Constructor for the Chemistry class
         """
         self.abunds = xr.Dataset()
-        self.ds = None
+        self.dsi = None
 
-    def set_data(self, ds):
+    def set_data(self, dsi):
         """
         Construct the chemistry class
 
         Parameters
         ----------
-        ds: DataSet
+        dsi: DataSet
             A gcmt-compatible dataset of a 3D climate simulation.
             Should not have a time coordinate anymore.
 
         """
-        self.ds = ds
+        self.dsi = dsi
 
-    def chem_from_poorman(self, temp_key='T', CO=0.55, FeH=0.0):
+    def chem_from_poorman(self, temp_key='T', co_ratio=0.55, feh_ratio=0.0):
         """
         Calculate equilibrium abundancies with poorman from pRT
 
@@ -50,49 +51,52 @@ class _Chemistry:
         temp_key: str, optional
             The key to the temperature field used for the abundancies.
             Defaults to T.
-        CO: float, optional
+        co_ratio: float, optional
             The C/O ratio. Currently only one global value allowed. Defaults to 0.55.
-        FeH: float, optional
+        feh_ratio: float, optional
             The metalicity ratio. Currently only one global value allowed. Defaults to 0.0.
         """
         from petitRADTRANS.poor_mans_nonequ_chem import interpol_abundances
 
-        if self.ds is None:
+        if self.dsi is None:
             raise ValueError("Data is missing. Use interface.set_data() first.")
 
-        if c['time'] in self.ds.dims:
-            raise ValueError('Dataset should not have a timedimension. Select the timestamp beforehand.')
+        if c['time'] in self.dsi.dims:
+            raise ValueError('Dataset should not have a timedimension. ' +
+                             'Select the timestamp beforehand.')
 
-        p = self.ds[c['Z']].values
-        p_unit = self.ds.attrs.get('p_unit')
+        pres = self.dsi[c['Z']].values
+        p_unit = self.dsi.attrs.get('p_unit')
         if p_unit == 'Pa':
-            p = p / 1e5  # convert to bar
+            pres = pres / 1e5  # convert to bar
         if p_unit not in ['Pa', 'bar']:
             raise NotImplementedError('can currently only deal with Pa or bar')
 
-        COs = np.ones_like(p) * CO
-        FeHs = np.ones_like(p) * FeH
+        co_ratios = np.ones_like(pres) * co_ratio
+        feh_ratios = np.ones_like(pres) * feh_ratio
 
-        var_names = interpol_abundances(np.array([0.55]), np.array([0.0]), np.array([100]), np.array([0.1])).keys()
+        var_names = interpol_abundances(np.array([0.55]), np.array([0.0]),
+                                        np.array([100]), np.array([0.1])).keys()
         for key in [c['T'], *var_names]:
             self.abunds.update({key: xr.DataArray(
-                data=np.empty((len(self.ds[c['lon']]), len(self.ds[c['lat']]), len(self.ds[c['Z']]))),
+                data=np.empty((len(self.dsi[c['lon']]), len(self.dsi[c['lat']]),
+                               len(self.dsi[c['Z']]))),
                 dims=[c['lon'], c['lat'], c['Z']],
-                coords={c['lon']: self.ds[c['lon']],
-                        c['lat']: self.ds[c['lat']],
-                        c['Z']: self.ds[c['Z']]})})
+                coords={c['lon']: self.dsi[c['lon']],
+                        c['lat']: self.dsi[c['lat']],
+                        c['Z']: self.dsi[c['Z']]})})
 
-        for lon in self.ds.lon:
-            for lat in self.ds.lat:
-                temp_i = self.ds[temp_key].sel(lon=lon, lat=lat)
-                abus = interpol_abundances(COs, FeHs, temp_i, p)
-                for sp in var_names:
-                    self.abunds[sp].loc[{c['lon']: lon, c['lat']: lat}] = abus[sp]
+        for lon in self.dsi.lon:
+            for lat in self.dsi.lat:
+                temp_i = self.dsi[temp_key].sel(lon=lon, lat=lat)
+                abus = interpol_abundances(co_ratios, feh_ratios, temp_i, pres)
+                for spi in var_names:
+                    self.abunds[spi].loc[{c['lon']: lon, c['lat']: lat}] = abus[spi]
                 self.abunds[c['T']].loc[{c['lon']: lon, c['lat']: lat}] = temp_i
 
         self.abunds.attrs.update({'p_unit': p_unit})
 
-    def to_pRT(self, prt_species, p_prt):
+    def to_prt(self, prt_species, p_prt):
         """
         Format chemistry to match petitRADTRANS requirements.
 
@@ -110,11 +114,11 @@ class _Chemistry:
         """
         prt_abu = self.abunds.copy()
         for sp_raw in prt_species:
-            sp = sp_raw.split('_')[0]
-            if sp not in self.abunds:
-                raise ValueError(f'We miss chemistry data for {sp}')
+            spi = sp_raw.split('_')[0]
+            if spi not in self.abunds:
+                raise ValueError(f'We miss chemistry data for {spi}')
 
-            prt_abu.update({sp_raw: self.abunds[sp]})
+            prt_abu.update({sp_raw: self.abunds[spi]})
 
         p_unit = self.abunds.attrs.get('p_unit')
         if p_unit not in ['Pa', 'bar']:
@@ -149,7 +153,7 @@ class Interface:
         """
         self.gcmt = gcmt
         self.chemistry = _Chemistry()
-        self.ds = None
+        self.dsi = None
 
     def set_data(self, time, tag=None, regrid_lowres=False):
         """
@@ -164,7 +168,7 @@ class Interface:
         regrid_lowres: bool, optional
             Can be useful, if your GCMT uses a very detailed grid
         """
-        self._set_data_common(time, tag=tag, regrid_lowres=False)
+        self._set_data_common(time, tag=tag, regrid_lowres=regrid_lowres)
 
     def _set_data_common(self, time, tag=None, regrid_lowres=False):
         """
@@ -179,7 +183,7 @@ class Interface:
         regrid_lowres: bool, optional
             Can be useful, if your GCMT uses a very detailed grid
         """
-        ds = self.gcmt.get_one_model(tag).sel(time=time)
+        dsi = self.gcmt.get_one_model(tag).sel(time=time)
 
         if regrid_lowres:
             dlon = 15
@@ -191,12 +195,12 @@ class Interface:
             lons = 0.5 * (lonb[1:] + lonb[:-1])
             lats = 0.5 * (latb[1:] + latb[:-1])
 
-            ds = ds.interp(lon=lons, lat=lats)
+            dsi = dsi.interp(lon=lons, lat=lats)
 
-        self.ds = ds
-        self.chemistry.set_data(ds)
+        self.dsi = dsi
+        self.chemistry.set_data(dsi)
 
-    def chem_from_poorman(self, temp_key='T', CO=0.55, FeH=0.0):
+    def chem_from_poorman(self, temp_key='T', co_ratio=0.55, feh_ratio=0.0):
         """
         Calculate equilibrium abundancies with poorman from pRT
 
@@ -205,23 +209,24 @@ class Interface:
         temp_key: str, optional
             The key to the temperature field used for the abundancies.
             Defaults to T.
-        CO: float, optional
+        co_ratio: float, optional
             The C/O ratio. Currently only one global value allowed. Defaults to 0.55.
-        FeH: float, optional
+        feh_ratio: float, optional
             The metalicity ratio. Currently only one global value allowed. Defaults to 0.0.
         """
-        if self.ds is None:
+        if self.dsi is None:
             raise ValueError("Data is missing. Use interface.set_data() first.")
 
-        return self.chemistry.chem_from_poorman(temp_key=temp_key, CO=CO, FeH=FeH)
+        return self.chemistry.chem_from_poorman(temp_key=temp_key, co_ratio=co_ratio,
+                                                feh_ratio=feh_ratio)
 
 
-class pRTInterface(Interface):
+class PrtInterface(Interface):
     """
     Interface with petitRADTRANS
     """
 
-    def __init__(self, gcmt, pRT):
+    def __init__(self, gcmt, prt):
         """
         Constructs the Interface and links to pRT.
 
@@ -233,7 +238,7 @@ class pRTInterface(Interface):
             A pRT Radtrans object
         """
         super().__init__(gcmt)
-        self.pRT = pRT
+        self.prt = prt
 
     def set_data(self, time, tag=None, regrid_lowres=False):
         """
@@ -250,17 +255,20 @@ class pRTInterface(Interface):
         """
         self._set_data_common(time, tag=tag, regrid_lowres=False)
 
-        if self.ds.p_unit == 'bar':
-            press = self.ds.Z.values
-        elif self.ds.p_unit == 'Pa':
-            press = self.ds.Z.values/1e5
+        if self.dsi.p_unit == 'bar':
+            press = self.dsi.Z.values
+        elif self.dsi.p_unit == 'Pa':
+            press = self.dsi.Z.values / 1e5
         else:
-            raise NotImplementedError('only pressure units in Pa and bar are implemented at the moment')
+            raise NotImplementedError('only pressure units in Pa and bar are ' +
+                                      'implemented at the moment')
 
         # be careful here: petitRADTRANS operates top->bot in bar
-        self.pRT.setup_opa_structure(np.sort(press))
+        self.prt.setup_opa_structure(np.sort(press))
 
-    def calc_phase_spectrum(self, mmw, Rstar, Tstar, semimajoraxis, gravity=None, filename=None, normalize=True,
+    # pylint: disable=C0103
+    def calc_phase_spectrum(self, mmw, Rstar, Tstar, semimajoraxis, gravity=None,
+                            filename=None, normalize=True,
                             **prt_args):
         """
         Calculate the spectrum for a phasecurve.
@@ -268,7 +276,8 @@ class pRTInterface(Interface):
         Parameters
         ----------
         mmw: float or 1D-array
-            Mean molecular weight (in atomic units). Will be globally uniform if float or horizonatally uniform if 1D.
+            Mean molecular weight (in atomic units). Will be globally uniform if
+            float or horizonatally uniform if 1D.
         Rstar: float
             stellar radius in !cm!.
         Tstar: float
@@ -296,53 +305,56 @@ class pRTInterface(Interface):
         from prt_phasecurve import calc_spectra
         import petitRADTRANS.nat_cst as nc
 
-        abus = self.chemistry.to_pRT(self.pRT.line_species, self.pRT.press / 1e6)
-        mu = np.cos(abus[c['lon']] * np.pi / 180.) * np.cos(abus[c['lat']] * np.pi / 180.)
-        theta_star = np.arccos(mu) * 180 / np.pi
-        pRT_abu_keys = list(set(abus.keys()) - {c['T'], 'nabla_ad', 'MMW'})
+        abus = self.chemistry.to_prt(self.prt.line_species, self.prt.press / 1e6)
+        mui = np.cos(abus[c['lon']] * np.pi / 180.) * np.cos(abus[c['lat']] * np.pi / 180.)
+        theta_star = np.arccos(mui) * 180 / np.pi
+        prt_abu_keys = list(set(abus.keys()) - {c['T'], 'nabla_ad', 'MMW'})
 
         lon, lat = np.meshgrid(abus[c['lon']], abus[c['lat']])
 
         if (lon.shape[0] * lon.shape[1]) > 300:
-            print(
-                'WARNING: Calculating a phasecurve on a fine grid takes very long. A resolution of 15 degrees is usually sufficient.')
+            print('WARNING: Calculating a phasecurve on a fine grid takes very long. ' +
+                  'A resolution of 15 degrees is usually sufficient.')
 
         theta_list, temp_list, abunds_list = [], [], []
         for i, lon_i in enumerate(np.array(lon).flat):
             lat_i = np.array(lat).flat[i]
             theta_list.append(theta_star.sel(lon=lon_i, lat=lat_i).values)
             temp_list.append(abus[c['T']].sel(lon=lon_i, lat=lat_i).values)
-            abunds_list.append({sp: abus[sp].sel(lon=lon_i, lat=lat_i).values for sp in pRT_abu_keys})
+            abunds_list.append({sp: abus[sp].sel(lon=lon_i,
+                                                 lat=lat_i).values for sp in prt_abu_keys})
 
         if gravity is None:
-            gravity = self.ds.attrs.get(c['g']) * 100
+            gravity = self.dsi.attrs.get(c['g']) * 100
 
-        wlen = nc.c / self.pRT.freq / 1e-4
-        stellar_spectrum = self._get_stellar_spec(wlen=wlen, Tstar=Tstar)
-        mmw = np.ones_like(self.pRT.press) * mmw  # broadcast if needed
+        wlen = nc.c / self.prt.freq / 1e-4
+        stellar_spectrum = self._get_stellar_spec(wlen=wlen, t_star=Tstar)
+        mmw = np.ones_like(self.prt.press) * mmw  # broadcast if needed
 
-        spectra_raw = calc_spectra(self.pRT, temp=temp_list, gravity=gravity, mmw=mmw, abunds=abunds_list,
-                                   theta_star=theta_list, Tstar=Tstar, Rstar=Rstar, semimajoraxis=semimajoraxis,
+        spectra_raw = calc_spectra(self.prt, temp=temp_list, gravity=gravity, mmw=mmw,
+                                   abunds=abunds_list, theta_star=theta_list, Tstar=Tstar,
+                                   Rstar=Rstar, semimajoraxis=semimajoraxis,
                                    **prt_args)
         spectra_raw = np.array(spectra_raw)
 
-        R_p = self.ds.attrs.get(c['R_p'])
-        if R_p is None:
+        r_p = self.dsi.attrs.get(c['R_p'])
+        if r_p is None:
             raise ValueError(
-                f'pRT needs the planetary radius [in m]. Please use this function only with a GCMT processed dataset.')
+                'pRT needs the planetary radius [in m]. Please use this function ' +
+                'only with a GCMT processed dataset.')
 
         if normalize:
-            # correct by (R_p/R_s)**2 and norm to stellar spectrum:
-            spectra_raw = spectra_raw * ((R_p * 100) / (Rstar)) ** 2
+            # correct by (r_p/R_s)**2 and norm to stellar spectrum:
+            spectra_raw = spectra_raw * ((r_p * 100) / (Rstar)) ** 2
             spectra_raw = spectra_raw / stellar_spectrum[np.newaxis, np.newaxis, :]
 
-        Nmus = spectra_raw.shape[1]
+        nmus = spectra_raw.shape[1]
         spectra = xr.DataArray(
-            data=np.empty((len(abus[c['lon']]), len(abus[c['lat']]), Nmus, len(wlen))),
+            data=np.empty((len(abus[c['lon']]), len(abus[c['lat']]), nmus, len(wlen))),
             dims=[c['lon'], c['lat'], 'imu', 'wlen'],
             coords={c['lon']: abus[c['lon']],
                     c['lat']: abus[c['lat']],
-                    'imu': range(Nmus),
+                    'imu': range(nmus),
                     'wlen': wlen})
 
         for i, lon_i in enumerate(np.array(lon).flat):
@@ -376,7 +388,8 @@ class pRTInterface(Interface):
         from prt_phasecurve import phase_curve
 
         if spectra is None and filename is None:
-            raise ValueError('please provide a file with the spectrum or a spectrum produced by calc_phase_spectrum')
+            raise ValueError('please provide a file with the spectrum or a spectrum ' +
+                             'produced by calc_phase_spectrum')
 
         if filename is not None and spectra is None:
             spectra = xr.open_dataarray(filename)
@@ -398,25 +411,28 @@ class pRTInterface(Interface):
             coords={'phase': phases,
                     'wlen': spectra.wlen})
 
-    def _get_stellar_spec(self, wlen, Tstar):
+    def _get_stellar_spec(self, wlen, t_star):
         """
-        Helperfunction from petitRADTRANS that calculates the stellar spectrum from the phoenix spectrum
+        Helperfunction from petitRADTRANS that calculates the stellar spectrum
+        from the phoenix spectrum
         """
         from petitRADTRANS.nat_cst import get_PHOENIX_spec_rad
-        if Tstar != None:
-            spec, _ = get_PHOENIX_spec_rad(Tstar)
+        if t_star is not None:
+            spec, _ = get_PHOENIX_spec_rad(t_star)
             stellar_intensity = np.interp(wlen * 1e-4, spec[:, 0], spec[:, 1])
             return stellar_intensity
 
+        raise ValueError('Tstar is need to define a stellar spectra.')
+
 # class PACInterface(Interface):
-#     def to_2D_PAC(self, ds):
+#     def to_2D_PAC(self, dsi):
 #         """
 #         Transform the given GCM dataset to a pseudo-2D PAC
 #         input file.
 #
 #         Parameters
 #         ----------
-#         ds: DataSet
+#         dsi: DataSet
 #             A gcmt-compatible dataset of a 3D climate simulation.
 #
 #         """

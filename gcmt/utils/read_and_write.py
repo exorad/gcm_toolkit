@@ -1,3 +1,6 @@
+"""
+Functions to read and write data from GCMs to variable output.
+"""
 import glob
 import os
 
@@ -42,17 +45,18 @@ def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None
 
         if tag is not None and load_existing:
             try:
-                loaded_ds = gcmt.get_models(tag)
+                loaded_dsi = gcmt.get_models(tag)
             except KeyError:
-                loaded_ds = None
+                loaded_dsi = None
         else:
-            loaded_ds = None
+            loaded_dsi = None
 
-        ds = m_read_from_mitgcm(gcmt, data_path, iters, loaded_ds=loaded_ds, **kwargs)
+        dsi = m_read_from_mitgcm(gcmt, data_path, iters, loaded_dsi=loaded_dsi, **kwargs)
     else:
         wrt.write_status('ERROR', 'The selected GCM type "' + gcm + '" is not supported')
 
-    _add_attrs_and_store(gcmt, ds, tag)
+    _add_attrs_and_store(gcmt, dsi, tag)
+
 
 def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa'):
     """
@@ -77,17 +81,17 @@ def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa
     wrt.write_status('INFO', 'pressure unit of data: ' + p_unit_in)
 
     # read dataset using xarray functionalities
-    ds = xr.open_dataset(data_path)
+    dsi = xr.open_dataset(data_path)
 
-    ds = convert_time(ds, current_unit=time_unit_in, goal_unit=gcmt.time_unit)
-    ds = convert_pressure(ds, current_unit=p_unit_in, goal_unit=gcmt.p_unit)
+    dsi = convert_time(dsi, current_unit=time_unit_in, goal_unit=gcmt.time_unit)
+    dsi = convert_pressure(dsi, current_unit=p_unit_in, goal_unit=gcmt.p_unit)
 
-    _add_attrs_and_store(gcmt, ds, tag)
+    _add_attrs_and_store(gcmt, dsi, tag)
 
     wrt.write_status('INFO', 'Tag: ' + tag)
 
 
-def _add_attrs_and_store(gcmt, ds, tag):
+def _add_attrs_and_store(gcmt, dsi, tag):
     # if no tag is given, models are just numbered as they get added
     if tag is None:
         tag = str(len(gcmt.get_models(always_dict=True)))
@@ -96,22 +100,22 @@ def _add_attrs_and_store(gcmt, ds, tag):
     wrt.write_status('INFO', 'Tag: ' + tag)
 
     # store tag in the dataset attributes
-    ds.attrs['tag'] = tag
+    dsi.attrs['tag'] = tag
     # check if the dataset has all necessary gcmt attributes
-    if not is_the_data_basic(ds):
+    if not is_the_data_basic(dsi):
         raise ValueError('This dataset is not supported by gcmt\n')
 
     # store dataset
-    gcmt[tag] = ds
+    gcmt[tag] = dsi
 
 
-def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
+def m_save(gcmt, path, method='nc', update_along_time=False, tag=None):
     """
     Save function to store current member variables.
 
     Parameters
     ----------
-    dir : str
+    path : str
         directory at which the gcmt datasets should be stored.
     method : str, optional
         Datasets can be stored as '.zarr' or '.nc'. Decide which type you prefer.
@@ -130,7 +134,7 @@ def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
 
     # print information
     wrt.write_status('STAT', 'Save current GCMs within gcmt')
-    wrt.write_status('INFO', 'File path: ' + dir)
+    wrt.write_status('INFO', 'File path: ' + path)
     if tag is None:
         wrt.write_message('INFO', 'Tag: All tags were stored')
     else:
@@ -145,7 +149,7 @@ def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
         if tag is not None and tag != key:
             continue
 
-        filename = os.path.join(dir, f"{key}.{method}")
+        filename = os.path.join(path, f"{key}.{method}")
 
         if method == 'nc':
             if os.path.isfile(filename):
@@ -153,30 +157,32 @@ def m_save(gcmt, dir, method='nc', update_along_time=False, tag=None):
             model.to_netcdf(filename)
         elif method == 'zarr':
             if os.path.isdir(filename) and update_along_time:
-                # Relies on https://stackoverflow.com/questions/65339851/xarray-dataset-to-zarr-overwrite-data-if-exists-with-append-dim
+                # Relies on https://stackoverflow.com/questions/65339851/xarray-
+                #           dataset-to-zarr-overwrite-data-if-exists-with-append-dim
                 # read structure of dataset to see what's on disk
-                ds_ondisk = xr.open_zarr(filename)
+                dsi_ondisk = xr.open_zarr(filename)
 
                 # get index of first new datapoint
-                start_ix, = np.nonzero(~np.isin(model[c['time']], ds_ondisk[c['time']]))
+                start_ix, = np.nonzero(~np.isin(model[c['time']], dsi_ondisk[c['time']]))
 
                 if len(start_ix) > 0:
                     # region of new data
                     region_new = slice(start_ix[0], model[c['time']].size)
 
                     # append structure of new data (compute=False means no data is written)
-                    model.isel(time=region_new).to_zarr(filename, append_dim=c['time'], compute=True)
+                    model.isel(time=region_new).to_zarr(filename, append_dim=c['time'],
+                                                        compute=True)
             else:
                 model.to_zarr(filename, mode='w')
 
 
-def m_load(gcmt, dir, method='nc', tag=None):
+def m_load(gcmt, path, method='nc', tag=None):
     """
     Load function to load stored member variables.
 
     Parameters
     ----------
-    dir : str
+    path : str
         directory at which the gcmt datasets are stored
     method : str, optional
         Should be the same method with which you stored the data
@@ -186,7 +192,7 @@ def m_load(gcmt, dir, method='nc', tag=None):
 
     # print information
     wrt.write_status('STAT', 'Load saved GCMs to gcmt')
-    wrt.write_status('INFO', 'File path: ' + dir)
+    wrt.write_status('INFO', 'File path: ' + path)
     if tag is None:
         wrt.write_message('INFO', 'Tag: All tags were stored')
     else:
@@ -197,22 +203,22 @@ def m_load(gcmt, dir, method='nc', tag=None):
         raise NotImplementedError("Please use zarr or nc.")
 
     if tag is None:
-        available_datasets = glob.glob(f'{dir}/*.{method}')
+        available_datasets = glob.glob(f'{path}/*.{method}')
     else:
-        available_datasets = glob.glob(f'{dir}/{tag}.{method}')
+        available_datasets = glob.glob(f'{path}/{tag}.{method}')
 
     if len(available_datasets) == 0:
         print(f'[INFO] No data available to load for method {method}')
 
     for file in available_datasets:
-        head, tail = os.path.split(file)
+        _, tail = os.path.split(file)
         tag = tail.replace(f'.{method}', '')
         if method == 'zarr':
-            ds = xr.open_zarr(file)
+            dsi = xr.open_zarr(file)
         elif method == 'nc':
-            ds = xr.open_dataset(file)
+            dsi = xr.open_dataset(file)
 
-        ds = convert_time(ds, current_unit=ds.attrs.get('time_unit'), goal_unit=gcmt.time_unit)
-        ds = convert_pressure(ds, current_unit=ds.attrs.get('p_unit'), goal_unit=gcmt.p_unit)
+        dsi = convert_time(dsi, current_unit=dsi.attrs.get('time_unit'), goal_unit=gcmt.time_unit)
+        dsi = convert_pressure(dsi, current_unit=dsi.attrs.get('p_unit'), goal_unit=gcmt.p_unit)
 
-        gcmt[tag] = ds
+        gcmt[tag] = dsi

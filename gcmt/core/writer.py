@@ -1,11 +1,14 @@
-# ==============================================================
-#                       Writer Subroutines
-# ==============================================================
-#  This file contains all functions to handle informative and
-#  diagnostic output during the run. If writer.on = False, no
-#  output will be produced and gcmt will run silently. If a
-#  file_name is given, it will save the output to this file.
-# ==============================================================
+"""
+==============================================================
+                      Writer Subroutines
+==============================================================
+ This file contains all functions to handle informative and
+ diagnostic output during the run. If writer.on = False, no
+ output will be produced and gcmt will run silently. If a
+ file_name is given, it will save the output to this file.
+==============================================================
+"""
+
 
 class Writer:
     """
@@ -21,10 +24,15 @@ class Writer:
     file_name = None
 
     # color settings
+    colors = {'DEFAULT': '\033[94m',
+              'STAT': '\033[94m',
+              'INFO': '\033[94m',
+              'ERROR': '\033[91m',
+              'E-INFO': '\033[91m',
+              'WARN': '\033[93m'
+              }
+
     ENDC = '\033[0m'
-    DEFAULT = '\033[94m'
-    ERROR = '\033[91m'
-    WARN = '\033[93m'
 
     # spare colors and layouts if needed
     # HEADER = '\033[95m'
@@ -40,7 +48,51 @@ class Writer:
     line_maxoff = 10
 
     # spacing for 1 unite of indent
-    spacer = "   "
+    spacer = {"INFO": "   ",
+              "DEFAULT": ""
+              }
+
+    # constructor
+    def __init__(self):
+        return
+
+    def get_color(self, tag):
+        """
+        return correct terminal color
+
+        Parameters
+        ----------
+        tag: string
+           tag of the color to be returned
+
+
+        Returns
+        -------
+        string
+            string of the terminal color to add
+        """
+        if tag in self.colors:
+            return self.colors[tag]
+        return self.colors['DEFAULT']
+
+    def get_spacer(self, tag):
+        """
+        return correct spacing
+
+        Parameters
+        ----------
+        tag: string
+           tag of the spacing to be returned
+
+
+        Returns
+        -------
+        string
+            spacing to be added
+        """
+        if tag in self.spacer:
+            return self.spacer[tag]
+        return self.spacer['DEFAULT']
 
 
 def writer_setup(typ):
@@ -70,8 +122,8 @@ def writer_setup(typ):
         # enable all outputs to file
         Writer.on = True
         Writer.file_name = typ
-        f = open(typ, 'w')
-        f.close()
+        with open(typ, 'w', encoding="utf-8") as fil:
+            fil.close()
     else:
         Writer.on = False
         Writer.file_name = None
@@ -91,29 +143,16 @@ def write_status(tag, message):
     message : str
         The message to be printed.
     """
-
+    writer = Writer()
     # define colors and layout according to tags
-    color = Writer.DEFAULT
-    space = ""
-    if tag == 'STAT':
-        color = Writer.DEFAULT
-    if tag == 'INFO':
-        color = Writer.DEFAULT
-        space = Writer.spacer
-    if tag == 'E-INFO':
-        color = Writer.ERROR
-    if tag == 'WARN':
-        color = Writer.WARN
-    if tag == 'ERROR':
-        color = Writer.ERROR
+    color = writer.get_color(tag=tag)
+    space = writer.get_spacer(tag=tag)
 
     # add line breaks after _writer.line_length characters
     line = space + "[" + tag + "] " + message
     tag_length = ' ' * (len(space + "[" + tag + "] "))
     liner = ""
-    no_loop = True
     while len(line) > Writer.line_length:
-        no_loop = False
         for i in range(Writer.line_maxoff):
             if line[Writer.line_length - i] == " ":
                 liner += line[:Writer.line_length - i + 1] + "\n"
@@ -132,9 +171,8 @@ def write_status(tag, message):
 
         # write message to file
         else:
-            f = open(Writer.file_name, 'a')
-            f.write(liner + "\n")
-            f.close()
+            with open(Writer.file_name, 'a', encoding="utf-8") as fil:
+                fil.write(liner + "\n")
 
     if tag == 'ERROR':
         raise ValueError(liner)
@@ -163,19 +201,14 @@ def write_message(message, color=None, spacing=0):
         return
 
     # set color scheme
-    col = Writer.DEFAULT
-    if color == 'WARN':
-        col = Writer.WARN
-    elif color == 'ERROR':
-        col = Writer.ERROR
+    writer = Writer()
+    col = writer.get_color(tag=color)
 
     # add line breaks after _writer.line_length characters
     tag_length = ' ' * spacing
     line = tag_length + message
     liner = ""
-    no_loop = True
     while len(line) > Writer.line_length:
-        no_loop = False
         for i in range(Writer.line_maxoff):
             if line[Writer.line_length - i] == " ":
                 liner += line[:Writer.line_length - i + 1] + "\n"
@@ -192,9 +225,8 @@ def write_message(message, color=None, spacing=0):
 
     # write message to file
     else:
-        f = open(Writer.file_name, 'a')
-        f.write(liner + "\n")
-        f.close()
+        with open(Writer.file_name, 'a', encoding="utf-8") as fil:
+            fil.write(liner + "\n")
 
 
 def write_hline(character='=', color=None):
@@ -217,11 +249,8 @@ def write_hline(character='=', color=None):
         return
 
     # set color scheme
-    col = Writer.DEFAULT
-    if color == 'WARN':
-        col = Writer.WARN
-    elif color == 'ERROR':
-        col = Writer.ERROR
+    writer = Writer()
+    col = writer.get_color(tag=color)
 
     # define output
     liner = character[0] * Writer.line_length
@@ -232,6 +261,5 @@ def write_hline(character='=', color=None):
 
     # write message to file
     else:
-        f = open(Writer.file_name, 'a')
-        f.write(liner + "\n")
-        f.close()
+        with open(Writer.file_name, 'a', encoding="utf-8") as fil:
+            fil.write(liner + "\n")

@@ -1,3 +1,6 @@
+"""
+utils to work with cubedsphere
+"""
 import os
 
 import cubedsphere as cs
@@ -9,6 +12,9 @@ from xgcm.autogenerate import generate_grid_ds
 
 
 class MITgcmDataParser(Parser):
+    """
+    MIT gcm data parser class to remember common variables
+    """
     def __init__(self):
         super().__init__()
         self.comment_tokens += '#'
@@ -49,11 +55,10 @@ def get_parameter(datafile, keyword, default=None):
 
     if default is None:
         raise KeyError(f"Keyword {keyword} not found in datafile.")
-    else:
-        return default
+    return default
 
 
-def convert_winds_and_T(ds, T_dim, W_dim):
+def convert_winds_and_t(dsi, temp_dim, w_dim):
     """
     Convert winds and temperature in dataset.
     Winds are converted from Pa/s to m/s.
@@ -61,11 +66,11 @@ def convert_winds_and_T(ds, T_dim, W_dim):
 
     Parameters
     ----------
-    ds: Dataset
+    dsi: Dataset
         dataset to be converted
-    T_dim: str
+    temp_dim: str
         temperature datadimension to be converted
-    W_dim: str
+    w_dim: str
         vertical wind datadimension to be converted
 
     Returns
@@ -73,38 +78,39 @@ def convert_winds_and_T(ds, T_dim, W_dim):
     ds: Dataset
         dataset with converted dimension
     """
-    kappa = ds.attrs["R"] / ds.attrs["cp"]
-    ds[T_dim] = ds[T_dim] * (ds[c.Z] / ds.attrs["p_ref"]) ** kappa
+    kappa = dsi.attrs["R"] / dsi.attrs["cp"]
+    dsi[temp_dim] = dsi[temp_dim] * (dsi[c.Z] / dsi.attrs["p_ref"]) ** kappa
 
     # calculate scale height
-    H = ds.attrs["R"] / ds.attrs["g"] * ds[T_dim]
+    h_val = dsi.attrs["R"] / dsi.attrs["g"] * dsi[temp_dim]
 
     # calculate geometric height
-    ds[c.Z_geo] = - H * np.log(ds[c.Z] / ds.attrs["p_ref"])
+    dsi[c.Z_geo] = - h_val * np.log(dsi[c.Z] / dsi.attrs["p_ref"])
 
-    if W_dim in ds:
+    if w_dim in dsi:
         # interpolate vertical windspeed to cell center:
-        if c.FACEDIM in ds.dims:
-            grid = cs.init_grid_CS(ds=ds)
+        if c.FACEDIM in dsi.dims:
+            grid = cs.init_grid_CS(ds=dsi)
         else:
-            grid = cs.init_grid_LL(ds=ds)
+            grid = cs.init_grid_LL(ds=dsi)
 
-        W_interp = grid.interp(ds[W_dim], axis=c.Z, to="center")
+        w_interp = grid.interp(dsi[w_dim], axis=c.Z, to="center")
 
         # convert vertical wind speed from Pa/s to m/s
-        ds[W_dim] = - W_interp * H / ds[c.Z]
+        dsi[w_dim] = - w_interp * h_val / dsi[c.Z]
 
-    return ds
+    return dsi
 
 
-def exorad_postprocessing(ds, outdir=None, datafile=None):
+def exorad_postprocessing(dsi, outdir=None, datafile=None):
     """
     Preliminaray postprocessing on exorad dataset.
-    This function converts the vertical windspeed from Pa into meters and saves attributes to the dataset.
+    This function converts the vertical windspeed from Pa into meters and saves attributes
+    to the dataset.
 
     Parameters
     ----------
-    ds: Dataset
+    dsi: Dataset
         dataset to be extended
     outdir: string
         directory in which to find the data file (following the convention f'{outdir}/data')
@@ -116,40 +122,41 @@ def exorad_postprocessing(ds, outdir=None, datafile=None):
     ds:
         Dataset to be returned
     """
-    assert outdir is not None or datafile is not None, "please specify a datafile or a folder where we can find a datafile"
+    stri = "please specify a datafile or a folder where we can find a datafile"
+    assert outdir is not None or datafile is not None, stri
 
     if outdir is not None:
         datafile = f'{outdir}/data'
 
     # Add metadata
     radius = float(get_parameter(datafile, 'rSphere', 6370e3))  # planet radius in m
-    P_rot = float(get_parameter(datafile, 'rotationperiod', 8.6164e4))  # planet rotationperiod in m
-    attrs = {"p_ref": float(get_parameter(datafile, 'Ro_SeaLevel', 1.0e5)),  # bottom layer pressure in pascal
-             "cp": float(get_parameter(datafile, 'atm_Cp', 1.004e3)),  # heat capacity at constant pressure
+    p_rot = float(get_parameter(datafile, 'rotationperiod', 8.6164e4))  # planet rotationperiod in m
+    attrs = {"p_ref": float(get_parameter(datafile, 'Ro_SeaLevel', 1.0e5)),  # bot layer pres in pa
+             "cp": float(get_parameter(datafile, 'atm_Cp', 1.004e3)),  # heat cap at constant pres
              "R": float(get_parameter(datafile, 'atm_Rd', 2.868571E2)),  # specific gas constant
              "g": float(get_parameter(datafile, 'gravity', 9.81)),  # surface gravity in m/s^2
              "dt": int(get_parameter(datafile, 'deltaT', 0.0)),  # time step size in s
              "R_p": radius,
-             "P_rot": P_rot,
-             "P_orb": P_rot,  # change, when this is available
+             "P_rot": p_rot,
+             "P_orb": p_rot,  # change, when this is available
              }
 
-    ds.attrs.update(attrs)
+    dsi.attrs.update(attrs)
 
     # Convert Temperature and winds
-    if c.T in ds:
-        ds = convert_winds_and_T(ds, c.T, c.W)
-    if c.Ttave in ds:
-        ds = convert_winds_and_T(ds, c.Ttave, c.wVeltave)
+    if c.T in dsi:
+        dsi = convert_winds_and_t(dsi, c.T, c.W)
+    if c.Ttave in dsi:
+        dsi = convert_winds_and_t(dsi, c.Ttave, c.wVeltave)
 
     # Add metrics to dataset
-    if c.FACEDIM not in ds.dims:
-        ds = add_distances(ds, radius=radius)
+    if c.FACEDIM not in dsi.dims:
+        dsi = add_distances(dsi, radius=radius)
 
-    return ds
+    return dsi
 
 
-def add_distances(ds, radius):
+def add_distances(dsi, radius):
     """Add metric distances into dataset if dataset is in lon lat.
 
     PARAMETERS
@@ -180,24 +187,24 @@ def add_distances(ds, radius):
         dy  : xarray.DataArray distance inferred from dlat
         """
         distance_1deg_equator = 2.0 * np.pi * radius * 1.0 / 360.0
-        dx = dlon * np.cos(lat/180*np.pi) * distance_1deg_equator
-        dy = ((lon * 0) + 1) * dlat * distance_1deg_equator
-        return dx, dy
+        dxi = dlon * np.cos(lat / 180 * np.pi) * distance_1deg_equator
+        dyi = ((lon * 0) + 1) * dlat * distance_1deg_equator
+        return dxi, dyi
 
-    if c.lon not in ds.dims or c.lat not in ds.dims:
-        return ds
+    if c.lon not in dsi.dims or c.lat not in dsi.dims:
+        return dsi
 
-    ds = generate_grid_ds(ds, {'X': c.lon, 'Y': c.lat})
-    xgcm_grid = xgcm.Grid(ds, periodic=['X'])
+    dsi = generate_grid_ds(dsi, {'X': c.lon, 'Y': c.lat})
+    xgcm_grid = xgcm.Grid(dsi, periodic=['X'])
 
-    dlong = xgcm_grid.diff(ds[c.lon], 'X', boundary_discontinuity=360)
-    dlonc = xgcm_grid.diff(ds["lon_left"], 'X', boundary_discontinuity=360)
+    dlong = xgcm_grid.diff(dsi[c.lon], 'X', boundary_discontinuity=360)
+    dlonc = xgcm_grid.diff(dsi["lon_left"], 'X', boundary_discontinuity=360)
 
-    dlatg = xgcm_grid.diff(ds[c.lat], 'Y', boundary='fill', fill_value=np.nan)
-    dlatc = xgcm_grid.diff(ds["lat_left"], 'Y', boundary='fill', fill_value=np.nan)
+    dlatg = xgcm_grid.diff(dsi[c.lat], 'Y', boundary='fill', fill_value=np.nan)
+    dlatc = xgcm_grid.diff(dsi["lat_left"], 'Y', boundary='fill', fill_value=np.nan)
 
-    ds.coords['dxg'], ds.coords['dyg'] = dll_dist(dlong, dlatg, ds[c.lon], ds[c.lat], radius)
-    ds.coords['dxc'], ds.coords['dyc'] = dll_dist(dlonc, dlatc, ds[c.lon], ds[c.lat], radius)
-    ds.coords['area_c'] = ds.dxc * ds.dyc
+    dsi.coords['dxg'], dsi.coords['dyg'] = dll_dist(dlong, dlatg, dsi[c.lon], dsi[c.lat], radius)
+    dsi.coords['dxc'], dsi.coords['dyc'] = dll_dist(dlonc, dlatc, dsi[c.lon], dsi[c.lat], radius)
+    dsi.coords['area_c'] = dsi.dxc * dsi.dyc
 
-    return ds
+    return dsi

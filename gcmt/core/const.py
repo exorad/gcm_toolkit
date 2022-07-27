@@ -1,18 +1,19 @@
-import cubedsphere.const as cc
+"""
+==============================================================
+                      gcmt const
+==============================================================
+Consistent namings of variables
 
-# ==============================================================
-#                       gcmt const
-# ==============================================================
-# Consistent namings of variables
-#
-# These variable names are currently synced with the naming scheme
-# from the cubedsphere package.
-# The advantage of that is that we do not need to worry about
-# variable naming inconsistancies with exorad data.
-# Warning: If at some points other standards are used here,
-#     we would need to make sure to rename variables
-#     in the readin routines of exorad data!
-# ==============================================================
+These variable names are currently synced with the naming scheme
+from the cubedsphere package.
+The advantage of that is that we do not need to worry about
+variable naming inconsistancies with exorad data.
+Warning: If at some points other standards are used here,
+    we would need to make sure to rename variables
+    in the readin routines of exorad data!
+==============================================================
+"""
+import cubedsphere.const as cc
 
 VARNAMES = dict(
     FACEDIM=cc.FACEDIM,  # index of the facedimension
