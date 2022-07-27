@@ -9,8 +9,8 @@
  value error if the conditions are not fulfilled.
 ==============================================================
 """
-import gcmt.core.writer as wrt
-from gcmt.core.const import VARNAMES as c
+from ..core import writer as wrt
+from ..core.const import VARNAMES as c
 
 
 def is_the_data_basic(dataset):

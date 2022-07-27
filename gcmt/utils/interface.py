@@ -14,7 +14,7 @@
 import numpy as np
 import xarray as xr
 
-from gcmt.core.const import VARNAMES as c
+from ..core.const import VARNAMES as c
 
 
 class _Chemistry:
@@ -143,15 +143,15 @@ class Interface:
     chem_from_poorman: Function that calculates chemistry based on the poorman code from pRT
     """
 
-    def __init__(self, gcmt):
+    def __init__(self, tools):
         """
         Constructor for the Interface class
 
         Parameters
         ----------
-        gcmt: GCMTools Object
+        tools: GCMTools Object
         """
-        self.gcmt = gcmt
+        self.tools = tools
         self.chemistry = _Chemistry()
         self.dsi = None
 
@@ -183,7 +183,7 @@ class Interface:
         regrid_lowres: bool, optional
             Can be useful, if your GCMT uses a very detailed grid
         """
-        dsi = self.gcmt.get_one_model(tag).sel(time=time)
+        dsi = self.tools.get_one_model(tag).sel(time=time)
 
         if regrid_lowres:
             dlon = 15
@@ -226,18 +226,18 @@ class PrtInterface(Interface):
     Interface with petitRADTRANS
     """
 
-    def __init__(self, gcmt, prt):
+    def __init__(self, tools, prt):
         """
         Constructs the Interface and links to pRT.
 
         Parameters
         ----------
-        gcmt: GCMTools Object
+        tools: GCMTools Object
             A GCMTools object that is linked to the interface
         pRT: petitRADTRANS.Radtrans
             A pRT Radtrans object
         """
-        super().__init__(gcmt)
+        super().__init__(tools)
         self.prt = prt
 
     def set_data(self, time, tag=None, regrid_lowres=False):

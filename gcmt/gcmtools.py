@@ -10,14 +10,14 @@
 """
 import xarray
 
-import gcmt.core.writer as wrt
-import gcmt.utils.gcm_plotting as gcmplt
-import gcmt.utils.manipulations as mani
-import gcmt.utils.read_and_write as raw
-from gcmt.gcm_dataset_collection import GCMDatasetCollection
-from gcmt.core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
-from gcmt.utils.passport import is_the_data_basic
-from gcmt.utils.interface import  PrtInterface
+from .core import writer as wrt
+from .utils import gcm_plotting as gcmplt
+from .utils import manipulations as mani
+from .utils import read_and_write as raw
+from .gcm_dataset_collection import GCMDatasetCollection
+from .core.units import ALLOWED_PUNITS, ALLOWED_TIMEUNITS
+from .utils.passport import is_the_data_basic
+from .utils.interface import PrtInterface
 
 
 class GCMT:

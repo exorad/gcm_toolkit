@@ -7,13 +7,13 @@ import os
 import numpy as np
 import xarray as xr
 
-import gcmt.core.writer as wrt
-from gcmt.core.const import VARNAMES as c
-from gcmt.core.units import convert_time, convert_pressure
-from gcmt.utils.passport import is_the_data_basic
+from ..core import writer as wrt
+from ..core.const import VARNAMES as c
+from ..core.units import convert_time, convert_pressure
+from .passport import is_the_data_basic
 
 
-def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None, **kwargs):
+def m_read_raw(tools, gcm, data_path, iters='last', load_existing=False, tag=None, **kwargs):
     """
     General read in function for GCM data
 
@@ -41,24 +41,24 @@ def m_read_raw(gcmt, gcm, data_path, iters='last', load_existing=False, tag=None
     if gcm == 'MITgcm':
         wrt.write_status('STAT', 'Read in raw MITgcm data')
         wrt.write_status('INFO', 'File path: ' + data_path)
-        from gcmt.exorad import m_read_from_mitgcm
+        from ..exorad import m_read_from_mitgcm
 
         if tag is not None and load_existing:
             try:
-                loaded_dsi = gcmt.get_models(tag)
+                loaded_dsi = tools.get_models(tag)
             except KeyError:
                 loaded_dsi = None
         else:
             loaded_dsi = None
 
-        dsi = m_read_from_mitgcm(gcmt, data_path, iters, loaded_dsi=loaded_dsi, **kwargs)
+        dsi = m_read_from_mitgcm(tools, data_path, iters, loaded_dsi=loaded_dsi, **kwargs)
     else:
         wrt.write_status('ERROR', 'The selected GCM type "' + gcm + '" is not supported')
 
-    _add_attrs_and_store(gcmt, dsi, tag)
+    _add_attrs_and_store(tools, dsi, tag)
 
 
-def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa'):
+def m_read_reduced(tools, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa'):
     """
     Read in function for GCM data that has been reduced and saved according
     to the gcmt GCMDataset format.
@@ -83,18 +83,18 @@ def m_read_reduced(gcmt, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa
     # read dataset using xarray functionalities
     dsi = xr.open_dataset(data_path)
 
-    dsi = convert_time(dsi, current_unit=time_unit_in, goal_unit=gcmt.time_unit)
-    dsi = convert_pressure(dsi, current_unit=p_unit_in, goal_unit=gcmt.p_unit)
+    dsi = convert_time(dsi, current_unit=time_unit_in, goal_unit=tools.time_unit)
+    dsi = convert_pressure(dsi, current_unit=p_unit_in, goal_unit=tools.p_unit)
 
-    _add_attrs_and_store(gcmt, dsi, tag)
+    _add_attrs_and_store(tools, dsi, tag)
 
     wrt.write_status('INFO', 'Tag: ' + tag)
 
 
-def _add_attrs_and_store(gcmt, dsi, tag):
+def _add_attrs_and_store(tools, dsi, tag):
     # if no tag is given, models are just numbered as they get added
     if tag is None:
-        tag = str(len(gcmt.get_models(always_dict=True)))
+        tag = str(len(tools.get_models(always_dict=True)))
         print('[WARN] -- No tag provided. This model is stored with tag: ' + tag)
 
     wrt.write_status('INFO', 'Tag: ' + tag)
@@ -106,10 +106,10 @@ def _add_attrs_and_store(gcmt, dsi, tag):
         raise ValueError('This dataset is not supported by gcmt\n')
 
     # store dataset
-    gcmt[tag] = dsi
+    tools[tag] = dsi
 
 
-def m_save(gcmt, path, method='nc', update_along_time=False, tag=None):
+def m_save(tools, path, method='nc', update_along_time=False, tag=None):
     """
     Save function to store current member variables.
 
@@ -145,7 +145,7 @@ def m_save(gcmt, path, method='nc', update_along_time=False, tag=None):
     if method not in ['nc', 'zarr']:
         raise NotImplementedError("Please use zarr or nc.")
 
-    for key, model in gcmt.get_models(always_dict=True).items():
+    for key, model in tools.get_models(always_dict=True).items():
         if tag is not None and tag != key:
             continue
 
@@ -176,7 +176,7 @@ def m_save(gcmt, path, method='nc', update_along_time=False, tag=None):
                 model.to_zarr(filename, mode='w')
 
 
-def m_load(gcmt, path, method='nc', tag=None):
+def m_load(tools, path, method='nc', tag=None):
     """
     Load function to load stored member variables.
 
@@ -218,7 +218,7 @@ def m_load(gcmt, path, method='nc', tag=None):
         elif method == 'nc':
             dsi = xr.open_dataset(file)
 
-        dsi = convert_time(dsi, current_unit=dsi.attrs.get('time_unit'), goal_unit=gcmt.time_unit)
-        dsi = convert_pressure(dsi, current_unit=dsi.attrs.get('p_unit'), goal_unit=gcmt.p_unit)
+        dsi = convert_time(dsi, current_unit=dsi.attrs.get('time_unit'), goal_unit=tools.time_unit)
+        dsi = convert_pressure(dsi, current_unit=dsi.attrs.get('p_unit'), goal_unit=tools.p_unit)
 
-        gcmt[tag] = dsi
+        tools[tag] = dsi

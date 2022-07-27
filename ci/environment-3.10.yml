@@ -11,5 +11,5 @@ dependencies:
   - pip:
       - git+https://github.com/MITgcm/xmitgcm.git
       - git+https://github.com/pydata/xarray.git
-      - pylint==2.14.5
-      - astroid==2.11.7
+      - pylint
+      - astroid

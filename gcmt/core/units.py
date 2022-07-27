@@ -8,7 +8,7 @@
 import astropy.units as u
 import numpy as np
 
-from gcmt.core.const import VARNAMES as c
+from .const import VARNAMES as c
 
 ALLOWED_PUNITS = ['bar', 'Pa']
 ALLOWED_TIMEUNITS = ['day', 'iter']
