@@ -1,4 +1,8 @@
 # gcmt
+[![codecov](https://codecov.io/gh/exorad/gcmt/branch/main/graph/badge.svg?token=OTEPCHABXI)](https://codecov.io/gh/exorad/gcmt)
+[![PyPi version](https://badgen.net/pypi/v/pip/)](https://pypi.org/project/gcmt/)
+[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://gcmt.readthedocs.io/?badge=latest)
+
 > *gcmt* is an open-source python package to read, post-process, and plot 3D GCM data. The goal is to have an easy to use invironment for new GCM users, while allowing for direct access to the data for more experienced users.
 
 *gcmt* originated from the need for a consistent and easy-to-share methodology for reading and analyzing the 3D circulation models of exoplanet atmospheres. Currently, the focus is on data produced by the [MITgcm](http://mitgcm.org/) and its implementations for exoplanets (see [Carone et al., 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.496.3582C/abstract) and [Schneider et al., 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220209183S/abstract)). But we envision this package as a general tool for the analysis of data from different 3D GCMs.
