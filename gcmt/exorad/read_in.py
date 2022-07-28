@@ -15,18 +15,18 @@ import os
 
 import xarray as xr
 
-import gcmt.core.writer as wrt
-from gcmt.core.units import convert_pressure, convert_time
+from ..core import writer as wrt
+from ..core.units import convert_pressure, convert_time
 
 
-def m_read_from_mitgcm(gcmt, data_path, iters, exclude_iters=None, d_lon=5, d_lat=4,
+def m_read_from_mitgcm(tools, data_path, iters, exclude_iters=None, d_lon=5, d_lat=4,
                        loaded_dsi=None, **kwargs):
     """
     Data read in for MITgcm output.
 
     Parameters
     ----------
-    gcmt : GCMT
+    tools : GCMT
         GCMTools to which the data should be added
     data_path : str
         Folder path to the standard output of the GCM.
@@ -91,8 +91,8 @@ def m_read_from_mitgcm(gcmt, data_path, iters, exclude_iters=None, d_lon=5, d_la
     # convert wind, vertical dimension, time, ...
     dsi = exorad_postprocessing(dsi, outdir=data_path)
 
-    convert_pressure(dsi, current_unit='Pa', goal_unit=gcmt.p_unit)
-    convert_time(dsi, current_unit='iter', goal_unit=gcmt.time_unit)
+    convert_pressure(dsi, current_unit='Pa', goal_unit=tools.p_unit)
+    convert_time(dsi, current_unit='iter', goal_unit=tools.time_unit)
 
     if loaded_dsi is not None:
         dsi = xr.merge([dsi, loaded_dsi])

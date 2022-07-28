@@ -63,7 +63,7 @@ Interface
 ``gcmt`` comes with some interfaces to other codes.
 We currently have support for ``petitRADTRANS`` to calculate spectra and phasecurves with ``prt_phasecure``.
 
-.. autoclass:: gcmt.utils.interface.pRTInterface
+.. autoclass:: gcmt.utils.interface.PrtInterface
     :members: __init__, set_data, chem_from_poorman, calc_phase_spectrum, phase_curve
 
 

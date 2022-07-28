@@ -1,6 +1,6 @@
 """ GCM dataset collection class to deal with GCM data """
 from collections import UserDict
-import gcmt.core.writer as wrt
+from .core import writer as wrt
 
 
 class GCMDatasetCollection(UserDict):

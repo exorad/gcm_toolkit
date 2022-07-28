@@ -2,8 +2,8 @@
 Functions to manipulate GCM data
 """
 import numpy as np
-import gcmt.core.writer as wrt
-from gcmt.core.const import VARNAMES as c
+from ..core import writer as wrt
+from ..core.const import VARNAMES as c
 
 
 def m_add_horizontal_average(dsi, var_key, var_key_out=None, area_key='area_c'):

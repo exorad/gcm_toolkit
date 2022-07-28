@@ -37,3 +37,12 @@ Install ``gcmt``.
 
         git clone https://github.com/exorad/gcmt.git
         pip install -e gcmt
+
+    We recommend to install ``pre-commit`` into your git hooks.
+    This will automatically format the code to meet common style guidelines.
+    Its as easy as:
+
+    .. code-block:: bash
+
+        cd gcmt
+        pre-commit install

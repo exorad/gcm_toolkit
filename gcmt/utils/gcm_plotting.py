@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 
-import gcmt.core.writer as wrt
-from gcmt.core.const import VARNAMES as c
+from ..core import writer as wrt
+from ..core.const import VARNAMES as c
 
 # pylint: disable=R0915,R0912
 def isobaric_slice(dsi, var_key, pres, time=-1, lookup_method='exact', axs=None,
