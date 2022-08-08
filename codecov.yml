@@ -25,6 +25,5 @@ ignore:
     - "gcmt/test/*"
     - "doc/*"
     - "bin/*"
-    - "gcmt/utils/gcm_plotting.py"
     - "gcmt/__init__.py"
     - "setup.py"
