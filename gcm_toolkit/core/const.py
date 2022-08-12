@@ -1,6 +1,6 @@
 """
 ==============================================================
-                      gcmt const
+                      gcm_toolkit const
 ==============================================================
 Consistent namings of variables
 
@@ -33,8 +33,8 @@ VARNAMES = dict(
     Z_u=cc.Z_u,  # upper Z interface
     Z_geo=cc.Z_geo,  # geometrical height
     T=cc.T,  # Temperature
-    U='U',
-    V='V',
+    U="U",
+    V="V",
     W=cc.W,
     Ttave=cc.Ttave,  # Temperature averaged
     wVeltave=cc.wVeltave,  # vertical velocity timeaveraged
@@ -63,8 +63,8 @@ VARNAMES = dict(
     dyU=cc.dyU,
     dxV=cc.dxV,
     dyF=cc.dyF,
-    P_rot='P_rot',
-    P_orb='P_orb',
-    g='g',
-    R_p='R_p'
+    P_rot="P_rot",
+    P_orb="P_orb",
+    g="g",
+    R_p="R_p",
 )

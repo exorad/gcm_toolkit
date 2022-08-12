@@ -12,18 +12,17 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
 
+sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
 
-project = 'gcmt'
-copyright = '2022, Aaron Schneider'
-author = 'Aaron Schneider'
+project = "gcm_toolkit"
+copyright = "2022, Aaron Schneider"
+author = "Aaron Schneider"
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
-
+release = "0.1"
 
 # -- General configuration ---------------------------------------------------
 
@@ -31,18 +30,19 @@ release = '0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.mathjax', 'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.autosectionlabel',
-    'sphinx.ext.extlinks',
-    'sphinx.ext.viewcode',
-    'numpydoc',
-    'nbsphinx',
-    'recommonmark'
+    "sphinx.ext.mathjax",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.viewcode",
+    "numpydoc",
+    "nbsphinx",
+    "recommonmark",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -53,18 +53,30 @@ exclude_patterns = []
 # numpydoc_show_class_members = False
 
 # NOT to sort autodoc functions in alphabetical order
-autodoc_member_order = 'bysource'
+autodoc_member_order = "bysource"
 autosummary_generate = True
 numpydoc_show_class_members = False
 
 # To avoid installing xESMF and all its dependencies when building doc
 # https://stackoverflow.com/a/15912502/8729698
-autodoc_mock_imports = ['xarray', 'scipy', 'ESMF', 'xesmf', 'xmitgcm', 'ESMPy', 'xgcm', 'matplotlib','f90nml','astropy', 'numpy','cubedsphere']
+autodoc_mock_imports = [
+    "xarray",
+    "scipy",
+    "ESMF",
+    "xesmf",
+    "xmitgcm",
+    "ESMPy",
+    "xgcm",
+    "matplotlib",
+    "f90nml",
+    "astropy",
+    "numpy",
+    "cubedsphere",
+]
 
 # avoid automatic execution for notebooks
-nbsphinx_execute = 'never'
+nbsphinx_execute = "never"
 # Numpydoc settings
-
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -72,9 +84,9 @@ nbsphinx_execute = 'never'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]

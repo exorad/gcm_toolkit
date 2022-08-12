@@ -38,18 +38,20 @@ class GCMDatasetCollection(UserDict):
             return list(self.values())[0]
 
         # If the tag is not a string, raise an error
-        return wrt.write_status('ERROR', 'The given tag is not a string.')
+        return wrt.write_status("ERROR", "The given tag is not a string.")
 
     def get_one_model(self, tag=None, raise_error=True):
         """
-        Helper Function that raises an error or returns None, if more than one model is selected.
+        Helper Function that raises an error or returns None,
+        if more than one model is selected.
 
         Parameters
         ----------
         tag: str, optional
             Name of the model that should be returned
         raise_error: bool, optional
-            If true, function will raise error, else will return None if not one model is selected
+            If true, function will raise error,
+            else will return None if not one model is selected
 
         Returns
         -------
@@ -61,10 +63,10 @@ class GCMDatasetCollection(UserDict):
         dsi = self.get_models(tag=tag, always_dict=False)
         # Raise error, if key not in collection and raise error is specified
         if dsi is None and raise_error:
-            raise KeyError('No dataset for given key available.')
+            raise KeyError("No dataset for given key available.")
         # if a collection is given (because multiple datasets are available, and
         # the tag is not provided), avoid ambiguity by raising an error
         if isinstance(dsi, GCMDatasetCollection):
-            wrt.write_status('ERROR', 'Ambiguous task. Please provide a tag.')
+            wrt.write_status("ERROR", "Ambiguous task. Please provide a tag.")
 
         return dsi

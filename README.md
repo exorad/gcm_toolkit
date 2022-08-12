@@ -1,13 +1,20 @@
-# gcmt
-[![codecov](https://codecov.io/gh/exorad/gcmt/branch/main/graph/badge.svg?token=OTEPCHABXI)](https://codecov.io/gh/exorad/gcmt)
-[![PyPi version](https://badgen.net/pypi/v/pip/)](https://pypi.org/project/gcmt/)
-[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://gcmt.readthedocs.io/?badge=latest)
+# gcm_toolkit
 
-> *gcmt* is an open-source python package to read, post-process, and plot 3D GCM data. The goal is to have an easy to use invironment for new GCM users, while allowing for direct access to the data for more experienced users.
+[![codecov](https://codecov.io/gh/exorad/gcm_toolkit/branch/main/graph/badge.svg?token=OTEPCHABXI)](https://codecov.io/gh/exorad/gcm_toolkit)
+[![PyPi version](https://badgen.net/pypi/v/pip/)](https://pypi.org/project/gcm_toolkit/)
+[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://gcm_toolkit.readthedocs.io/?badge=latest)
 
-*gcmt* originated from the need for a consistent and easy-to-share methodology for reading and analyzing the 3D circulation models of exoplanet atmospheres. Currently, the focus is on data produced by the [MITgcm](http://mitgcm.org/) and its implementations for exoplanets (see [Carone et al., 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.496.3582C/abstract) and [Schneider et al., 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220209183S/abstract)). But we envision this package as a general tool for the analysis of data from different 3D GCMs.
+> *gcm_toolkit* is an open-source python package to read, post-process, and plot 3D GCM data. The goal is to have an
+> easy to use invironment for new GCM users, while allowing for direct access to the data for more experienced users.
 
-*gcmt* is currently under development. Feel free to contribute!
+*gcm_toolkit* originated from the need for a consistent and easy-to-share methodology for reading and analyzing the 3D
+circulation models of exoplanet atmospheres. Currently, the focus is on data produced by
+the [MITgcm](http://mitgcm.org/) and its implementations for exoplanets (
+see [Carone et al., 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.496.3582C/abstract)
+and [Schneider et al., 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220209183S/abstract)). But we envision this
+package as a general tool for the analysis of data from different 3D GCMs.
+
+*gcm_toolkit* is currently under development. Feel free to contribute!
 
 ## Features (Current/Planned)
 
@@ -21,17 +28,18 @@
 * Direct data access for custom plotting and post-processing
 
 ## Main Authors
+
 * [Aaron Schneider](https://github.com/AaronDavidSchneider)
 * [Sven Kiefer](https://github.com/Kiefersv)
 * [Robin Baeyens](https://github.com/robinbaeyens)
 
 ## Get Started
 
-Read the [docs](https://gcmt.readthedocs.io/en/latest/)
+Read the [docs](https://gcm_toolkit.readthedocs.io/en/latest/)
 
 ### Installation
 
-`pip install gcmt`
+`pip install gcm-toolkit`
 
 ### Packages needed
 
@@ -46,7 +54,7 @@ xmitgcm, xgcm, f90nml,
 
 ### Running the first example
 
-Check the get started in the [docs](https://gcmt.readthedocs.io/en/latest/notebooks/demo.html)
+Check the get started in the [docs](https://gcm_toolkit.readthedocs.io/en/latest/notebooks/demo.html)
 
 ## Miscellaneous Documentation
 
@@ -57,6 +65,7 @@ Check the get started in the [docs](https://gcmt.readthedocs.io/en/latest/notebo
 
 ## Contact
 
-Feel free to contact one of the main authors: **[Aaron Schneider](https://aaron-schneider.de)**, **[Sven Kiefer](https://kiefersv.github.io/)**, or **[Robin Baeyens](https://www.linkedin.com/in/robin-baeyens/)**.
+Feel free to contact one of the main authors: **[Aaron Schneider](https://aaron-schneider.de)**
+, **[Sven Kiefer](https://kiefersv.github.io/)**, or **[Robin Baeyens](https://www.linkedin.com/in/robin-baeyens/)**.
 
-Project url: [https://github.com/exorad/gcmt](https://github.com/exorad/gcmt)
+Project url: [https://github.com/exorad/gcm_toolkit](https://github.com/exorad/gcm_toolkit)

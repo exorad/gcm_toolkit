@@ -1,8 +1,8 @@
 """
 ==============================================================
-                      gcmt Main Class
+                      gcm_toolkit Main Class
 ==============================================================
- This class is the user interace of the gcmt
+ This class is the user interace of the gcm_toolkit
  functionalities. The goal is to have a clean and easy to use
  environment for new users of GCMs while allowing direct
  access to the data for more experienced users.
@@ -22,7 +22,7 @@ from .utils.interface import PrtInterface
 
 class GCMT:
     """
-    The main gcmt class with which the user can interact.
+    The main gcm_toolkit class with which the user can interact.
 
     Attributes
     ----------
@@ -38,9 +38,9 @@ class GCMT:
         Read in the previously reduced GCM
     """
 
-    def __init__(self, p_unit='bar', time_unit='day', write='on'):
+    def __init__(self, p_unit="bar", time_unit="day", write="on"):
         """
-        Constructor for the gcmt class.
+        Constructor for the gcm_toolkit class.
 
         Parameters
         ----------
@@ -57,11 +57,15 @@ class GCMT:
 
         # check units
         if p_unit not in ALLOWED_PUNITS:
-            raise ValueError(f"Please use a pressure unit from {ALLOWED_PUNITS}")
+            raise ValueError(
+                f"Please use a pressure unit from {ALLOWED_PUNITS}"
+            )
         self.p_unit = p_unit
 
         if time_unit not in ALLOWED_TIMEUNITS:
-            raise ValueError(f"Please use a time unit from {ALLOWED_TIMEUNITS}")
+            raise ValueError(
+                f"Please use a time unit from {ALLOWED_TIMEUNITS}"
+            )
         self.time_unit = time_unit
 
         # initialize writing function (to file or to console)
@@ -69,12 +73,16 @@ class GCMT:
 
         # print welcome message and information
         wrt.write_hline()
-        hello = 'Welcome to gcmt'
-        wrt.write_message(hello, color='WARN', spacing=(wrt.Writer.line_length - len(hello)) // 2)
+        hello = "Welcome to gcm_toolkit"
+        wrt.write_message(
+            hello,
+            color="WARN",
+            spacing=(wrt.Writer.line_length - len(hello)) // 2,
+        )
         wrt.write_hline()
-        wrt.write_status('STAT', 'Set up gcmt')
-        wrt.write_status('INFO', 'pressure units: ' + self.p_unit)
-        wrt.write_status('INFO', 'time units: ' + self.time_unit)
+        wrt.write_status("STAT", "Set up gcm_toolkit")
+        wrt.write_status("INFO", "pressure units: " + self.p_unit)
+        wrt.write_status("INFO", "time units: " + self.time_unit)
 
     # ==============================================================================================
     #   Data handling
@@ -112,10 +120,12 @@ class GCMT:
         selected_model : xarray Dataset
         """
         if tag not in self._models.keys():
-            raise ValueError('The provided tag does not exist in the collection')
+            raise ValueError(
+                "The provided tag does not exist in the collection"
+            )
         if isinstance(tag, str):
             return self.get_one_model(tag=tag, raise_error=True)
-        raise ValueError('key needs to be a string.')
+        raise ValueError("key needs to be a string.")
 
     def __setitem__(self, tag, dsi):
         """
@@ -157,14 +167,16 @@ class GCMT:
 
     def get_one_model(self, tag=None, raise_error=True):
         """
-        Like get_models, but raises an error or return None, if more than one model is selected.
+        Like get_models, but raises an error or return None,
+        if more than one model is selected.
 
         Parameters
         ----------
         tag: str, optional
             Name of the model that should be returned
         raise_error: bool, optional
-            If true, function will raise error, else will return None if not one model is selected
+            If true, function will raise error, else will return
+            None if not one model is selected
 
         Returns
         -------
@@ -207,22 +219,30 @@ class GCMT:
         if not isinstance(tag, str):
             raise ValueError("The provided tag needs to be a string.")
         if not isinstance(dsi, xarray.Dataset):
-            raise ValueError("The provided input dataset needs to be a xarray Dataset.")
+            raise ValueError(
+                "The provided input dataset needs to be a xarray Dataset."
+            )
         if not is_the_data_basic(dsi):
             raise ValueError("The provided input dataset is not compatible.")
 
-        if dsi.attrs.get('p_unit') != self.p_unit:
-            raise NotImplementedError('Unit conversion is needed and not yet implemented')
-        if dsi.attrs.get('time_unit') != self.time_unit:
-            raise NotImplementedError('Unit conversion is needed and not yet implemented')
+        if dsi.attrs.get("p_unit") != self.p_unit:
+            raise NotImplementedError(
+                "Unit conversion is needed and not yet implemented"
+            )
+        if dsi.attrs.get("time_unit") != self.time_unit:
+            raise NotImplementedError(
+                "Unit conversion is needed and not yet implemented"
+            )
 
-        dsi.attrs.update({'tag': tag})
+        dsi.attrs.update({"tag": tag})
         self._models[tag] = dsi
 
     # ==============================================================================================
     #   Data manipulation
     # ==============================================================================================
-    def add_horizontal_average(self, var_key, var_key_out=None, area_key='area_c', tag=None):
+    def add_horizontal_average(
+        self, var_key, var_key_out=None, area_key="area_c", tag=None
+    ):
         """
         Calculate horizontal averaged quantities. Horizontal averages
         are calculated as area-weighted quantities q, so that:
@@ -234,13 +254,15 @@ class GCMT:
         var_key: str
             The key of the variable quantity that should be plotted.
         var_key_out: str, optional
-            variable name used to store the outcome. If not provided, this script will just
+            variable name used to store the outcome.
+            If not provided, this script will just
             return the averages and not change the dataset inplace.
         area_key: str, optional
             Variable key in the dataset for the area of grid cells
         tag : str, optional
-            The tag of the dataset that should be used. If no tag is provided,
-            and multiple datasets are available, an error is raised.
+            The tag of the dataset that should be used.
+            If no tag is provided, and multiple datasets are available,
+            an error is raised.
 
         Returns
         -------
@@ -249,10 +271,13 @@ class GCMT:
 
         """
         dsi = self.get_one_model(tag)
-        return mani.m_add_horizontal_average(dsi, var_key, var_key_out=var_key_out,
-                                             area_key=area_key)
+        return mani.m_add_horizontal_average(
+            dsi, var_key, var_key_out=var_key_out, area_key=area_key
+        )
 
-    def add_meridional_overturning(self, v_data='V', var_key_out=None, tag=None):
+    def add_meridional_overturning(
+        self, v_data="V", var_key_out=None, tag=None
+    ):
         """
         Calculate meridional overturning streamfunction.
 
@@ -263,11 +288,14 @@ class GCMT:
         v_data: str
             The key that holds the data to meridional velocity
         tag : str, optional
-            The tag of the dataset that should be used. If no tag is provided,
+            The tag of the dataset that should be used.
+             If no tag is provided,
             and multiple datasets are available, an error is raised.
         var_key_out: str, optional
-            variable name used to store the outcome. If not provided, this script will just
-            return the overturning circulation and not change the dataset inplace.
+            variable name used to store the outcome.
+            If not provided, this script will just
+            return the overturning circulation
+            and not change the dataset inplace.
 
         Returns
         -------
@@ -275,12 +303,22 @@ class GCMT:
             Horizontal overturning
         """
         dsi = self.get_one_model(tag)
-        return mani.m_add_meridional_overturning(dsi, v_data=v_data, var_key_out=var_key_out)
+        return mani.m_add_meridional_overturning(
+            dsi, v_data=v_data, var_key_out=var_key_out
+        )
 
-    # ==============================================================================================
+    # ======================================================
     #   Reading and writing functions
-    # ==============================================================================================
-    def read_raw(self, gcm, data_path, iters='last', load_existing=False, tag=None, **kwargs):
+    # ======================================================
+    def read_raw(
+        self,
+        gcm,
+        data_path,
+        iters="last",
+        load_existing=False,
+        tag=None,
+        **kwargs,
+    ):
         """
         General read in function for GCM data
 
@@ -303,18 +341,27 @@ class GCMT:
         kwargs: dict
             Additional options passed down to read functions
         """
-        return raw.m_read_raw(self, gcm, data_path, iters=iters, load_existing=load_existing,
-                              tag=tag, **kwargs)
+        return raw.m_read_raw(
+            self,
+            gcm,
+            data_path,
+            iters=iters,
+            load_existing=load_existing,
+            tag=tag,
+            **kwargs,
+        )
 
-    def read_reduced(self, data_path, tag=None, time_unit_in='iter', p_unit_in='Pa'):
+    def read_reduced(
+        self, data_path, tag=None, time_unit_in="iter", p_unit_in="Pa"
+    ):
         """
-        Read in function for GCM data that has been reduced and saved according
-        to the gcmt GCMDataset format.
+        Read in function for GCM data that has been reduced a
+        nd saved according to the gcm_toolkit GCMDataset format.
 
         Parameters
         ----------
         data_path : str
-            Folder path to the reduced (gcmt) data.
+            Folder path to the reduced (gcm_toolkit) data.
         time_unit_in: str
             units of time dimension in input dataset
         p_unit_in: str
@@ -322,51 +369,64 @@ class GCMT:
         tag : str
             Tag to reference the simulation in the collection of models.
         """
-        return raw.m_read_reduced(self, data_path, tag=tag, time_unit_in=time_unit_in,
-                                  p_unit_in=p_unit_in)
+        return raw.m_read_reduced(
+            self,
+            data_path,
+            tag=tag,
+            time_unit_in=time_unit_in,
+            p_unit_in=p_unit_in,
+        )
 
-    def save(self, direct, method='nc', update_along_time=False, tag=None):
+    def save(self, direct, method="nc", update_along_time=False, tag=None):
         """
         Save function to store current member variables.
 
         Parameters
         ----------
         direct : str
-            directory at which the gcmt datasets should be stored.
+            directory at which the gcm_toolkit datasets should be stored.
         method : str, optional
-            Datasets can be stored as '.zarr' or '.nc'. Decide which type you prefer.
-            Defaults to '.nc'.
+            Datasets can be stored as '.zarr' or '.nc'.
+            Decide which type you prefer. Defaults to '.nc'.
         update_along_time: str, optional
-            Decide if you want to update already saved datasets along the timedimension.
-            This only works with method='zarr'.
+            Decide if you want to update already saved datasets
+            along the timedimension. This only works with method='zarr'.
         tag: str, optional
-            tag of the model that should be loaded. Will save all available models by default.
+            tag of the model that should be loaded.
+            Will save all available models by default.
 
         Returns
         -------
         NoneType
             None
         """
-        return raw.m_save(self, direct, method=method, update_along_time=update_along_time, tag=tag)
+        return raw.m_save(
+            self,
+            direct,
+            method=method,
+            update_along_time=update_along_time,
+            tag=tag,
+        )
 
-    def load(self, direct, method='nc', tag=None):
+    def load(self, direct, method="nc", tag=None):
         """
         Load function to load stored member variables.
 
         Parameters
         ----------
         direct : str
-            directory at which the gcmt datasets are stored
+            directory at which the gcm_toolkit datasets are stored
         method : str, optional
             Should be the same method with which you stored the data
         tag: str, optional
-            tag of the model that should be loaded. Will load all available models by default.
+            tag of the model that should be loaded.
+            Will load all available models by default.
         """
         return raw.m_load(self, direct, method=method, tag=tag)
 
-    # ==============================================================================================
+    # =============================================================
     #   Plotting Functions
-    # ==============================================================================================
+    # =============================================================
 
     def isobaric_slice(self, var_key, pres, tag=None, **kwargs):
         """
@@ -391,14 +451,15 @@ class GCMT:
 
     def time_evol(self, var_key, tag=None, **kwargs):
         """
-        Function that plots the time evolution of a quantity in a 1D line collection plot,
-        where the colorscale can be related to the time evolution.
+        Function that plots the time evolution of a quantity
+        in a 1D line collection plot, where the colorscale can be
+        related to the time evolution.
         Note: var_key needs to contain data that is 2D in time and pressure.
 
         Parameters
         ----------
         dsi : DataSet
-            A gcmt-compatible dataset of a 3D climate simulation.
+            A gcm_toolkit-compatible dataset of a 3D climate simulation.
         var_key : str
             The key of the variable quantity that should be plotted.
         tag : str, optional
@@ -415,7 +476,7 @@ class GCMT:
         Parameters
         ----------
         dsi : DataSet
-            A gcmt-compatible dataset of a 3D climate simulation.
+            A gcm_toolkit-compatible dataset of a 3D climate simulation.
         var_key : str
             The key of the variable quantity that should be plotted.
         tag : str, optional

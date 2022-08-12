@@ -1,8 +1,8 @@
 """
 ==============================================================
-                  gcmt Plotting Library
+                  gcm_toolkit Plotting Library
 ==============================================================
- This library incorporates all of gcmt plotting
+ This library incorporates all of gcm_toolkit plotting
  functionalities. We aim to have flexible and easy-to-use
  plotting routines for the most common GCM data visualizations.
 ==============================================================
@@ -42,7 +42,7 @@ def isobaric_slice(
     Parameters
     ----------
     dsi : DataSet
-        A gcmt-compatible dataset of a 3D climate simulation.
+        A gcm_toolkit-compatible dataset of a 3D climate simulation.
     var_key : str
         The key of the variable quantity that should be plotted.
     pres : float
@@ -121,14 +121,19 @@ def isobaric_slice(
         ds2d = dsi.interp(**{c["Z"]: pres})
     else:
         raise ValueError(
-            "Please enter 'exact', 'nearest', or 'interpolate' as Z lookup method."
+            "Please enter 'exact', 'nearest', or 'interpolate' as Z lookup"
+            " method."
         )
 
     # Simple plot (with xarray.plot.pcolormesh)
     if contourf:
-        plotted = ds2d[var_key].plot.contourf(add_colorbar=False, ax=ax, **kwargs)
+        plotted = ds2d[var_key].plot.contourf(
+            add_colorbar=False, ax=ax, **kwargs
+        )
     else:
-        plotted = ds2d[var_key].plot.pcolormesh(add_colorbar=False, ax=ax, **kwargs)
+        plotted = ds2d[var_key].plot.pcolormesh(
+            add_colorbar=False, ax=ax, **kwargs
+        )
 
     # make own colorbar, as the automatic colorbar is hard to customize
     if add_colorbar:
@@ -171,7 +176,7 @@ def plot_horizontal_wind(
     Parameters
     ----------
     dsi : DataSet
-        A gcmt-compatible dataset where only latitude and longitude are
+        A gcm_toolkit-compatible dataset where only latitude and longitude are
         non-singleton dimensions.
     ax : matplotlib.axes.Axes, optional
         The axis on which you want your plot to appear.
@@ -302,7 +307,7 @@ def time_evol(
     Parameters
     ----------
     dsi : DataSet
-        A gcmt-compatible dataset of a 3D climate simulation.
+        A gcm_toolkit-compatible dataset of a 3D climate simulation.
     var_key : str
         The key of the variable quantity that should be plotted.
     ax : matplotlib.axes.Axes, optional
@@ -409,7 +414,7 @@ def zonal_mean(
     Parameters
     ----------
     dsi : DataSet
-        A gcmt-compatible dataset of a 3D climate simulation.
+        A gcm_toolkit-compatible dataset of a 3D climate simulation.
     var_key : str
         The key of the variable quantity that should be plotted.
     time : int, optional
@@ -463,9 +468,13 @@ def zonal_mean(
 
     # Simple plot (with xarray.plot.pcolormesh)
     if contourf:
-        plotted = zmean.plot.contourf(add_colorbar=False, ax=ax, x=c["lat"], **kwargs)
+        plotted = zmean.plot.contourf(
+            add_colorbar=False, ax=ax, x=c["lat"], **kwargs
+        )
     else:
-        plotted = zmean.plot.pcolormesh(add_colorbar=False, ax=ax, x=c["lat"], **kwargs)
+        plotted = zmean.plot.pcolormesh(
+            add_colorbar=False, ax=ax, x=c["lat"], **kwargs
+        )
 
     # make own colorbar, as the automatic colorbar is hard to customize
     if add_colorbar:

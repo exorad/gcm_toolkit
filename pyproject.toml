@@ -6,7 +6,7 @@
 # character.
 
 [tool.black]
-line-length = 88
+line-length = 79
 include = '\.pyi?$'
 target-version = ['py38', 'py39', 'py310']
 # We use preview style for formatting Black itself. If you

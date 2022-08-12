@@ -1,33 +1,33 @@
 .. GCMTools documentation master file, created by
-   sphinx-quickstart on Mon Jan 11 14:18:49 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+sphinx-quickstart on Mon Jan 11 14:18:49 2021.
+You can adapt this file completely to your liking, but it should at least
+contain the root `toctree` directive.
 
-Welcome to gcmt's documentation!
+Welcome to gcm_toolkit's documentation!
 =======================================
 Library for post processing of GCM data
 
 Philosophy
 ----------
-``gcmt`` aims at simplifying the post-processing of GCM data.
+``gcm_toolkit`` aims at simplifying the post-processing of GCM data.
 It is mainly built with the purpose of generalizing the process of dealing with exoplanet GCM data.
 
 We appreciate that every GCM comes with different output formats and structures.
 However, we find that most users are interested in similar diagnostics, such as plotting isobaric slices or plotting zonal means.
 
-``gcmt`` is therefore tailored to abstract away the differences in the output of GCM data.
+``gcm_toolkit`` is therefore tailored to abstract away the differences in the output of GCM data.
 
 Capabilities
 ------------
 
 .. warning::
-   ``gcmt`` is under active development. If you would like to see your GCM supported by ``gcmt``, please contact one of the authors.
+   ``gcm_toolkit`` is under active development. If you would like to see your GCM supported by ``gcm_toolkit``, please contact one of the authors.
 
 **Implemented functionality:**
 
 - Plotting (isobaric slices, zonal means, etc.)
 - readin capabilities for exorad
-- load and save capabilities of the ``gcmt`` abstraction
+- load and save capabilities of the ``gcm_toolkit`` abstraction
 - interface to ``petitRADTRANS`` for phasecurves, etc.
 
 **Planned functionality:**

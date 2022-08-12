@@ -6,7 +6,9 @@ from ..core import writer as wrt
 from ..core.const import VARNAMES as c
 
 
-def m_add_horizontal_average(dsi, var_key, var_key_out=None, area_key='area_c'):
+def m_add_horizontal_average(
+    dsi, var_key, var_key_out=None, area_key="area_c"
+):
     """
     Calculate horizontal averaged quantities. Horizontal averages
     are calculated as area-weighted averages of quantity q:
@@ -32,14 +34,15 @@ def m_add_horizontal_average(dsi, var_key, var_key_out=None, area_key='area_c'):
         averaged quantity.
     """
     # print information
-    wrt.write_status('STAT', 'Calculate horizontal average')
-    wrt.write_status('INFO', 'Variable to be plotted: ' + var_key)
+    wrt.write_status("STAT", "Calculate horizontal average")
+    wrt.write_status("INFO", "Variable to be plotted: " + var_key)
     if var_key_out is not None:
-        wrt.write_status('INFO', 'Output variable: ' + var_key_out)
-    wrt.write_status('INFO', 'Area of grid cells: ' + area_key)
+        wrt.write_status("INFO", "Output variable: " + var_key_out)
+    wrt.write_status("INFO", "Area of grid cells: " + area_key)
 
-    avg = ((dsi[area_key] * dsi[var_key]).sum(dim=[c['lon'], c['lat']]) /
-           dsi[area_key].sum(dim=[c['lon'], c['lat']]))
+    avg = (dsi[area_key] * dsi[var_key]).sum(dim=[c["lon"], c["lat"]]) / dsi[
+        area_key
+    ].sum(dim=[c["lon"], c["lat"]])
 
     if var_key_out is not None:
         dsi.update({var_key_out: avg})
@@ -47,7 +50,7 @@ def m_add_horizontal_average(dsi, var_key, var_key_out=None, area_key='area_c'):
     return avg
 
 
-def m_add_meridional_overturning(dsi, v_data='V', var_key_out=None):
+def m_add_meridional_overturning(dsi, v_data="V", var_key_out=None):
     """
     Calculate meridional overturning streamfunction. This quantity psi is
     computed by integrating the zonal-mean meridional velocity \bar V along
@@ -70,17 +73,24 @@ def m_add_meridional_overturning(dsi, v_data='V', var_key_out=None):
     """
 
     # print information
-    wrt.write_status('STAT', 'Calculate meridional overturning streamfunction')
+    wrt.write_status("STAT", "Calculate meridional overturning streamfunction")
     if var_key_out is not None:
-        wrt.write_status('INFO', 'Output variable: ' + var_key_out)
+        wrt.write_status("INFO", "Output variable: " + var_key_out)
 
-    v_integral = dsi[v_data].cumulative_integrate(coord='Z')
+    v_integral = dsi[v_data].cumulative_integrate(coord="Z")
 
-    if dsi.attrs.get('p_unit') == 'bar':
+    if dsi.attrs.get("p_unit") == "bar":
         # convert to SI, if needed
         v_integral = v_integral / 1.0e5
 
-    psi = 2 * np.pi * np.cos(dsi.lat / 180 * np.pi) * dsi.R_p / dsi.g * v_integral
+    psi = (
+        2
+        * np.pi
+        * np.cos(dsi.lat / 180 * np.pi)
+        * dsi.R_p
+        / dsi.g
+        * v_integral
+    )
 
     if var_key_out is not None:
         dsi.update({var_key_out: psi})

@@ -1,8 +1,8 @@
 Command Line Interface
 ======================
 
-``gcmt`` also provides some functionality to be used from the command line.
-The functionalites explained below are scripts, which are automatically installed into your environment, when installing ``gcmt``.
+``gcm_toolkit`` also provides some functionality to be used from the command line.
+The functionalites explained below are scripts, which are automatically installed into your environment, when installing ``gcm_toolkit``.
 You can use them in your terminal by hitting the name of the script (e.g.:).
 Information on the required arguments can be found below, or by using the ``-h`` flag.
 
@@ -48,9 +48,9 @@ The following options are available in the ``convert.yaml`` file:
     data_path: "run"             # Path to the raw data
     save_path: "results"         # Path at which the converted data should be stored
     method: "nc"                 # Output format used for the conversion
-    update_along_time: False     # Only relevant if method == "zarr". Checkout gcmt.GCMT.save for more info
-    # (anything else to be passed to gcmt.GCMT.read_raw)
+    update_along_time: False     # Only relevant if method == "zarr". Checkout gcm_toolkit.GCMT.save for more info
+    # (anything else to be passed to gcm_toolkit.GCMT.read_raw)
 
-.. Note:: All of the other arguments are input for :meth:`gcmt.GCMT.read_raw`
+.. Note:: All of the other arguments are input for :meth:`gcm_toolkit.GCMT.read_raw`
 
-Checkout :meth:`gcmt.GCMT.read_raw`, :meth:`gcmt.GCMT.load` and :meth:`gcmt.GCMT.save` to understand the usage of the above parameters.
+Checkout :meth:`gcm_toolkit.GCMT.read_raw`, :meth:`gcm_toolkit.GCMT.load` and :meth:`gcm_toolkit.GCMT.save` to understand the usage of the above parameters.
