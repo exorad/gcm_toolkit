@@ -41,6 +41,8 @@ Read the [docs](https://gcm_toolkit.readthedocs.io/en/latest/)
 
 `pip install gcm-toolkit`
 
+(Note the dash)
+
 ### Packages needed
 
 Please install the following packages beforehand:
