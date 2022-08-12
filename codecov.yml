@@ -1,8 +1,8 @@
 codecov:
-    require_ci_to_pass: no
-    max_report_age: off
+  require_ci_to_pass: no
+  max_report_age: off
 
-comment:                  # this is a top-level key
+comment: # this is a top-level key
   layout: "reach, diff, flags, files"
   behavior: default
   require_changes: false  # if true: only post the comment if coverage changes
@@ -11,19 +11,19 @@ comment:                  # this is a top-level key
 
 
 coverage:
-    precision: 2
-    round: down
-    status:
-        project:
-            default:
-                target: 95
-                informational: true
-        patch: off
-        changes: off
+  precision: 2
+  round: down
+  status:
+    project:
+      default:
+        target: 95
+        informational: true
+    patch: off
+    changes: off
 
 ignore:
-    - "gcmt/test/*"
-    - "doc/*"
-    - "bin/*"
-    - "gcmt/__init__.py"
-    - "setup.py"
+  - "gcm_toolkit/test/*"
+  - "doc/*"
+  - "bin/*"
+  - "gcm_toolkit/__init__.py"
+  - "setup.py"

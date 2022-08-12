@@ -4,7 +4,7 @@
 ==============================================================
  This file contains all functions to handle informative and
  diagnostic output during the run. If writer.on = False, no
- output will be produced and gcmt will run silently. If a
+ output will be produced and gcm_toolkit will run silently. If a
  file_name is given, it will save the output to this file.
 ==============================================================
 """
@@ -24,15 +24,16 @@ class Writer:
     file_name = None
 
     # color settings
-    colors = {'DEFAULT': '\033[94m',
-              'STAT': '\033[94m',
-              'INFO': '\033[94m',
-              'ERROR': '\033[91m',
-              'E-INFO': '\033[91m',
-              'WARN': '\033[93m'
-              }
+    colors = {
+        "DEFAULT": "\033[94m",
+        "STAT": "\033[94m",
+        "INFO": "\033[94m",
+        "ERROR": "\033[91m",
+        "E-INFO": "\033[91m",
+        "WARN": "\033[93m",
+    }
 
-    ENDC = '\033[0m'
+    ENDC = "\033[0m"
 
     # spare colors and layouts if needed
     # HEADER = '\033[95m'
@@ -48,9 +49,7 @@ class Writer:
     line_maxoff = 10
 
     # spacing for 1 unite of indent
-    spacer = {"INFO": "   ",
-              "DEFAULT": ""
-              }
+    spacer = {"INFO": "   ", "DEFAULT": ""}
 
     # constructor
     def __init__(self):
@@ -73,7 +72,7 @@ class Writer:
         """
         if tag in self.colors:
             return self.colors[tag]
-        return self.colors['DEFAULT']
+        return self.colors["DEFAULT"]
 
     def get_spacer(self, tag):
         """
@@ -92,7 +91,7 @@ class Writer:
         """
         if tag in self.spacer:
             return self.spacer[tag]
-        return self.spacer['DEFAULT']
+        return self.spacer["DEFAULT"]
 
 
 def writer_setup(typ):
@@ -110,11 +109,11 @@ def writer_setup(typ):
         str: file path to where log should be saved
     """
 
-    if typ == 'off':
+    if typ == "off":
         # mute all outputs
         Writer.on = False
         Writer.file_name = None
-    elif typ == 'on':
+    elif typ == "on":
         # enable all outputs to console
         Writer.on = True
         Writer.file_name = None
@@ -122,7 +121,7 @@ def writer_setup(typ):
         # enable all outputs to file
         Writer.on = True
         Writer.file_name = typ
-        with open(typ, 'w', encoding="utf-8") as fil:
+        with open(typ, "w", encoding="utf-8") as fil:
             fil.close()
     else:
         Writer.on = False
@@ -150,17 +149,17 @@ def write_status(tag, message):
 
     # add line breaks after _writer.line_length characters
     line = space + "[" + tag + "] " + message
-    tag_length = ' ' * (len(space + "[" + tag + "] "))
+    tag_length = " " * (len(space + "[" + tag + "] "))
     liner = ""
     while len(line) > Writer.line_length:
         for i in range(Writer.line_maxoff):
             if line[Writer.line_length - i] == " ":
-                liner += line[:Writer.line_length - i + 1] + "\n"
-                line = tag_length + line[Writer.line_length - i + 1:]
+                liner += line[: Writer.line_length - i + 1] + "\n"
+                line = tag_length + line[Writer.line_length - i + 1 :]
                 break
         else:
-            liner += line[:Writer.line_length + 1] + "\n"
-            line = tag_length + line[Writer.line_length + 1:]
+            liner += line[: Writer.line_length + 1] + "\n"
+            line = tag_length + line[Writer.line_length + 1 :]
     liner += line
 
     # check if verbosity is whished
@@ -171,10 +170,10 @@ def write_status(tag, message):
 
         # write message to file
         else:
-            with open(Writer.file_name, 'a', encoding="utf-8") as fil:
+            with open(Writer.file_name, "a", encoding="utf-8") as fil:
                 fil.write(liner + "\n")
 
-    if tag == 'ERROR':
+    if tag == "ERROR":
         raise ValueError(liner)
 
 
@@ -205,18 +204,18 @@ def write_message(message, color=None, spacing=0):
     col = writer.get_color(tag=color)
 
     # add line breaks after _writer.line_length characters
-    tag_length = ' ' * spacing
+    tag_length = " " * spacing
     line = tag_length + message
     liner = ""
     while len(line) > Writer.line_length:
         for i in range(Writer.line_maxoff):
             if line[Writer.line_length - i] == " ":
-                liner += line[:Writer.line_length - i + 1] + "\n"
-                line = tag_length + line[Writer.line_length - i + 1:]
+                liner += line[: Writer.line_length - i + 1] + "\n"
+                line = tag_length + line[Writer.line_length - i + 1 :]
                 break
         else:
-            liner += line[:Writer.line_length + 1] + "\n"
-            line = tag_length + line[Writer.line_length + 1:]
+            liner += line[: Writer.line_length + 1] + "\n"
+            line = tag_length + line[Writer.line_length + 1 :]
     liner += line
 
     # write message to terminal
@@ -225,11 +224,11 @@ def write_message(message, color=None, spacing=0):
 
     # write message to file
     else:
-        with open(Writer.file_name, 'a', encoding="utf-8") as fil:
+        with open(Writer.file_name, "a", encoding="utf-8") as fil:
             fil.write(liner + "\n")
 
 
-def write_hline(character='=', color=None):
+def write_hline(character="=", color=None):
     """
     Write a single horizontal line.
 
@@ -261,5 +260,5 @@ def write_hline(character='=', color=None):
 
     # write message to file
     else:
-        with open(Writer.file_name, 'a', encoding="utf-8") as fil:
+        with open(Writer.file_name, "a", encoding="utf-8") as fil:
             fil.write(liner + "\n")

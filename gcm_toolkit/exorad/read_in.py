@@ -19,8 +19,16 @@ from ..core import writer as wrt
 from ..core.units import convert_pressure, convert_time
 
 
-def m_read_from_mitgcm(tools, data_path, iters, exclude_iters=None, d_lon=5, d_lat=4,
-                       loaded_dsi=None, **kwargs):
+def m_read_from_mitgcm(
+    tools,
+    data_path,
+    iters,
+    exclude_iters=None,
+    d_lon=5,
+    d_lat=4,
+    loaded_dsi=None,
+    **kwargs,
+):
     """
     Data read in for MITgcm output.
 
@@ -54,13 +62,13 @@ def m_read_from_mitgcm(tools, data_path, iters, exclude_iters=None, d_lon=5, d_l
     from .utils import exorad_postprocessing
 
     # determine the prefixes that should be loaded
-    prefix = kwargs.pop('prefix', ["T", "U", "V", "W"])
+    prefix = kwargs.pop("prefix", ["T", "U", "V", "W"])
 
     # determine the final iteration if needed
-    if iters == 'last':
+    if iters == "last":
         all_iters = find_iters_mitgcm(data_path, prefix)
         iters = [max(all_iters)]
-    elif iters == 'all':
+    elif iters == "all":
         iters = find_iters_mitgcm(data_path, prefix)
 
     if exclude_iters is not None:
@@ -68,7 +76,9 @@ def m_read_from_mitgcm(tools, data_path, iters, exclude_iters=None, d_lon=5, d_l
             exclude_iters = [exclude_iters]
         iters = set(iters) - set(exclude_iters)
 
-    wrt.write_status('INFO', 'Iterations: ' + ", ".join([str(i) for i in iters]))
+    wrt.write_status(
+        "INFO", "Iterations: " + ", ".join([str(i) for i in iters])
+    )
 
     if loaded_dsi is not None:
         to_load = list(set(iters) - set(list(loaded_dsi.iter.values)))
@@ -80,19 +90,27 @@ def m_read_from_mitgcm(tools, data_path, iters, exclude_iters=None, d_lon=5, d_l
     # Currently, the read-in method is built using the wrapper functionality of
     # the cubedsphere package (Aaron Schneider)
     # see: https://cubedsphere.readthedocs.io/en/latest/index.html
-    dsi_ascii, grid = cs.open_ascii_dataset(data_path, iters=to_load, prefix=prefix, **kwargs)
+    dsi_ascii, grid = cs.open_ascii_dataset(
+        data_path, iters=to_load, prefix=prefix, **kwargs
+    )
 
     # regrid the dataset
-    filename = 'tmp_gcmt_reg_weights_xya'  # generate random filename for weights to be deleted
-    regrid = cs.Regridder(ds=dsi_ascii, cs_grid=grid, d_lon=d_lon, d_lat=d_lat, filename=filename)
-    _ = [os.remove(f) for f in glob.glob(filename + "*.nc")]  # delete aux weights
+    filename = (  # generate random filename for weights to be deleted
+        "tmp_gcmt_reg_weights_xya"
+    )
+    regrid = cs.Regridder(
+        ds=dsi_ascii, cs_grid=grid, d_lon=d_lon, d_lat=d_lat, filename=filename
+    )
+    _ = [
+        os.remove(f) for f in glob.glob(filename + "*.nc")
+    ]  # delete aux weights
     dsi = regrid()
 
     # convert wind, vertical dimension, time, ...
     dsi = exorad_postprocessing(dsi, outdir=data_path)
 
-    convert_pressure(dsi, current_unit='Pa', goal_unit=tools.p_unit)
-    convert_time(dsi, current_unit='iter', goal_unit=tools.time_unit)
+    convert_pressure(dsi, current_unit="Pa", goal_unit=tools.p_unit)
+    convert_time(dsi, current_unit="iter", goal_unit=tools.time_unit)
 
     if loaded_dsi is not None:
         dsi = xr.merge([dsi, loaded_dsi])
@@ -119,7 +137,7 @@ def find_iters_mitgcm(data_path, prefixes):
     for prefix in prefixes:
         files = glob.glob(os.path.join(data_path, f"{prefix}.*.data"))
 
-        iters = [int(f.split('.')[-2]) for f in files]
+        iters = [int(f.split(".")[-2]) for f in files]
         iters_list.append(iters)
 
     # find common iterations with data for all prefixes

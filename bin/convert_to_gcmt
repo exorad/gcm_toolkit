@@ -1,14 +1,14 @@
 #!/usr/bin/python
 
 """
-A Command line script that converts raw data to gcmt data
+A Command line script that converts raw data to gcm_toolkit data
 """
 import os
 import argparse
 import yaml
 
-from gcmt import GCMT
-import gcmt.core.writer as wrt
+from gcm_toolkit import GCMT
+import gcm_toolkit.core.writer as wrt
 
 wdir = os.getcwd()
 
@@ -16,7 +16,7 @@ wdir = os.getcwd()
 # Default values
 ################
 DEFAULT_CONFIG = os.path.join(wdir, 'convert.yaml')
-DEFAUT_PREFIXES = ["T","U","V","W"]
+DEFAUT_PREFIXES = ["T", "U", "V", "W"]
 DEFAULT_ITERATIONS = "all"
 DEFAULT_LOAD_EXISTING = False
 DEFAULT_GCM = "MITgcm"
@@ -44,11 +44,11 @@ args = parser.parse_args()
 gcmt = GCMT(write='on')
 
 if not os.path.isfile(args.config):
-    wrt.write_status('WARN', "Conversion to gcmt: no config file found, using defaults instead")
+    wrt.write_status('WARN', "Conversion to gcm_toolkit: no config file found, using defaults instead")
     config = {}
 else:
     with open(args.config) as f:
-         config = yaml.load(f, Loader=yaml.FullLoader)
+        config = yaml.load(f, Loader=yaml.FullLoader)
 
 ################
 # Set parameters
@@ -68,5 +68,6 @@ update_along_time = config.pop("update_along_time", DEFAULT_UPDATE_ALONG_TIME)
 ###############
 if load_existing:
     gcmt.load(save_path, tag=tag, method=method)
-gcmt.read_raw(gcm=gcm, data_path=data_path, iters=iterations, prefix=prefixes, load_existing=load_existing, tag=tag, **config)
+gcmt.read_raw(gcm=gcm, data_path=data_path, iters=iterations, prefix=prefixes, load_existing=load_existing, tag=tag,
+              **config)
 gcmt.save(save_path, tag=tag, method=method, update_along_time=update_along_time)

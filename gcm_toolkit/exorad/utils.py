@@ -15,9 +15,10 @@ class MITgcmDataParser(Parser):
     """
     MIT gcm data parser class to remember common variables
     """
+
     def __init__(self):
         super().__init__()
-        self.comment_tokens += '#'
+        self.comment_tokens += "#"
         self.end_comma = True
         self.indent = " "
         self.column_width = 72
@@ -85,7 +86,7 @@ def convert_winds_and_t(dsi, temp_dim, w_dim):
     h_val = dsi.attrs["R"] / dsi.attrs["g"] * dsi[temp_dim]
 
     # calculate geometric height
-    dsi[c.Z_geo] = - h_val * np.log(dsi[c.Z] / dsi.attrs["p_ref"])
+    dsi[c.Z_geo] = -h_val * np.log(dsi[c.Z] / dsi.attrs["p_ref"])
 
     if w_dim in dsi:
         # interpolate vertical windspeed to cell center:
@@ -97,7 +98,7 @@ def convert_winds_and_t(dsi, temp_dim, w_dim):
         w_interp = grid.interp(dsi[w_dim], axis=c.Z, to="center")
 
         # convert vertical wind speed from Pa/s to m/s
-        dsi[w_dim] = - w_interp * h_val / dsi[c.Z]
+        dsi[w_dim] = -w_interp * h_val / dsi[c.Z]
 
     return dsi
 
@@ -105,15 +106,16 @@ def convert_winds_and_t(dsi, temp_dim, w_dim):
 def exorad_postprocessing(dsi, outdir=None, datafile=None):
     """
     Preliminaray postprocessing on exorad dataset.
-    This function converts the vertical windspeed from Pa into meters and saves attributes
-    to the dataset.
+    This function converts the vertical windspeed from Pa
+    into meters and saves attributes to the dataset.
 
     Parameters
     ----------
     dsi: Dataset
         dataset to be extended
     outdir: string
-        directory in which to find the data file (following the convention f'{outdir}/data')
+        directory in which to find the data file
+        (following the convention f'{outdir}/data')
     datafile: string
         alternatively specify datafile directly
 
@@ -126,20 +128,35 @@ def exorad_postprocessing(dsi, outdir=None, datafile=None):
     assert outdir is not None or datafile is not None, stri
 
     if outdir is not None:
-        datafile = f'{outdir}/data'
+        datafile = f"{outdir}/data"
 
     # Add metadata
-    radius = float(get_parameter(datafile, 'rSphere', 6370e3))  # planet radius in m
-    p_rot = float(get_parameter(datafile, 'rotationperiod', 8.6164e4))  # planet rotationperiod in m
-    attrs = {"p_ref": float(get_parameter(datafile, 'Ro_SeaLevel', 1.0e5)),  # bot layer pres in pa
-             "cp": float(get_parameter(datafile, 'atm_Cp', 1.004e3)),  # heat cap at constant pres
-             "R": float(get_parameter(datafile, 'atm_Rd', 2.868571E2)),  # specific gas constant
-             "g": float(get_parameter(datafile, 'gravity', 9.81)),  # surface gravity in m/s^2
-             "dt": int(get_parameter(datafile, 'deltaT', 0.0)),  # time step size in s
-             "R_p": radius,
-             "P_rot": p_rot,
-             "P_orb": p_rot,  # change, when this is available
-             }
+    radius = float(
+        get_parameter(datafile, "rSphere", 6370e3)
+    )  # planet radius in m
+    p_rot = float(
+        get_parameter(datafile, "rotationperiod", 8.6164e4)
+    )  # planet rotationperiod in m
+    attrs = {
+        "p_ref": float(
+            get_parameter(datafile, "Ro_SeaLevel", 1.0e5)
+        ),  # bot layer pres in pa
+        "cp": float(
+            get_parameter(datafile, "atm_Cp", 1.004e3)
+        ),  # heat cap at constant pres
+        "R": float(
+            get_parameter(datafile, "atm_Rd", 2.868571e2)
+        ),  # specific gas constant
+        "g": float(
+            get_parameter(datafile, "gravity", 9.81)
+        ),  # surface gravity in m/s^2
+        "dt": int(
+            get_parameter(datafile, "deltaT", 0.0)
+        ),  # time step size in s
+        "R_p": radius,
+        "P_rot": p_rot,
+        "P_orb": p_rot,  # change, when this is available
+    }
 
     dsi.attrs.update(attrs)
 
@@ -194,17 +211,23 @@ def add_distances(dsi, radius):
     if c.lon not in dsi.dims or c.lat not in dsi.dims:
         return dsi
 
-    dsi = generate_grid_ds(dsi, {'X': c.lon, 'Y': c.lat})
-    xgcm_grid = xgcm.Grid(dsi, periodic=['X'])
+    dsi = generate_grid_ds(dsi, {"X": c.lon, "Y": c.lat})
+    xgcm_grid = xgcm.Grid(dsi, periodic=["X"])
 
-    dlong = xgcm_grid.diff(dsi[c.lon], 'X', boundary_discontinuity=360)
-    dlonc = xgcm_grid.diff(dsi["lon_left"], 'X', boundary_discontinuity=360)
+    dlong = xgcm_grid.diff(dsi[c.lon], "X", boundary_discontinuity=360)
+    dlonc = xgcm_grid.diff(dsi["lon_left"], "X", boundary_discontinuity=360)
 
-    dlatg = xgcm_grid.diff(dsi[c.lat], 'Y', boundary='fill', fill_value=np.nan)
-    dlatc = xgcm_grid.diff(dsi["lat_left"], 'Y', boundary='fill', fill_value=np.nan)
+    dlatg = xgcm_grid.diff(dsi[c.lat], "Y", boundary="fill", fill_value=np.nan)
+    dlatc = xgcm_grid.diff(
+        dsi["lat_left"], "Y", boundary="fill", fill_value=np.nan
+    )
 
-    dsi.coords['dxg'], dsi.coords['dyg'] = dll_dist(dlong, dlatg, dsi[c.lon], dsi[c.lat], radius)
-    dsi.coords['dxc'], dsi.coords['dyc'] = dll_dist(dlonc, dlatc, dsi[c.lon], dsi[c.lat], radius)
-    dsi.coords['area_c'] = dsi.dxc * dsi.dyc
+    dsi.coords["dxg"], dsi.coords["dyg"] = dll_dist(
+        dlong, dlatg, dsi[c.lon], dsi[c.lat], radius
+    )
+    dsi.coords["dxc"], dsi.coords["dyc"] = dll_dist(
+        dlonc, dlatc, dsi[c.lon], dsi[c.lat], radius
+    )
+    dsi.coords["area_c"] = dsi.dxc * dsi.dyc
 
     return dsi
