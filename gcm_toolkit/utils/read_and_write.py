@@ -46,6 +46,8 @@ def m_read_raw(
     """
 
     # call the required GCM read-in method
+    dsi = None
+
     if gcm == "MITgcm":
         wrt.write_status("STAT", "Read in raw MITgcm data")
         wrt.write_status("INFO", "File path: " + data_path)
@@ -67,7 +69,10 @@ def m_read_raw(
             "ERROR", 'The selected GCM type "' + gcm + '" is not supported'
         )
 
-    _add_attrs_and_store(tools, dsi, tag)
+    if dsi is not None:
+        _add_attrs_and_store(tools, dsi, tag)
+    else:
+        wrt.write_status("E-INFO", "No dataset has been loaded!")
 
 
 def m_read_reduced(
