@@ -141,15 +141,7 @@ def is_the_data_basic(dataset):
             + "therefore does not qualify as a basic GCM dataset.",
         )
 
-    if not is_the_data_ok:
-        wrt.write_status(
-            "ERROR",
-            "The data does not fulfill the "
-            + "requirements for a basic dataset.",
-        )
-
-    # dataset fulfilled all checks
-    return True
+    return is_the_data_ok
 
 
 def is_the_data_cloudy(dataset):
@@ -170,13 +162,13 @@ def is_the_data_cloudy(dataset):
     """
 
     # check first if the dataset fulfills the basic requirements
-    is_the_data_basic(dataset)
+    is_the_data_ok = True
+    if not is_the_data_basic(dataset):
+        # variable to check if everything is OK
+        is_the_data_ok = False
 
     # get names of all data variables and attributes
     data_variables = list(dataset.keys())
-
-    # variable to check if everything is OK
-    is_the_data_ok = True
 
     if "ClAb" not in data_variables:
         wrt.write_status(

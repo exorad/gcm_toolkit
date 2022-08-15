@@ -2,6 +2,7 @@
 General GCMT tests
 """
 import numpy as np
+import pytest
 import xarray
 from gcm_toolkit import GCMT
 from gcm_toolkit.gcm_dataset_collection import GCMDatasetCollection
@@ -36,9 +37,35 @@ def test_gcmt_get_model_multiple(all_raw_testdata):
     assert models == tools.models
 
     test1 = tools.get_models("test1")
+    _ = tools.get_models("test2")
     test1_one_model = tools.get_one_model("test1")
     assert isinstance(test1, xarray.Dataset)
     assert test1_one_model == test1
+
+    assert len(tools) == 2
+    assert bool(tools)
+
+    with pytest.raises(ValueError):
+        tools.get_one_model()
+
+    with pytest.raises(ValueError):
+        _ = tools["wrong"]
+
+    with pytest.raises(ValueError):
+        _ = tools[0]
+
+    with pytest.raises(ValueError):
+        _ = tools.get(2)
+
+    assert tools.get("test1") == test1
+    assert tools.get("wrong", 1) == 1
+    assert tools.get("wrong") is None
+
+    get_model_test = list(tools.get_models(always_dict=True).values())
+    iter_test = [m for t, m in tools]
+    assert get_model_test == iter_test
+
+    _ = tools["test1"]
 
 
 def test_gcmt_get_model_single(all_raw_testdata):
@@ -58,6 +85,12 @@ def test_gcmt_get_model_single(all_raw_testdata):
     assert isinstance(models, xarray.Dataset)
     assert models == tools.models
 
+    with pytest.raises(KeyError):
+        tools.get_one_model(tag="wrong")
+
+    with pytest.raises(ValueError):
+        tools.get_models(tag=2)
+
 
 def test_units(all_raw_testdata):
     """Do tests for the conversion of units in GCMT"""
@@ -67,6 +100,11 @@ def test_units(all_raw_testdata):
 
     p_unit = "bar"
     time_unit = "day"
+
+    with pytest.raises(ValueError):
+        _ = GCMT(p_unit="wrong")
+    with pytest.raises(ValueError):
+        _ = GCMT(time_unit="wrong")
 
     tools = GCMT(p_unit=p_unit, time_unit=time_unit)
     tools.read_raw(gcm=expected["gcm"], data_path=data_path)
@@ -89,3 +127,35 @@ def test_units(all_raw_testdata):
     if times := expected.get("times"):
         # If available in metadata, also check if timestamps are correct
         assert np.all(np.isclose(dsi.time.values, times))
+
+
+def test_set_model(all_raw_testdata):
+    """Test the function to set data"""
+    dirname, expected = all_raw_testdata
+    data_path = expected.get("rel_data_dir", "{}").format(dirname)
+
+    tools = GCMT(write="off")
+    tools.read_raw(gcm=expected["gcm"], data_path=data_path, tag="raw_readin")
+
+    ds_raw = tools.get("raw_readin")
+
+    with pytest.raises(ValueError):
+        tools[2] = ds_raw
+
+    with pytest.raises(ValueError):
+        tools["wrong_input"] = 2
+
+    with pytest.raises(ValueError):
+        tools["wrong_input"] = ds_raw.drop("T")
+
+    with pytest.raises(NotImplementedError):
+        ds_raw.attrs.update({"time_unit": "wrong"})
+        tools["wrong_time"] = ds_raw
+
+    ds_raw.attrs.update({"time_unit": tools.time_unit})
+
+    with pytest.raises(NotImplementedError):
+        ds_raw.attrs.update({"p_unit": "wrong"})
+        tools["wrong_p"] = ds_raw
+
+    ds_raw.attrs.update({"p_unit": tools.p_unit})
