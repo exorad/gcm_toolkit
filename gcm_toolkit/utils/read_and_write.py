@@ -223,19 +223,17 @@ def m_load(tools, path, method="nc", tag=None):
     # print information
     wrt.write_status("STAT", "Load saved GCMs to gcm_toolkit")
     wrt.write_status("INFO", "File path: " + path)
-    if tag is None:
-        wrt.write_message("INFO", "Tag: All tags were stored")
-    else:
-        wrt.write_status("INFO", "Tag: " + tag)
+
+    tag_message = "All tags were stored" if tag is None else tag
+    wrt.write_message("INFO", f"Tag: {tag_message}")
+
     wrt.write_status("INFO", "method: " + method)
 
     if method not in ["nc", "zarr"]:
         raise NotImplementedError("Please use zarr or nc.")
 
-    if tag is None:
-        available_datasets = glob.glob(f"{path}/*.{method}")
-    else:
-        available_datasets = glob.glob(f"{path}/{tag}.{method}")
+    tag_filename = "*" if tag is None else tag
+    available_datasets = glob.glob(f"{path}/{tag_filename}.{method}")
 
     if len(available_datasets) == 0:
         print(f"[INFO] No data available to load for method {method}")

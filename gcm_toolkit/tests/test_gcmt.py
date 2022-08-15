@@ -183,6 +183,7 @@ def test_load_save(all_raw_testdata):
 
     tools = GCMT(write="off")
     tools.load(".", method="nc")
+    tools.load(".", method="nc")  # test twice
     os.remove(f"{tag}.nc")
 
     assert isinstance(tools[tag], xarray.Dataset)
@@ -196,3 +197,50 @@ def test_load_save(all_raw_testdata):
 
     assert isinstance(tools[tag], xarray.Dataset)
     assert tools[tag] == ds
+
+
+def test_read_reduced(all_raw_testdata):
+    """Test load and save"""
+    dirname, expected = all_raw_testdata
+    data_path = expected.get("rel_data_dir", "{}").format(dirname)
+
+    tag = "raw_readin"
+
+    tools = GCMT(write="off")
+    tools.read_raw(gcm=expected["gcm"], data_path=data_path, tag=tag)
+    ds = tools[tag]
+    tools.save(".", method="nc")
+    assert os.path.exists(f"{tag}.nc")
+
+    del tools
+
+    tools = GCMT(write="off")
+    tools.read_reduced(f"{tag}.nc", tag=tag)
+
+    assert isinstance(tools[tag], xarray.Dataset)
+    assert all(tools[tag].load() == ds)
+
+    os.remove(f"{tag}.nc")
+
+
+def test_read_incorrect_files(all_raw_testdata):
+    """Test load and save"""
+    dirname, expected = all_raw_testdata
+    data_path = expected.get("rel_data_dir", "{}").format(dirname)
+
+    tag = "raw_readin"
+
+    tools = GCMT(write="off")
+    tools.read_raw(gcm=expected["gcm"], data_path=data_path, tag=tag)
+    ds = tools[tag]
+    ds.drop("T").to_netcdf(f"{tag}.nc")
+    assert os.path.exists(f"{tag}.nc")
+
+    del tools
+
+    tools = GCMT(write="off")
+
+    with pytest.raises(ValueError):
+        tools.read_reduced(f"{tag}.nc", tag=tag)
+
+    os.remove(f"{tag}.nc")

@@ -125,7 +125,6 @@ class GCMT:
             )
         if isinstance(tag, str):
             return self.get_one_model(tag=tag, raise_error=True)
-        raise ValueError("key needs to be a string.")
 
     def __setitem__(self, tag, dsi):
         """
