@@ -9,6 +9,7 @@ import xarray
 from gcm_toolkit import GCMT
 from gcm_toolkit.gcm_dataset_collection import GCMDatasetCollection
 from gcm_toolkit.tests.test_gcmtools_common import all_raw_testdata
+from gcm_toolkit.core.units import convert_time
 import shutil
 
 
@@ -130,6 +131,9 @@ def test_units(all_raw_testdata):
     if times := expected.get("times"):
         # If available in metadata, also check if timestamps are correct
         assert np.all(np.isclose(dsi.time.values, times))
+
+    dsi_new = convert_time(dsi, "day", "iter")
+    assert dsi_new.time_unit == "iter"
 
 
 def test_set_model(all_raw_testdata):
