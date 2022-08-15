@@ -8,7 +8,7 @@ import numpy as np
 import xarray as xr
 
 from ..core import writer as wrt
-from ..core.const import VARNAMES as c
+from ..core.const import SUPPORTED_GCMS, VARNAMES as c
 from ..core.units import convert_time, convert_pressure
 from .passport import is_the_data_basic
 
@@ -48,6 +48,11 @@ def m_read_raw(
     # call the required GCM read-in method
     dsi = None
 
+    if gcm not in SUPPORTED_GCMS:
+        raise NotImplementedError(
+            f"There is currently no readin function for {gcm}"
+        )
+
     if gcm == "MITgcm":
         wrt.write_status("STAT", "Read in raw MITgcm data")
         wrt.write_status("INFO", "File path: " + data_path)
@@ -63,10 +68,6 @@ def m_read_raw(
 
         dsi = m_read_from_mitgcm(
             tools, data_path, iters, loaded_dsi=loaded_dsi, **kwargs
-        )
-    else:
-        wrt.write_status(
-            "ERROR", 'The selected GCM type "' + gcm + '" is not supported'
         )
 
     if dsi is not None:

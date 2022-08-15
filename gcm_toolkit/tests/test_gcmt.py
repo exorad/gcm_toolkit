@@ -175,7 +175,14 @@ def test_load_save(all_raw_testdata):
     tools.read_raw(gcm=expected["gcm"], data_path=data_path, tag=tag)
     ds = tools[tag]
     tools.save(".", method="nc")
+    tools.save(".", method="nc", tag=tag)
     tools.save(".", method="zarr")
+    tools.save(".", method="zarr", tag=tag)
+    tools.save(".", method="zarr", tag=tag, update_along_time=True)
+
+    with pytest.raises(NotImplementedError):
+        tools.save(".", method="wrong")
+
     assert os.path.exists(f"{tag}.nc")
     assert os.path.exists(f"{tag}.zarr")
 
@@ -184,6 +191,12 @@ def test_load_save(all_raw_testdata):
     tools = GCMT(write="off")
     tools.load(".", method="nc")
     tools.load(".", method="nc")  # test twice
+
+    tools.load(".", method="nc", tag=tag)
+    tools.load(
+        ".", method="nc", tag="wrong"
+    )  # will not raise error, and just warn
+
     os.remove(f"{tag}.nc")
 
     assert isinstance(tools[tag], xarray.Dataset)
@@ -197,6 +210,9 @@ def test_load_save(all_raw_testdata):
 
     assert isinstance(tools[tag], xarray.Dataset)
     assert tools[tag] == ds
+
+    with pytest.raises(NotImplementedError):
+        tools.load(".", method="wrong")
 
 
 def test_read_reduced(all_raw_testdata):
@@ -244,3 +260,23 @@ def test_read_incorrect_files(all_raw_testdata):
         tools.read_reduced(f"{tag}.nc", tag=tag)
 
     os.remove(f"{tag}.nc")
+
+
+def test_gcmt_read_raw_existing(all_raw_testdata):
+    """Create a minimal gcm_toolkit object and do simple tests on it."""
+    dirname, expected = all_raw_testdata
+    data_path = expected.get("rel_data_dir", "{}").format(dirname)
+
+    tools = GCMT()
+    tools.read_raw(
+        gcm=expected["gcm"], data_path=data_path, load_existing=True
+    )
+    assert bool(tools), "did not load a dataset!"
+
+
+def test_read_incorrect_raw_gcm():
+    """Raise error, when we try to read a GCM that is not yet supported"""
+    tools = GCMT(write="off")
+
+    with pytest.raises(NotImplementedError):
+        tools.read_raw("wrong_gcm", data_path=".")
