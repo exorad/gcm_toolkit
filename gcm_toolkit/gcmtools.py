@@ -125,7 +125,6 @@ class GCMT:
             )
         if isinstance(tag, str):
             return self.get_one_model(tag=tag, raise_error=True)
-        raise ValueError("key needs to be a string.")
 
     def __setitem__(self, tag, dsi):
         """
@@ -388,7 +387,7 @@ class GCMT:
         method : str, optional
             Datasets can be stored as '.zarr' or '.nc'.
             Decide which type you prefer. Defaults to '.nc'.
-        update_along_time: str, optional
+        update_along_time: bool, optional
             Decide if you want to update already saved datasets
             along the timedimension. This only works with method='zarr'.
         tag: str, optional

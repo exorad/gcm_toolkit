@@ -68,3 +68,5 @@ VARNAMES = dict(
     g="g",
     R_p="R_p",
 )
+
+SUPPORTED_GCMS = ["MITgcm"]

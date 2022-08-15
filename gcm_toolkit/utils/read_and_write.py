@@ -8,7 +8,7 @@ import numpy as np
 import xarray as xr
 
 from ..core import writer as wrt
-from ..core.const import VARNAMES as c
+from ..core.const import SUPPORTED_GCMS, VARNAMES as c
 from ..core.units import convert_time, convert_pressure
 from .passport import is_the_data_basic
 
@@ -48,6 +48,11 @@ def m_read_raw(
     # call the required GCM read-in method
     dsi = None
 
+    if gcm not in SUPPORTED_GCMS:
+        raise NotImplementedError(
+            f"There is currently no readin function for {gcm}"
+        )
+
     if gcm == "MITgcm":
         wrt.write_status("STAT", "Read in raw MITgcm data")
         wrt.write_status("INFO", "File path: " + data_path)
@@ -63,10 +68,6 @@ def m_read_raw(
 
         dsi = m_read_from_mitgcm(
             tools, data_path, iters, loaded_dsi=loaded_dsi, **kwargs
-        )
-    else:
-        wrt.write_status(
-            "ERROR", 'The selected GCM type "' + gcm + '" is not supported'
         )
 
     if dsi is not None:
@@ -223,19 +224,17 @@ def m_load(tools, path, method="nc", tag=None):
     # print information
     wrt.write_status("STAT", "Load saved GCMs to gcm_toolkit")
     wrt.write_status("INFO", "File path: " + path)
-    if tag is None:
-        wrt.write_message("INFO", "Tag: All tags were stored")
-    else:
-        wrt.write_status("INFO", "Tag: " + tag)
+
+    tag_message = "All tags were stored" if tag is None else tag
+    wrt.write_message("INFO", f"Tag: {tag_message}")
+
     wrt.write_status("INFO", "method: " + method)
 
     if method not in ["nc", "zarr"]:
         raise NotImplementedError("Please use zarr or nc.")
 
-    if tag is None:
-        available_datasets = glob.glob(f"{path}/*.{method}")
-    else:
-        available_datasets = glob.glob(f"{path}/{tag}.{method}")
+    tag_filename = "*" if tag is None else tag
+    available_datasets = glob.glob(f"{path}/{tag_filename}.{method}")
 
     if len(available_datasets) == 0:
         print(f"[INFO] No data available to load for method {method}")
