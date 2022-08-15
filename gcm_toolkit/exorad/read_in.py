@@ -80,12 +80,16 @@ def m_read_from_mitgcm(
         "INFO", "Iterations: " + ", ".join([str(i) for i in iters])
     )
 
-    if loaded_dsi is not None:
-        to_load = list(set(iters) - set(list(loaded_dsi.iter.values)))
-        if len(to_load) == 0:
-            return loaded_dsi
-    else:
-        to_load = iters
+    to_load = (
+        list(set(iters) - set(list(loaded_dsi.iter.values)))
+        if loaded_dsi is not None
+        else iters
+    )
+
+    if len(to_load) == 0:
+        if loaded_dsi is None:
+            wrt.write_status("E-INFO", "No iterations selected to load.")
+        return loaded_dsi
 
     # Currently, the read-in method is built using the wrapper functionality of
     # the cubedsphere package (Aaron Schneider)

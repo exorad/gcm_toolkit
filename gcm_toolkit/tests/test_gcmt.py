@@ -1,12 +1,15 @@
 """
 General GCMT tests
 """
+import os
+
 import numpy as np
 import pytest
 import xarray
 from gcm_toolkit import GCMT
 from gcm_toolkit.gcm_dataset_collection import GCMDatasetCollection
 from gcm_toolkit.tests.test_gcmtools_common import all_raw_testdata
+import shutil
 
 
 def test_create_gcmt_minimal(all_raw_testdata):
@@ -159,3 +162,37 @@ def test_set_model(all_raw_testdata):
         tools["wrong_p"] = ds_raw
 
     ds_raw.attrs.update({"p_unit": tools.p_unit})
+
+
+def test_load_save(all_raw_testdata):
+    """Test load and save"""
+    dirname, expected = all_raw_testdata
+    data_path = expected.get("rel_data_dir", "{}").format(dirname)
+
+    tag = "raw_readin"
+
+    tools = GCMT(write="off")
+    tools.read_raw(gcm=expected["gcm"], data_path=data_path, tag=tag)
+    ds = tools[tag]
+    tools.save(".", method="nc")
+    tools.save(".", method="zarr")
+    assert os.path.exists(f"{tag}.nc")
+    assert os.path.exists(f"{tag}.zarr")
+
+    del tools
+
+    tools = GCMT(write="off")
+    tools.load(".", method="nc")
+    os.remove(f"{tag}.nc")
+
+    assert isinstance(tools[tag], xarray.Dataset)
+    assert tools[tag] == ds
+
+    del tools
+
+    tools = GCMT(write="off")
+    tools.load(".", method="zarr")
+    shutil.rmtree(f"{tag}.zarr")
+
+    assert isinstance(tools[tag], xarray.Dataset)
+    assert tools[tag] == ds

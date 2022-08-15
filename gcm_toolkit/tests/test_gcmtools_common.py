@@ -51,6 +51,7 @@ _experiments = {
         "rel_data_dir": "{}/run",
         "p_domain": [1e-5, 650],  # expected pressure domain in bar
         "times": [12000],  # expected timestamps in days
+        "iters": [41472000],
         "area_key": "area_c",
         "v_data": "V",
     },
