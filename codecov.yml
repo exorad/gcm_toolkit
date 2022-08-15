@@ -22,7 +22,7 @@ coverage:
     changes: off
 
 ignore:
-  - "gcm_toolkit/test/*"
+  - "gcm_toolkit/tests/*"
   - "doc/*"
   - "bin/*"
   - "gcm_toolkit/__init__.py"
