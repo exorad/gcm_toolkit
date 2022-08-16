@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ "macos-latest" ]
+        os: [ "ubuntu-latest" ]
         python-version: [ "3.8", "3.9", "3.10" ]
     steps:
       - uses: actions/checkout@v2
@@ -41,6 +41,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           environment-file: ci/environment-${{ matrix.python-version }}.yml
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+      - name: Set up petitRADTRANS
+        shell: bash -l {0}
+        run: |
+          python -m pip install petitRADTRANS==2.3.4 --no-build-isolation
+          python -m pip install prt-phasecurve --no-build-isolation
       - name: Set up conda environment
         shell: bash -l {0}
         run: |
@@ -61,7 +66,7 @@ jobs:
 
   xarray-master:
     name: Build xarray-master
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Cache conda
@@ -78,6 +83,11 @@ jobs:
           auto-update-conda: false
           environment-file: ci/environment-xarraymaster.yml
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+      - name: Set up petitRADTRANS
+        shell: bash -l {0}
+        run: |
+          python -m pip install petitRADTRANS==2.3.4 --no-build-isolation
+          python -m pip install prt-phasecurve --no-build-isolation
       - name: Set up conda environment
         shell: bash -l {0}
         run: |
