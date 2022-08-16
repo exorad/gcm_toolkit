@@ -8,6 +8,8 @@ dependencies:
   - codecov
   - pytest-cov
   - xarray
+  - fortran-compiler
+  - toolchain3
   - pip
   - pip:
       - git+https://github.com/MITgcm/xmitgcm.git
