@@ -9,7 +9,6 @@ from gcm_toolkit.tests.test_gcmtools_common import (
     petitradtrans_testdata,
     all_raw_testdata,
 )
-from petitRADTRANS import Radtrans
 
 
 def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
@@ -18,6 +17,8 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
 
     dirname_prt, expected_prt = petitradtrans_testdata
     os.environ["pRT_input_data_path"] = dirname_prt
+
+    from petitRADTRANS import Radtrans
 
     pRT = Radtrans(
         line_species=expected_prt["line_species"],
