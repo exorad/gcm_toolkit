@@ -8,7 +8,8 @@ dependencies:
   - codecov
   - pytest-cov
   - xarray
-  - numpy=1.22.4
+  - numpy=1.21.5
+  - setuptools=61.2.0
   - pip
   - pip:
       - git+https://github.com/MITgcm/xmitgcm.git
