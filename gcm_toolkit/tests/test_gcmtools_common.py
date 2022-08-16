@@ -52,23 +52,41 @@ _experiments = {
         "p_domain": [1e-5, 650],  # expected pressure domain in bar
         "times": [12000],  # expected timestamps in days
         "iters": [41472000],
+        "MMW": 2.3160063003212366,  # in mass of u
+        "Rstar": 83692710000.0,  # in cm
+        "Tstar": 6092.0,  # in K
+        "semimajoraxis": 710141092212.9,  # in cm
         "area_key": "area_c",
         "v_data": "V",
+        "prt_max": 0.0042081,  # values for petitradtrans test
+        "prt_min": 0.00023373,  # values for petitradtrans test
+        "prt_mean": 0.00150488,  # values for petitradtrans test
+    },
+}
+
+_interface_data = {
+    "prt_input_data": {
+        "dlink": DLROOT + "36686016",
+        "md5": "2b6efbd672cce17eba6c66495f544aea",
+        "line_species": ["H2O_Exomol_R_1"],
+        "rayleigh_species": [],
+        "continuum_opacities": [],
+        "wlen_bords_micron": [0.3, 30.0],
     },
 }
 
 
-def setup_mds_dir(tmpdir_factory, request, dbs):
+def setup_experiment_dir(tmpdir_factory, request, dbs):
     """Helper function for setting up test cases."""
     expt_name = request.param
     expected_results = dbs[expt_name]
     target_dir = str(tmpdir_factory.mktemp("mdsdata"))
     try:
         # user-defined directory for test datasets
-        data_dir = os.environ["GCMTOOLS_TESTDATA"]
+        data_dir = os.environ["GCM_TOOLKIT_TESTDATA"]
     except KeyError:
         # default to HOME/.xmitgcm-test-data/
-        data_dir = os.environ["HOME"] + "/.gcmtools-test-data"
+        data_dir = os.environ["HOME"] + "/.gcm_toolkit-test-data"
     # create the directory if it doesn't exixt
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
@@ -141,10 +159,16 @@ def file_md5_checksum(fname):
 @pytest.fixture(scope="module", params=_experiments.keys())
 def all_raw_testdata(tmpdir_factory, request):
     """setup test data"""
-    return setup_mds_dir(tmpdir_factory, request, _experiments)
+    return setup_experiment_dir(tmpdir_factory, request, _experiments)
 
 
 @pytest.fixture(scope="module", params=["HD2_test"])
 def exorad_testdata(tmpdir_factory, request):
     """set up test data"""
-    return setup_mds_dir(tmpdir_factory, request, _experiments)
+    return setup_experiment_dir(tmpdir_factory, request, _experiments)
+
+
+@pytest.fixture(scope="module", params=["prt_input_data"])
+def petitradtrans_testdata(tmpdir_factory, request):
+    """set up test data"""
+    return setup_experiment_dir(tmpdir_factory, request, _interface_data)
