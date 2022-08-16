@@ -7,6 +7,7 @@ dependencies:
   - pytest
   - codecov
   - pytest-cov
+  - numpy
   - fortran-compiler
   - toolchain3
   - pip

@@ -8,6 +8,7 @@ dependencies:
   - codecov
   - pytest-cov
   - xarray
+  - numpy
   - fortran-compiler
   - toolchain3
   - pip
