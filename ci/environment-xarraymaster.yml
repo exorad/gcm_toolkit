@@ -10,6 +10,6 @@ dependencies:
   - pip
   - pip:"
       - petitRADTRANS
-      - prt_phasecurve
+      - prt-phasecurve
       - git+https://github.com/MITgcm/xmitgcm.git
       - git+https://github.com/pydata/xarray.git
