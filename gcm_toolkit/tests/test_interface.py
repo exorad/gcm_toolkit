@@ -87,6 +87,15 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
         )
     interface.dsi.attrs["R_p"] = R_p
 
+    with pytest.raises(ValueError):
+        interface.calc_phase_spectrum(
+            mmw=expected["MMW"],
+            Rstar=expected["Rstar"],
+            Tstar=None,
+            semimajoraxis=expected["semimajoraxis"],
+            normalize=True,
+        )
+
     # Test if Pa works
     interface.dsi.attrs["p_unit"] = "Pa"
     interface.set_data(time=expected["times"][-1])
@@ -147,6 +156,12 @@ def test_general_interface(all_raw_testdata, petitradtrans_testdata):
     tools.read_raw(gcm=expected["gcm"], data_path=data_path)
 
     interface = Interface(tools)
+
+    with pytest.raises(ValueError):
+        # We need to set the data first
+        interface.chemistry.chem_from_poorman(
+            "T", co_ratio=0.55, feh_ratio=0.0
+        )
 
     with pytest.raises(ValueError):
         # We need to set the data first
