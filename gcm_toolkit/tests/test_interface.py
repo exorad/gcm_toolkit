@@ -99,7 +99,7 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
     os.remove(filename)
 
 
-def test_raise_error_on_large_data(all_raw_testdata):
+def test_raise_error_on_large_data(all_raw_testdata, petitradtrans_testdata):
     dirname, expected = all_raw_testdata
     data_path = expected.get("rel_data_dir", "{}").format(dirname)
 
