@@ -41,6 +41,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           environment-file: ci/environment-${{ matrix.python-version }}.yml
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+      - name: Install petitRADTRANS
+        shell: bash -l {0}
+        run: |
+          pip install petitRADTRANS
+          pip install prt-phasecurve
       - name: Set up conda environment
         shell: bash -l {0}
         run: |

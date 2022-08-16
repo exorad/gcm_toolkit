@@ -8,8 +8,7 @@ dependencies:
   - codecov
   - pytest-cov
   - xarray
+  - numpy
   - pip
   - pip:
-      - petitRADTRANS
-      - prt-phasecurve
       - git+https://github.com/MITgcm/xmitgcm.git

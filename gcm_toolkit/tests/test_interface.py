@@ -66,3 +66,5 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
     assert np.isclose(ph_with_filename.max(), expected["prt_max"])
     assert np.isclose(ph_with_filename.min(), expected["prt_min"])
     assert np.isclose(ph_with_filename.mean(), expected["prt_mean"])
+
+    os.remove(filename)
