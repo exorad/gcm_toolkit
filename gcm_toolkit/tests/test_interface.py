@@ -75,26 +75,26 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
     assert np.isclose(ph_with_filename.min(), expected["prt_min"])
     assert np.isclose(ph_with_filename.mean(), expected["prt_mean"])
 
-    bad_dsi = interface.dsi.drop("R_p")
-    bad_interface = interface.copy()
-    bad_interface.dsi = bad_dsi
+    R_p = interface.dsi.attrs["R_p"]
+    del interface.dsi.attrs["R_p"]
     with pytest.raises(ValueError):
-        bad_interface.calc_phase_spectrum(
+        interface.calc_phase_spectrum(
             mmw=expected["MMW"],
             Rstar=expected["Rstar"],
             Tstar=expected["Tstar"],
             semimajoraxis=expected["semimajoraxis"],
             normalize=True,
         )
+    interface.dsi.attrs["R_p"] = R_p
 
-    # Test if Pa workd
-    bad_interface.dsi.p_unit = "Pa"
-    bad_interface.set_data(time=expected["times"][-1])
+    # Test if Pa works
+    interface.dsi.attrs["p_unit"] = "Pa"
+    interface.set_data(time=expected["times"][-1])
 
     # Test if something weird works
-    bad_interface.dsi.p_unit = "wrong"
-    with pytest.raises(ValueError):
-        bad_interface.set_data(time=expected["times"][-1])
+    interface.dsi.attrs["p_unit"] = "wrong"
+    with pytest.raises(NotImplementedError):
+        interface.set_data(time=expected["times"][-1])
 
     os.remove(filename)
 
