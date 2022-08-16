@@ -282,7 +282,7 @@ class PrtInterface(Interface):
         regrid_lowres: bool, optional
             Can be useful, if your GCMT uses a very detailed grid
         """
-        self._set_data_common(time, tag=tag, regrid_lowres=False)
+        self._set_data_common(time, tag=tag, regrid_lowres=regrid_lowres)
 
         if self.dsi.p_unit == "bar":
             press = self.dsi.Z.values
@@ -359,7 +359,7 @@ class PrtInterface(Interface):
         lon, lat = np.meshgrid(abus[c["lon"]], abus[c["lat"]])
 
         if (lon.shape[0] * lon.shape[1]) > 300:
-            print(
+            raise ValueError(
                 "WARNING: Calculating a phasecurve on a fine grid takes very"
                 " long. "
                 + "A resolution of 15 degrees is usually sufficient."
@@ -498,18 +498,3 @@ class PrtInterface(Interface):
             return stellar_intensity
 
         raise ValueError("Tstar is need to define a stellar spectra.")
-
-
-# class PACInterface(Interface):
-#     def to_2D_PAC(self, dsi):
-#         """
-#         Transform the given GCM dataset to a pseudo-2D PAC
-#         input file.
-#
-#         Parameters
-#         ----------
-#         dsi: DataSet
-#             A gcm_toolkit-compatible dataset of a 3D climate simulation.
-#
-#         """
-#         pass
