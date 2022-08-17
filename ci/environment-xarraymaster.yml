@@ -9,6 +9,7 @@ dependencies:
   - pytest-cov
   - numpy=1.21.5
   - setuptools=61.2.0
+  - netcdf4
   - pip
   - pip:
       - git+https://github.com/MITgcm/xmitgcm.git
