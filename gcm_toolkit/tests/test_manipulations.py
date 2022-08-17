@@ -1,16 +1,18 @@
 """testing manipulations functions"""
 from gcm_toolkit import GCMT
-from gcm_toolkit.tests.test_gcmtools_common import all_raw_testdata
+from gcm_toolkit.tests.test_gcmtools_common import (
+    all_raw_testdata,
+    all_nc_testdata,
+)
 
 
-def test_horizontal_average(all_raw_testdata):
+def test_horizontal_average(all_nc_testdata):
     """Create a minimal gcm_toolkit object and do simple tests on it."""
 
-    dirname, expected = all_raw_testdata
-    data_path = expected.get("rel_data_dir", "{}").format(dirname)
+    dirname, expected = all_nc_testdata
 
     tools = GCMT()
-    tools.read_raw(gcm=expected["gcm"], data_path=data_path)
+    tools.read_reduced(data_path=dirname)
     dsi = tools.get_models()
 
     area_key = expected.get("area_key", "area_c")
@@ -23,14 +25,13 @@ def test_horizontal_average(all_raw_testdata):
     assert set(dsi.T_g.dims) == {"Z", "time"}
 
 
-def test_horizontal_overturning(all_raw_testdata):
+def test_horizontal_overturning(all_nc_testdata):
     """Create a minimal gcm_toolkit object and do simple tests on it."""
 
-    dirname, expected = all_raw_testdata
-    data_path = expected.get("rel_data_dir", "{}").format(dirname)
+    dirname, expected = all_nc_testdata
 
     tools = GCMT()
-    tools.read_raw(gcm=expected["gcm"], data_path=data_path)
+    tools.read_reduced(data_path=dirname)
     dsi = tools.get_models()
 
     v_data = expected.get("v_data", "V")

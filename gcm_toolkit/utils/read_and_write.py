@@ -77,7 +77,7 @@ def m_read_raw(
 
 
 def m_read_reduced(
-    tools, data_path, tag=None, time_unit_in="iter", p_unit_in="Pa"
+    tools, data_path, tag=None, time_unit_in=None, p_unit_in=None
 ):
     """
     Read in function for GCM data that has been reduced and saved according
@@ -87,28 +87,41 @@ def m_read_reduced(
     ----------
     data_path : str
         Folder path to the reduced (gcm_toolkit) data.
-    time_unit_in: str
-        units of time dimension in input dataset
-    p_unit_in: str
-        units of pressure dimensions in input dataset
+    time_unit_in: str, None
+        units of time dimension in input dataset.
+        If None, try to read from nc file (ds.attr.time_unit)
+    p_unit_in: str, None
+        units of pressure dimensions in input dataset,
+        If None, try to read from nc file (ds.attr.p_unit)
     tag : str
         Tag to reference the simulation in the collection of models.
     """
     # print information
     wrt.write_status("STAT", "Read in reduced data")
     wrt.write_status("INFO", "File path: " + data_path)
-    wrt.write_status("INFO", "Time unit of data: " + time_unit_in)
-    wrt.write_status("INFO", "pressure unit of data: " + p_unit_in)
 
     # read dataset using xarray functionalities
     dsi = xr.open_dataset(data_path)
+
+    if time_unit_in is None:
+        time_unit_in = dsi.attrs.get("time_unit")
+        if time_unit_in is None:
+            raise ValueError("Please specify time_unit_in")
+
+    if p_unit_in is None:
+        p_unit_in = dsi.attrs.get("p_unit")
+        if p_unit_in is None:
+            raise ValueError("Please specify p_unit_in")
+
+    wrt.write_status("INFO", "Time unit of data: " + time_unit_in)
+    wrt.write_status("INFO", "pressure unit of data: " + p_unit_in)
 
     dsi = convert_time(
         dsi, current_unit=time_unit_in, goal_unit=tools.time_unit
     )
     dsi = convert_pressure(dsi, current_unit=p_unit_in, goal_unit=tools.p_unit)
 
-    _add_attrs_and_store(tools, dsi, tag)
+    tag = _add_attrs_and_store(tools, dsi, tag)
 
     wrt.write_status("INFO", "Tag: " + tag)
 
@@ -131,6 +144,8 @@ def _add_attrs_and_store(tools, dsi, tag):
 
     # store dataset
     tools[tag] = dsi
+
+    return tag
 
 
 def m_save(tools, path, method="nc", update_along_time=False, tag=None):

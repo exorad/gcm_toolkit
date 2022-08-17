@@ -43,7 +43,7 @@ DLROOT = "https://ndownloader.figshare.com/files/"
 # http://docs.pytest.org/en/latest/fixture.html#fixture-parametrize
 
 # dictionary of archived experiments and some expected properties
-_experiments = {
+_experiments_raw = {
     "HD2_test": {
         "dlink": DLROOT + "36234516",
         "md5": "20a49edac60f905cffdd1300916e978c",
@@ -52,6 +52,24 @@ _experiments = {
         "p_domain": [1e-5, 650],  # expected pressure domain in bar
         "times": [12000],  # expected timestamps in days
         "iters": [41472000],
+        "MMW": 2.3160063003212366,  # in mass of u
+        "Rstar": 83692710000.0,  # in cm
+        "Tstar": 6092.0,  # in K
+        "semimajoraxis": 710141092212.9,  # in cm
+        "prt_max": 0.0042081,  # values for petitradtrans test
+        "prt_min": 0.00023373,  # values for petitradtrans test
+        "prt_mean": 0.00150488,  # values for petitradtrans test
+    },
+}
+
+_experiments_nc = {
+    "HD2_test_nc": {
+        "tag": "HD2_test_nc",  # same as the filename (without extension)
+        "dlink": DLROOT + "36701961",
+        "md5": "73cdd7b938b25a173eeefb4262c6b6db",
+        "p_domain": [1e-5, 650],  # expected pressure domain in bar
+        "times": [11000, 12000],  # expected timestamps in days
+        "iters": [38016000, 41472000],
         "MMW": 2.3160063003212366,  # in mass of u
         "Rstar": 83692710000.0,  # in cm
         "Tstar": 6092.0,  # in K
@@ -66,8 +84,8 @@ _experiments = {
 
 _interface_data = {
     "prt_input_data": {
-        "dlink": DLROOT + "36686016",
-        "md5": "2b6efbd672cce17eba6c66495f544aea",
+        "dlink": DLROOT + "36704253",
+        "md5": "a7a1ecfa6764c0a4b55029da359f42d6",
         "line_species": ["H2O_Exomol_R_1"],
         "rayleigh_species": [],
         "continuum_opacities": [],
@@ -76,7 +94,7 @@ _interface_data = {
 }
 
 
-def setup_experiment_dir(tmpdir_factory, request, dbs):
+def setup_experiment_dir(tmpdir_factory, request, dbs, format):
     """Helper function for setting up test cases."""
     expt_name = request.param
     expected_results = dbs[expt_name]
@@ -85,13 +103,13 @@ def setup_experiment_dir(tmpdir_factory, request, dbs):
         # user-defined directory for test datasets
         data_dir = os.environ["GCM_TOOLKIT_TESTDATA"]
     except KeyError:
-        # default to HOME/.xmitgcm-test-data/
+        # default to HOME/.gcm_toolkit-test-data/
         data_dir = os.environ["HOME"] + "/.gcm_toolkit-test-data"
     # create the directory if it doesn't exixt
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
-    datafile = os.path.join(data_dir, expt_name + ".tar.gz")
+    datafile = os.path.join(data_dir, expt_name + format)
     # download if does not exist locally
     if not os.path.exists(datafile):
         print("File does not exist locally, downloading...")
@@ -104,7 +122,10 @@ def setup_experiment_dir(tmpdir_factory, request, dbs):
             """
             raise IOError(msg)
 
-    return untar(data_dir, expt_name, target_dir), expected_results
+    if format == ".tar.gz":
+        return untar(data_dir, expt_name, target_dir), expected_results
+    else:
+        return datafile, expected_results
 
 
 def download_archive(url, filename):
@@ -156,19 +177,33 @@ def file_md5_checksum(fname):
 
 # find the tar archive in the test directory
 # http://stackoverflow.com/questions/29627341/pytest-where-to-store-expected-data
-@pytest.fixture(scope="module", params=_experiments.keys())
+@pytest.fixture(scope="module", params=_experiments_nc.keys())
+def all_nc_testdata(tmpdir_factory, request):
+    """setup test data"""
+    return setup_experiment_dir(
+        tmpdir_factory, request, _experiments_nc, ".nc"
+    )
+
+
+@pytest.fixture(scope="module", params=_experiments_raw.keys())
 def all_raw_testdata(tmpdir_factory, request):
     """setup test data"""
-    return setup_experiment_dir(tmpdir_factory, request, _experiments)
+    return setup_experiment_dir(
+        tmpdir_factory, request, _experiments_raw, ".tar.gz"
+    )
 
 
 @pytest.fixture(scope="module", params=["HD2_test"])
 def exorad_testdata(tmpdir_factory, request):
     """set up test data"""
-    return setup_experiment_dir(tmpdir_factory, request, _experiments)
+    return setup_experiment_dir(
+        tmpdir_factory, request, _experiments_raw, ".tar.gz"
+    )
 
 
 @pytest.fixture(scope="module", params=["prt_input_data"])
 def petitradtrans_testdata(tmpdir_factory, request):
     """set up test data"""
-    return setup_experiment_dir(tmpdir_factory, request, _interface_data)
+    return setup_experiment_dir(
+        tmpdir_factory, request, _interface_data, ".tar.gz"
+    )
