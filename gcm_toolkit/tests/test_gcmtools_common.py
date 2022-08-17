@@ -201,6 +201,14 @@ def exorad_testdata(tmpdir_factory, request):
     )
 
 
+@pytest.fixture(scope="module", params=["HD2_test_nc"])
+def exorad_testdata_nc(tmpdir_factory, request):
+    """set up test data"""
+    return setup_experiment_dir(
+        tmpdir_factory, request, _experiments_nc, ".nc"
+    )
+
+
 @pytest.fixture(scope="module", params=["prt_input_data"])
 def petitradtrans_testdata(tmpdir_factory, request):
     """set up test data"""
