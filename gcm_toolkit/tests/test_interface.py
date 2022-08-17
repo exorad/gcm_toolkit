@@ -11,10 +11,15 @@ from gcm_toolkit.utils.interface import Interface
 from gcm_toolkit.tests.test_gcmtools_common import (
     petitradtrans_testdata,
     all_raw_testdata,
+    all_nc_testdata,
 )
 
 
 def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
+    """
+    Test petitRADTRANS interface.
+    Note: Currently requires raw readin, because we do some regridding of the data!
+    """
     dirname, expected = all_raw_testdata
     data_path = expected.get("rel_data_dir", "{}").format(dirname)
 
@@ -108,9 +113,8 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
     os.remove(filename)
 
 
-def test_raise_error_on_large_data(all_raw_testdata, petitradtrans_testdata):
-    dirname, expected = all_raw_testdata
-    data_path = expected.get("rel_data_dir", "{}").format(dirname)
+def test_raise_error_on_large_data(all_nc_testdata, petitradtrans_testdata):
+    dirname, expected = all_nc_testdata
 
     dirname_prt, expected_prt = petitradtrans_testdata
     os.environ["pRT_input_data_path"] = dirname_prt
@@ -126,7 +130,7 @@ def test_raise_error_on_large_data(all_raw_testdata, petitradtrans_testdata):
     )
 
     tools = GCMT(p_unit="bar", time_unit="day")  # create a GCMT object
-    tools.read_raw(gcm=expected["gcm"], data_path=data_path)
+    tools.read_reduced(data_path=dirname)
     interface = tools.get_prt_interface(pRT)
 
     # Now continue without regrid lowres
@@ -144,16 +148,15 @@ def test_raise_error_on_large_data(all_raw_testdata, petitradtrans_testdata):
         )
 
 
-def test_general_interface(all_raw_testdata, petitradtrans_testdata):
+def test_general_interface(all_nc_testdata, petitradtrans_testdata):
     """General test for interface class"""
-    dirname, expected = all_raw_testdata
-    data_path = expected.get("rel_data_dir", "{}").format(dirname)
+    dirname, expected = all_nc_testdata
 
     dirname_prt, expected_prt = petitradtrans_testdata
     os.environ["pRT_input_data_path"] = dirname_prt
 
     tools = GCMT(p_unit="bar", time_unit="day")  # create a GCMT object
-    tools.read_raw(gcm=expected["gcm"], data_path=data_path)
+    tools.read_reduced(data_path=dirname)
 
     interface = Interface(tools)
 

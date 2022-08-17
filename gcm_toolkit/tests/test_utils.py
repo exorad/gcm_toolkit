@@ -9,18 +9,19 @@ import xarray
 from gcm_toolkit import GCMT
 from gcm_toolkit.utils.passport import is_the_data_basic, is_the_data_cloudy
 from gcm_toolkit.core.units import convert_time, convert_pressure
-from gcm_toolkit.tests.test_gcmtools_common import all_raw_testdata
+from gcm_toolkit.tests.test_gcmtools_common import (
+    all_raw_testdata,
+    all_nc_testdata,
+)
 import shutil
 
 
-def test_is_data_testing_utils(all_raw_testdata):
-    dirname, expected = all_raw_testdata
-    data_path = expected.get("rel_data_dir", "{}").format(dirname)
-
-    tag = "raw_readin"
+def test_data_testing_utils(all_nc_testdata):
+    dirname, expected = all_nc_testdata
+    tag = "readin"
 
     tools = GCMT(write="off")
-    tools.read_raw(gcm=expected["gcm"], data_path=data_path, tag=tag)
+    tools.read_reduced(data_path=dirname, tag=tag)
 
     ds = tools.models
 

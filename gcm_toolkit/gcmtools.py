@@ -351,7 +351,7 @@ class GCMT:
         )
 
     def read_reduced(
-        self, data_path, tag=None, time_unit_in="iter", p_unit_in="Pa"
+        self, data_path, tag=None, time_unit_in=None, p_unit_in=None
     ):
         """
         Read in function for GCM data that has been reduced a
@@ -361,10 +361,12 @@ class GCMT:
         ----------
         data_path : str
             Folder path to the reduced (gcm_toolkit) data.
-        time_unit_in: str
-            units of time dimension in input dataset
-        p_unit_in: str
-            units of pressure dimensions in input dataset
+        time_unit_in: str, None
+            units of time dimension in input dataset.
+            If None, try to read from nc file (ds.attr.time_unit)
+        p_unit_in: str, None
+            units of pressure dimensions in input dataset,
+            If None, try to read from nc file (ds.attr.p_unit)
         tag : str
             Tag to reference the simulation in the collection of models.
         """
