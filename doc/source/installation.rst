@@ -13,8 +13,8 @@ Create an anaconda environment.
 
 .. code-block:: bash
 
-    conda create -n 'MITGCM' -y
-    conda activate MITGCM
+    conda create -n 'GCM' -y
+    conda activate GCM
 
 Install a few dependencies (optional include the following packages: ``jupyterlab`` and ``cartopy``.)
 

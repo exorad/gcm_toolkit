@@ -3,7 +3,7 @@ Command Line Interface
 
 ``gcm_toolkit`` also provides some functionality to be used from the command line.
 The functionalites explained below are scripts, which are automatically installed into your environment, when installing ``gcm_toolkit``.
-You can use them in your terminal by hitting the name of the script (e.g.:).
+You can use them in your terminal by hitting the name of the script.
 Information on the required arguments can be found below, or by using the ``-h`` flag.
 
 

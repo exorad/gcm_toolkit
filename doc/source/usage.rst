@@ -22,6 +22,15 @@ It is used to load data into ``xarray`` datasets, which can then be used for ana
 
 The GCMT class can also be used for quick plotting of data, since it wraps a few plotting functions, which are outlined in :ref:`Plotting`.
 
+.. note::
+   
+   You can also load netcdf data:
+   
+   .. code-block:: python
+   
+        tools.read_reduced(..., tag='model_name')
+
+
 .. autoclass:: gcm_toolkit.GCMT
     :members: __init__, get, get_models, models, add_horizontal_average, add_meridional_overturning, read_raw, read_reduced, load, save
 
