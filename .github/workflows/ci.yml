@@ -41,7 +41,7 @@ jobs:
       - name: Set up petitRADTRANS
         shell: bash -l {0}
         run: |
-          python -m pip install petitRADTRANS==2.3.4
+          python -m pip install petitRADTRANS==2.4.9
           python -m pip install prt-phasecurve
       - name: Set up conda environment
         shell: bash -l {0}
