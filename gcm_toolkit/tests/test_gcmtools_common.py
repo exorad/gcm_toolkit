@@ -84,8 +84,8 @@ _experiments_nc = {
 
 _interface_data = {
     "prt_input_data": {
-        "dlink": DLROOT + "36704253",
-        "md5": "a7a1ecfa6764c0a4b55029da359f42d6",
+        "dlink": DLROOT + "36745209",
+        "md5": "01e64cc50d87d3c268e1861619b0cbf8",
         "line_species": ["H2O_Exomol_R_1"],
         "rayleigh_species": [],
         "continuum_opacities": [],
