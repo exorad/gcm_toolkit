@@ -58,7 +58,7 @@ _experiments_raw = {
         "semimajoraxis": 710141092212.9,  # in cm
         "prt_max": 0.0042081,  # values for petitradtrans test
         "prt_min": 0.00023373,  # values for petitradtrans test
-        "prt_sum": 0.30097666,  # values for petitradtrans test
+        "prt_sum": 0.31550672,  # values for petitradtrans test
     },
 }
 
@@ -78,7 +78,7 @@ _experiments_nc = {
         "v_data": "V",
         "prt_max": 0.0042081,  # values for petitradtrans test
         "prt_min": 0.00023373,  # values for petitradtrans test
-        "prt_mean": 0.00150488,  # values for petitradtrans test
+        "prt_sum": 0.31550672,  # values for petitradtrans test
     },
 }
 
