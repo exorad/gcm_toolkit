@@ -78,7 +78,7 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
     assert (ph_with_filename == ph_without_filename).all()
     assert np.isclose(ph_with_filename.max(), expected["prt_max"])
     assert np.isclose(ph_with_filename.min(), expected["prt_min"])
-    assert np.isclose(ph_with_filename.mean(), expected["prt_mean"])
+    assert np.isclose(ph_with_filename.sum(), expected["prt_sum"])
 
     R_p = interface.dsi.attrs["R_p"]
     del interface.dsi.attrs["R_p"]
