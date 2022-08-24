@@ -8,6 +8,7 @@ dependencies:
   - codecov
   - pytest-cov
   - xarray
+  - h5py
   - numpy=1.21.5
   - setuptools=61.2.0
   - netcdf4
