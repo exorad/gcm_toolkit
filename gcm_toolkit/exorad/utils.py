@@ -65,6 +65,8 @@ def convert_winds_and_t(dsi, temp_dim, w_dim):
     Winds are converted from Pa/s to m/s.
     Temperatures are converted from potential temperature to ordinary temperature
 
+    Warnings: only use this function with SI units in dsi (including pressure)!
+
     Parameters
     ----------
     dsi: Dataset
@@ -86,7 +88,11 @@ def convert_winds_and_t(dsi, temp_dim, w_dim):
     h_val = dsi.attrs["R"] / dsi.attrs["g"] * dsi[temp_dim]
 
     # calculate geometric height
-    dsi[c.Z_geo] = -h_val * np.log(dsi[c.Z] / dsi.attrs["p_ref"])
+    rho = dsi[c.Z] / dsi.attrs["R"] / dsi[temp_dim]  # ideal gas equation
+    dzdp = -1 / rho / dsi.attrs["g"]  # hydrostatic eq.
+    dp = dsi[c.Z_p1].diff(dim=c.Z_p1)
+    dz = dzdp * dp.values[:, np.newaxis, np.newaxis, np.newaxis]
+    dsi[c.Z_geo] = dz.cumulative_integrate(coord=c.Z)
 
     if w_dim in dsi:
         # interpolate vertical windspeed to cell center:

@@ -4,6 +4,7 @@ Functions to manipulate GCM data
 import numpy as np
 from ..core import writer as wrt
 from ..core.const import VARNAMES as c
+from ..core.units import convert_pressure
 
 
 def m_add_horizontal_average(
@@ -48,6 +49,62 @@ def m_add_horizontal_average(
         dsi.update({var_key_out: avg})
 
     return avg
+
+
+def m_add_total_energy(dsi, var_key_out=None, area_key="area_c", temp_key="T"):
+    """
+    Calculate the total Energy of the GCM. See e.g.,
+    https://ui.adsabs.harvard.edu/abs/2014Icar..229..355P, Eq. 16
+
+    Parameters
+    ----------
+    ds: xarray.Dataset
+        The dataset for which the calculation should be performed
+    var_key_out: str, optional
+        variable name used to store the outcome. If not provided, this script will just
+        return the averages and not change the dataset inplace.
+    area_key: str, optional
+        Variable key in the dataset for the area of grid cells
+    temp_key: str, optional
+        The key to look up the temperature
+
+    Returns
+    -------
+    energy : xarray.DataArray
+        A dataArray with reduced dimensionality, containing the total energy.
+    """
+    # print information
+    wrt.write_status("STAT", "Calculate total energy")
+    if var_key_out is not None:
+        wrt.write_status("INFO", "Output variable: " + var_key_out)
+    wrt.write_status("INFO", "Area of grid cells: " + area_key)
+    wrt.write_status("INFO", "Temperature variable: " + temp_key)
+
+    dsi = convert_pressure(dsi, dsi.p_unit, "Pa")
+
+    rho = dsi[c["Z"]] / dsi.attrs[c["R"]] / dsi[temp_key]
+    dzdp = -1 / rho / dsi.attrs[c["g"]]
+
+    if c["Z_p1"] not in dsi.coords and c["Z_l"] in dsi.coords:
+        z_p1 = np.append(dsi[c["Z_l"]].values, 0.0)
+        dsi.coords.update({c["Z_p1"]: z_p1})
+
+    dp = dsi[c["Z_p1"]].diff(dim=c["Z_p1"])
+    dz = dzdp * dp.values[:, np.newaxis, np.newaxis, np.newaxis]
+    z_geo = dz.cumulative_integrate(coord=c["Z"])
+    d_energy = (
+        z_geo * dsi.attrs[c["g"]]
+        + dsi.attrs[c["cp"]] * dsi[temp_key]
+        + 0.5 * (dsi[c["U"]] ** 2 + dsi[c["V"]] ** 2)
+    )
+    energy = (d_energy * rho * dsi[area_key] * (-dz)).sum(
+        dim=[c["lon"], c["lat"], c["Z"]]
+    )
+
+    if var_key_out is not None:
+        dsi.update({var_key_out: energy})
+
+    return energy
 
 
 def m_add_meridional_overturning(dsi, v_data="V", var_key_out=None):
