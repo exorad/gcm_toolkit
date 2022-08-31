@@ -295,7 +295,7 @@ class GCMT:
             The key to look up the temperature
         tag : str, optional
             The tag of the dataset that should be used.
-             If no tag is provided,
+            If no tag is provided,
             and multiple datasets are available, an error is raised.
 
         Returns
@@ -321,15 +321,15 @@ class GCMT:
         ----------
         v_data: str
             The key that holds the data to meridional velocity
-        tag : str, optional
-            The tag of the dataset that should be used.
-             If no tag is provided,
-            and multiple datasets are available, an error is raised.
         var_key_out: str, optional
             variable name used to store the outcome.
             If not provided, this script will just
             return the overturning circulation
             and not change the dataset inplace.
+        tag : str, optional
+            The tag of the dataset that should be used.
+            If no tag is provided,
+            and multiple datasets are available, an error is raised.
 
         Returns
         -------
