@@ -80,25 +80,21 @@ def m_add_total_energy(dsi, var_key_out=None, area_key="area_c", temp_key="T"):
     wrt.write_status("INFO", "Area of grid cells: " + area_key)
     wrt.write_status("INFO", "Temperature variable: " + temp_key)
 
-    dsi = convert_pressure(dsi, dsi.p_unit, "Pa")
+    dsi_calc = dsi.copy()
+    dsi_calc = convert_pressure(dsi_calc, dsi_calc.p_unit, "Pa")
 
-    rho = dsi[c["Z"]] / dsi.attrs[c["R"]] / dsi[temp_key]
-    dzdp = -1 / rho / dsi.attrs[c["g"]]
-
-    if c["Z_p1"] not in dsi.coords and c["Z_l"] in dsi.coords:
-        z_p1 = np.append(dsi[c["Z_l"]].values, 0.0)
-        dsi.coords.update({c["Z_p1"]: z_p1})
-
-    dp = dsi[c["Z_p1"]].diff(dim=c["Z_p1"])
-    dz = dzdp * dp.values[:, np.newaxis, np.newaxis, np.newaxis]
-    z_geo = dz.cumulative_integrate(coord=c["Z"])
+    rho = dsi_calc[c["Z"]] / dsi_calc.attrs[c["R"]] / dsi_calc[temp_key]
+    dzdp = -1 / rho / dsi_calc.attrs[c["g"]]
+    z_geo = dzdp.cumulative_integrate(coord=c["Z"])
     d_energy = (
-        z_geo * dsi.attrs[c["g"]]
-        + dsi.attrs[c["cp"]] * dsi[temp_key]
-        + 0.5 * (dsi[c["U"]] ** 2 + dsi[c["V"]] ** 2)
+        z_geo * dsi_calc.attrs[c["g"]]
+        + dsi_calc.attrs[c["cp"]] * dsi_calc[temp_key]
+        + 0.5 * (dsi_calc[c["U"]] ** 2 + dsi_calc[c["V"]] ** 2)
     )
-    energy = (d_energy * rho * dsi[area_key] * (-dz)).sum(
-        dim=[c["lon"], c["lat"], c["Z"]]
+    energy = (
+        (d_energy * rho * dsi_calc[area_key] * dzdp)
+        .sum(dim=[c["lon"], c["lat"]])
+        .integrate(coord=c["Z"])
     )
 
     if var_key_out is not None:

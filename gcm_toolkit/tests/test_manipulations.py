@@ -29,12 +29,9 @@ def test_horizontal_average(all_nc_testdata):
 def test_total_energy(all_nc_testdata):
     """Create a minimal gcm_toolkit object and do simple tests on the total energy.
     """
-
     dirname, expected = all_nc_testdata
-    # data_path = expected.get("rel_data_dir", "{}").format(dirname)
 
     tools = GCMT(write="off")
-    # tools.read_raw(gcm=expected["gcm"], data_path=data_path, tag='tag')
     tools.read_reduced(data_path=dirname)
 
     dsi = tools.get_models()

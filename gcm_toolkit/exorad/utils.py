@@ -90,9 +90,7 @@ def convert_winds_and_t(dsi, temp_dim, w_dim):
     # calculate geometric height
     rho = dsi[c.Z] / dsi.attrs["R"] / dsi[temp_dim]  # ideal gas equation
     dzdp = -1 / rho / dsi.attrs["g"]  # hydrostatic eq.
-    dp = dsi[c.Z_p1].diff(dim=c.Z_p1)
-    dz = dzdp * dp.values[:, np.newaxis, np.newaxis, np.newaxis]
-    dsi[c.Z_geo] = dz.cumulative_integrate(coord=c.Z)
+    dsi[c.Z_geo] = dzdp.cumulative_integrate(coord=c.Z)
 
     if w_dim in dsi:
         # interpolate vertical windspeed to cell center:
