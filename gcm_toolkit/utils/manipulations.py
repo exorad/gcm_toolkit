@@ -109,13 +109,13 @@ def _integrate_over_mass(quant_to_int, area, dzdp, rho):
     )
 
 
-def _calc_hydrostat_eq(dsi_calc, temp_key):
+def _calc_hydrostat_eq(dsi, temp_key):
     """
     Helper function that calculated rho and dz/dp
     based on the ideal gas equation and on hydrostatic eq.
     """
-    rho = dsi_calc[c["Z"]] / dsi_calc.attrs[c["R"]] / dsi_calc[temp_key]
-    dzdp = -1 / rho / dsi_calc.attrs[c["g"]]
+    rho = dsi[c["Z"]] / dsi.attrs[c["R"]] / dsi[temp_key]
+    dzdp = -1 / rho / dsi.attrs[c["g"]]
     return dzdp, rho
 
 
@@ -197,7 +197,7 @@ def m_add_theta(dsi, var_key_out=None, temp_key="T"):
         A dataArray with reduced dimensionality, containing the potential temperature
     """
     theta = dsi[c[temp_key]] * (dsi[c["Z"]].max() / dsi[c["Z"]]) ** (
-        dsi[c["R"]] / dsi[c["cp"]]
+        dsi.attrs[c["R"]] / dsi.attrs[c["cp"]]
     )
 
     if var_key_out is not None:
