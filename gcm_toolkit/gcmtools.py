@@ -291,7 +291,7 @@ class GCMT:
 
         Parameters
         ----------
-        tol: int
+        tol: float
             tolerance for the relative deviation from adiabat
         var_key_out: str, optional
             variable name used to store the outcome.
@@ -308,8 +308,9 @@ class GCMT:
 
         Returns
         -------
-        momentum : xarray.DataArray
-            A dataArray with reduced dimensionality, containing the total momentum.
+        rcb : xarray.DataArray
+            A dataArray with reduced dimensionality,
+            containing the pressure of the rcb location.
         """
         dsi = self.get_one_model(tag)
         return mani.m_add_rcb(

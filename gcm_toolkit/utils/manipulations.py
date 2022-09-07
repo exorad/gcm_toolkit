@@ -220,7 +220,7 @@ def m_add_rcb(
     ----------
     dsi: xarray.Dataset
         The dataset for which the calculation should be performed
-    tol: int
+    tol: float
         tolerance for the relative deviation from adiabat
     var_key_out: str, optional
         variable name used to store the outcome. If not provided, this script will just
@@ -232,8 +232,9 @@ def m_add_rcb(
 
     Returns
     -------
-    momentum : xarray.DataArray
-        A dataArray with reduced dimensionality, containing the total momentum.
+    rcb : xarray.DataArray
+        A dataArray with reduced dimensionality,
+        containing the pressure of the rcb location.
     """
     # print information
     wrt.write_status("STAT", "Calculate the location of the rcb")
@@ -248,13 +249,15 @@ def m_add_rcb(
     m_add_theta(dsi_calc, temp_key=temp_key, var_key_out="theta")
     theta_g = m_add_horizontal_average(dsi_calc, var_key="theta")
 
-    rcb = (
+    rcb_loc = (
         abs(
             (theta_g - theta_g.isel(**{c["Z"]: 0}))
             / theta_g.isel(**{c["Z"]: 0})
         )
         < tol
     ).argmin(dim=c["Z"])
+
+    rcb = dsi[c["Z"]].isel(**{c["Z"]: rcb_loc})
 
     if var_key_out is not None:
         dsi.update({var_key_out: rcb})
