@@ -141,6 +141,17 @@ def is_the_data_basic(dataset):
             + "therefore does not qualify as a basic GCM dataset.",
         )
 
+    if c["Z"].argmax() != 0:
+        is_the_data_ok = False
+        wrt.write_status(
+            "E-INFO",
+            'The dataset "'
+            + str(dataset.attrs["tag"])
+            + '" is '
+            + "not correctly sorted from bottom to top"
+            + "therefore does not qualify as a basic GCM dataset.",
+        )
+
     return is_the_data_ok
 
 
