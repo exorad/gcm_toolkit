@@ -274,6 +274,41 @@ class GCMT:
             dsi, var_key, var_key_out=var_key_out, area_key=area_key
         )
 
+    def add_total_energy(
+        self, var_key_out=None, area_key="area_c", temp_key="T", tag=None
+    ):
+        """
+        Calculate the total Energy of the GCM. See e.g.,
+        https://ui.adsabs.harvard.edu/abs/2014Icar..229..355P, Eq. 16
+
+        Parameters
+        ----------
+        ds: xarray.Dataset
+            The dataset for which the calculation should be performed
+        var_key_out: str, optional
+            variable name used to store the outcome. If not provided,
+            this script will just return the averages and not change
+            the dataset inplace.
+        area_key: str, optional
+            Variable key in the dataset for the area of grid cells
+        temp_key: str, optional
+            The key to look up the temperature
+        tag : str, optional
+            The tag of the dataset that should be used.
+            If no tag is provided,
+            and multiple datasets are available, an error is raised.
+
+        Returns
+        -------
+        energy : xarray.DataArray
+            A dataArray with reduced dimensionality, containing the total energy.
+        """
+
+        dsi = self.get_one_model(tag)
+        return mani.m_add_total_energy(
+            dsi, var_key_out=var_key_out, area_key=area_key, temp_key=temp_key
+        )
+
     def add_meridional_overturning(
         self, v_data="V", var_key_out=None, tag=None
     ):
@@ -286,15 +321,15 @@ class GCMT:
         ----------
         v_data: str
             The key that holds the data to meridional velocity
-        tag : str, optional
-            The tag of the dataset that should be used.
-             If no tag is provided,
-            and multiple datasets are available, an error is raised.
         var_key_out: str, optional
             variable name used to store the outcome.
             If not provided, this script will just
             return the overturning circulation
             and not change the dataset inplace.
+        tag : str, optional
+            The tag of the dataset that should be used.
+            If no tag is provided,
+            and multiple datasets are available, an error is raised.
 
         Returns
         -------

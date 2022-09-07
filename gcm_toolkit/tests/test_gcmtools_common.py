@@ -65,8 +65,8 @@ _experiments_raw = {
 _experiments_nc = {
     "HD2_test_nc": {
         "tag": "HD2_test_nc",  # same as the filename (without extension)
-        "dlink": DLROOT + "36701961",
-        "md5": "73cdd7b938b25a173eeefb4262c6b6db",
+        "dlink": DLROOT + "37049866",
+        "md5": "4f9dba6f700e9e4c5fa27fae28510c50",
         "p_domain": [1e-5, 650],  # expected pressure domain in bar
         "times": [11000, 12000],  # expected timestamps in days
         "iters": [38016000, 41472000],
