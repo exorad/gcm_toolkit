@@ -274,6 +274,81 @@ class GCMT:
             dsi, var_key, var_key_out=var_key_out, area_key=area_key
         )
 
+    def add_rcb(
+        self,
+        tol=0.01,
+        var_key_out=None,
+        area_key="area_c",
+        temp_key="T",
+        tag=None,
+    ):
+        """
+        Calculate the radiative convective boundary (rcb) by searching
+        (from the bottom upwards) for the first occurance of a deviation
+        from an adiabatic temperature profile.
+
+        Operates on and calculates the horizontal average.
+
+        Parameters
+        ----------
+        tol: float
+            tolerance for the relative deviation from adiabat
+        var_key_out: str, optional
+            variable name used to store the outcome.
+            If not provided, this script will just
+            return the averages and not change the dataset inplace.
+        area_key: str, optional
+            Variable key in the dataset for the area of grid cells
+        temp_key: str, optional
+            The key to look up the temperature (needed for density calculation)
+        tag : str, optional
+            The tag of the dataset that should be used.
+            If no tag is provided, and multiple datasets are available,
+            an error is raised.
+
+        Returns
+        -------
+        rcb : xarray.DataArray
+            A dataArray with reduced dimensionality,
+            containing the pressure of the rcb location.
+        """
+        dsi = self.get_one_model(tag)
+        return mani.m_add_rcb(
+            dsi,
+            tol=tol,
+            var_key_out=var_key_out,
+            area_key=area_key,
+            temp_key=temp_key,
+        )
+
+    def add_theta(self, var_key_out=None, temp_key="T", tag=None):
+        """
+        Convert temperature to potential temperature with respect to model boundary.
+
+        Parameters
+        ----------
+        var_key_out: str, optional
+            variable name used to store the outcome.
+            If not provided, this script will just
+            return theta and not change the dataset inplace.
+        temp_key: str, optional
+            The key to look up the temperature
+        tag : str, optional
+            The tag of the dataset that should be used.
+            If no tag is provided, and multiple datasets are available,
+            an error is raised.
+
+        Returns
+        -------
+        theta : xarray.DataArray
+            A dataArray with reduced dimensionality,
+            containing the potential temperature
+        """
+        dsi = self.get_one_model(tag)
+        return mani.m_add_theta(
+            dsi, var_key_out=var_key_out, temp_key=temp_key
+        )
+
     def add_total_energy(
         self, var_key_out=None, area_key="area_c", temp_key="T", tag=None
     ):
@@ -283,8 +358,6 @@ class GCMT:
 
         Parameters
         ----------
-        ds: xarray.Dataset
-            The dataset for which the calculation should be performed
         var_key_out: str, optional
             variable name used to store the outcome. If not provided,
             this script will just return the averages and not change
@@ -306,6 +379,38 @@ class GCMT:
 
         dsi = self.get_one_model(tag)
         return mani.m_add_total_energy(
+            dsi, var_key_out=var_key_out, area_key=area_key, temp_key=temp_key
+        )
+
+    def add_total_momentum(
+        self, var_key_out=None, area_key="area_c", temp_key="T", tag=None
+    ):
+        """
+        Calculate the total angular momentum of the GCM. See e.g.,
+        https://ui.adsabs.harvard.edu/abs/2014Icar..229..355P, Eq. 17
+
+        Parameters
+        ----------
+        var_key_out: str, optional
+            variable name used to store the outcome.
+            If not provided, this script will just
+            return the averages and not change the dataset inplace.
+        area_key: str, optional
+            Variable key in the dataset for the area of grid cells
+        temp_key: str, optional
+            The key to look up the temperature (needed for density calculation)
+        tag : str, optional
+            The tag of the dataset that should be used.
+            If no tag is provided,
+            and multiple datasets are available, an error is raised.
+
+        Returns
+        -------
+        momentum : xarray.DataArray
+            A dataArray with reduced dimensionality, containing the total momentum.
+        """
+        dsi = self.get_one_model(tag)
+        return mani.m_add_total_momentum(
             dsi, var_key_out=var_key_out, area_key=area_key, temp_key=temp_key
         )
 

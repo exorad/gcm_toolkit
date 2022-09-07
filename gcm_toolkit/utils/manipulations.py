@@ -18,7 +18,7 @@ def m_add_horizontal_average(
 
     Parameters
     ----------
-    ds: xarray.Dataset
+    dsi: xarray.Dataset
         The dataset for which the calculation should be performed
     var_key: str
         The key of the variable quantity that should be plotted.
@@ -58,7 +58,7 @@ def m_add_total_energy(dsi, var_key_out=None, area_key="area_c", temp_key="T"):
 
     Parameters
     ----------
-    ds: xarray.Dataset
+    dsi: xarray.Dataset
         The dataset for which the calculation should be performed
     var_key_out: str, optional
         variable name used to store the outcome. If not provided, this script will just
@@ -83,24 +83,186 @@ def m_add_total_energy(dsi, var_key_out=None, area_key="area_c", temp_key="T"):
     dsi_calc = dsi.copy()
     dsi_calc = convert_pressure(dsi_calc, dsi_calc.p_unit, "Pa")
 
-    rho = dsi_calc[c["Z"]] / dsi_calc.attrs[c["R"]] / dsi_calc[temp_key]
-    dzdp = -1 / rho / dsi_calc.attrs[c["g"]]
+    dzdp, rho = _calc_hydrostat_eq(dsi_calc, temp_key)
     z_geo = dzdp.cumulative_integrate(coord=c["Z"])
     d_energy = (
         z_geo * dsi_calc.attrs[c["g"]]
         + dsi_calc.attrs[c["cp"]] * dsi_calc[temp_key]
         + 0.5 * (dsi_calc[c["U"]] ** 2 + dsi_calc[c["V"]] ** 2)
     )
-    energy = (
-        (d_energy * rho * dsi_calc[area_key] * dzdp)
-        .sum(dim=[c["lon"], c["lat"]])
-        .integrate(coord=c["Z"])
+    energy = _integrate_over_mass(
+        quant_to_int=d_energy, area=dsi_calc[area_key], dzdp=dzdp, rho=rho
     )
 
     if var_key_out is not None:
         dsi.update({var_key_out: energy})
 
     return energy
+
+
+def _integrate_over_mass(quant_to_int, area, dzdp, rho):
+    """Helper function that carries out a mass integral (dM = rho dV)."""
+    return (
+        (quant_to_int * rho * area * dzdp)
+        .sum(dim=[c["lon"], c["lat"]])
+        .integrate(coord=c["Z"])
+    )
+
+
+def _calc_hydrostat_eq(dsi, temp_key):
+    """
+    Helper function that calculated rho and dz/dp
+    based on the ideal gas equation and on hydrostatic eq.
+    """
+    rho = dsi[c["Z"]] / dsi.attrs[c["R"]] / dsi[temp_key]
+    dzdp = -1 / rho / dsi.attrs[c["g"]]
+    return dzdp, rho
+
+
+def m_add_total_momentum(
+    dsi, var_key_out=None, area_key="area_c", temp_key="T"
+):
+    """
+    Calculate the total angular momentum of the GCM. See e.g.,
+    https://ui.adsabs.harvard.edu/abs/2014Icar..229..355P, Eq. 17
+
+    Parameters
+    ----------
+    dsi: xarray.Dataset
+        The dataset for which the calculation should be performed
+    var_key_out: str, optional
+        variable name used to store the outcome. If not provided, this script will just
+        return the averages and not change the dataset inplace.
+    area_key: str, optional
+        Variable key in the dataset for the area of grid cells
+    temp_key: str, optional
+        The key to look up the temperature (needed for density calculation)
+
+    Returns
+    -------
+    momentum : xarray.DataArray
+        A dataArray with reduced dimensionality, containing the total momentum.
+    """
+    # print information
+    wrt.write_status("STAT", "Calculate total angular momentum")
+    if var_key_out is not None:
+        wrt.write_status("INFO", "Output variable: " + var_key_out)
+    wrt.write_status("INFO", "Area of grid cells: " + area_key)
+    wrt.write_status("INFO", "Temperature variable: " + temp_key)
+
+    dsi_calc = dsi.copy()
+    dsi_calc = convert_pressure(dsi_calc, dsi_calc.p_unit, "Pa")
+
+    dzdp, rho = _calc_hydrostat_eq(dsi_calc, temp_key)
+    cosphi = np.cos(dsi_calc[c["lat"]] * np.pi / 180)
+    d_momentum = (
+        (
+            2
+            * np.pi
+            / dsi_calc.attrs[c["P_rot"]]
+            * dsi_calc.attrs[c["R_p"]]
+            * cosphi
+            + dsi_calc[c["U"]]
+        )
+        * cosphi
+        * dsi_calc.attrs[c["R_p"]]
+    )
+    momentum = _integrate_over_mass(
+        quant_to_int=d_momentum, area=dsi_calc[area_key], dzdp=dzdp, rho=rho
+    )
+
+    if var_key_out is not None:
+        dsi.update({var_key_out: momentum})
+
+    return momentum
+
+
+def m_add_theta(dsi, var_key_out=None, temp_key="T"):
+    """
+    Convert temperature to potential temperature with respect to model boundary.
+
+    Parameters
+    ----------
+    dsi: xarray.Dataset
+        The dataset for which the calculation should be performed
+    var_key_out: str, optional
+        variable name used to store the outcome. If not provided, this script will just
+        return theta and not change the dataset inplace.
+    temp_key: str, optional
+        The key to look up the temperature
+
+    Returns
+    -------
+    theta : xarray.DataArray
+        A dataArray with reduced dimensionality, containing the potential temperature
+    """
+    theta = dsi[c[temp_key]] * (dsi[c["Z"]].max() / dsi[c["Z"]]) ** (
+        dsi.attrs[c["R"]] / dsi.attrs[c["cp"]]
+    )
+
+    if var_key_out is not None:
+        dsi.update({var_key_out: theta})
+
+    return theta
+
+
+def m_add_rcb(
+    dsi, tol=0.01, var_key_out=None, area_key="area_c", temp_key="T"
+):
+    """
+    Calculate the radiative convective boundary (rcb) by searching
+    (from the bottom upwards) for the first occurance of a deviation
+    from an adiabatic temperature profile.
+
+    Operates on and calculates the horizontal average.
+
+    Parameters
+    ----------
+    dsi: xarray.Dataset
+        The dataset for which the calculation should be performed
+    tol: float
+        tolerance for the relative deviation from adiabat
+    var_key_out: str, optional
+        variable name used to store the outcome. If not provided, this script will just
+        return the averages and not change the dataset inplace.
+    area_key: str, optional
+        Variable key in the dataset for the area of grid cells
+    temp_key: str, optional
+        The key to look up the temperature (needed for density calculation)
+
+    Returns
+    -------
+    rcb : xarray.DataArray
+        A dataArray with reduced dimensionality,
+        containing the pressure of the rcb location.
+    """
+    # print information
+    wrt.write_status("STAT", "Calculate the location of the rcb")
+    if var_key_out is not None:
+        wrt.write_status("INFO", "Output variable: " + var_key_out)
+    wrt.write_status("INFO", "Area of grid cells: " + area_key)
+    wrt.write_status("INFO", "Temperature variable: " + temp_key)
+
+    dsi_calc = dsi.copy()
+    dsi_calc = convert_pressure(dsi_calc, dsi_calc.p_unit, "Pa")
+
+    m_add_theta(dsi_calc, temp_key=temp_key, var_key_out="theta")
+    theta_g = m_add_horizontal_average(dsi_calc, var_key="theta")
+
+    rcb_loc = (
+        abs(
+            (theta_g - theta_g.isel(**{c["Z"]: 0}))
+            / theta_g.isel(**{c["Z"]: 0})
+        )
+        < tol
+    ).argmin(dim=c["Z"])
+
+    rcb = dsi[c["Z"]].isel(**{c["Z"]: rcb_loc})
+
+    if var_key_out is not None:
+        dsi.update({var_key_out: rcb})
+
+    return rcb
 
 
 def m_add_meridional_overturning(dsi, v_data="V", var_key_out=None):

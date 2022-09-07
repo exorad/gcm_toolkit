@@ -34,6 +34,11 @@ def test_data_testing_utils(all_nc_testdata):
     assert not is_the_data_cloudy(ds_new)
     assert not is_the_data_basic(ds_new)
 
+    ds_new = ds.copy()
+    ds_new["Z"] = ds_new.Z[::-1]
+    assert not is_the_data_cloudy(ds_new)
+    assert not is_the_data_basic(ds_new)
+
 
 def test_convert_pressure_failures():
     with pytest.raises(ValueError):

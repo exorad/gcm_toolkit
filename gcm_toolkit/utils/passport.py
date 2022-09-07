@@ -11,6 +11,7 @@
 """
 from ..core import writer as wrt
 from ..core.const import VARNAMES as c
+import numpy as np
 
 
 def is_the_data_basic(dataset):
@@ -40,6 +41,14 @@ def is_the_data_basic(dataset):
     data_attributes = dataset.attrs
 
     to_be_checked_coords = [c["lon"], c["lat"], c["Z"], c["time"]]
+
+    if "tag" not in dataset.attrs:
+        wrt.write_status(
+            "E-INFO",
+            "The dataset should contain a tag! "
+            + 'Add a tag using ds.attrs.update({"tag":"whatever"}).',
+        )
+        return False
 
     for dim in to_be_checked_coords:
         if dim not in data_coords:
@@ -138,6 +147,23 @@ def is_the_data_basic(dataset):
             + str(dataset.attrs["tag"])
             + '" does '
             + f'not contain {c["R_p"]} (planet radius) information and '
+            + "therefore does not qualify as a basic GCM dataset.",
+        )
+
+    if not is_the_data_ok:
+        return False
+
+    # Some additional checks that only work, if above already worked:
+
+    Z = dataset[c["Z"]].values
+    if (np.sort(Z) != Z[::-1]).any():
+        is_the_data_ok = False
+        wrt.write_status(
+            "E-INFO",
+            'The dataset "'
+            + str(dataset.attrs["tag"])
+            + '" is '
+            + "not correctly sorted from bottom to top"
             + "therefore does not qualify as a basic GCM dataset.",
         )
 
