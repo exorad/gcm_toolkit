@@ -141,7 +141,8 @@ def is_the_data_basic(dataset):
             + "therefore does not qualify as a basic GCM dataset.",
         )
 
-    if c["Z"].argmax() != 0:
+    Z = dataset[c["Z"]].values
+    if (Z.sort() == Z[::-1]).all():
         is_the_data_ok = False
         wrt.write_status(
             "E-INFO",
