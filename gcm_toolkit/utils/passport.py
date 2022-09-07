@@ -142,7 +142,7 @@ def is_the_data_basic(dataset):
         )
 
     Z = dataset[c["Z"]].values
-    if (Z.sort() == Z[::-1]).all():
+    if (Z.sort() != Z[::-1]).any():
         is_the_data_ok = False
         wrt.write_status(
             "E-INFO",
