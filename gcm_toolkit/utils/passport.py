@@ -142,6 +142,11 @@ def is_the_data_basic(dataset):
             + "therefore does not qualify as a basic GCM dataset.",
         )
 
+    if not is_the_data_ok:
+        return False
+
+    # Some additional checks that only work, if above already worked:
+
     Z = dataset[c["Z"]].values
     if (np.sort(Z) != Z[::-1]).any():
         is_the_data_ok = False

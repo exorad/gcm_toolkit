@@ -100,7 +100,7 @@ def test_theta(all_nc_testdata):
 
     assert hasattr(dsi, "theta")
     assert (theta == dsi.theta).all()
-    assert set(dsi.theta.dims) == {"time"}
+    assert set(dsi.theta.dims) == {"Z", "time", "lat", "lon"}
 
 
 def test_horizontal_overturning(all_nc_testdata):
