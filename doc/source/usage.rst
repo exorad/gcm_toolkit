@@ -32,7 +32,32 @@ The GCMT class can also be used for quick plotting of data, since it wraps a few
 
 
 .. autoclass:: gcm_toolkit.GCMT
-    :members: __init__, get, get_models, models, add_horizontal_average, add_total_energy, add_meridional_overturning, read_raw, read_reduced, load, save
+    :members: __init__, get, get_models, models, read_raw, read_reduced, load, save
+
+
+Postprocessing
+--------------
+The GCMT class has quite a few methods that can calculate diagnostics such as total energy, location of the RCB and so on.
+You find their documentation here.
+
+Example for the total energy:
+
+.. code-block:: python
+
+        from gcm_toolkit import GCMT
+        import gcm_toolkit.gcm_plotting as gcmp
+
+        # Load data
+        tools = GCMT()
+        tools.read_raw(..., tag='model_name')
+        E = tools.add_total_energy(var_key_out='E', tag='model_name')
+
+        # You will also have the energy stored in the dataset if var_key_out is not None:
+        ds = tools['model_name']
+        E == ds.E
+
+.. autoclass:: gcm_toolkit.GCMT
+    :members: add_theta, add_horizontal_average, add_total_energy, add_meridional_overturning, add_rcb, add_total_momentum
 
 
 Plotting
