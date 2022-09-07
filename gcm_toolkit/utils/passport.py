@@ -11,6 +11,7 @@
 """
 from ..core import writer as wrt
 from ..core.const import VARNAMES as c
+import numpy as np
 
 
 def is_the_data_basic(dataset):
@@ -142,7 +143,7 @@ def is_the_data_basic(dataset):
         )
 
     Z = dataset[c["Z"]].values
-    if (Z.sort() != Z[::-1]).any():
+    if (np.sort(Z) != Z[::-1]).any():
         is_the_data_ok = False
         wrt.write_status(
             "E-INFO",
