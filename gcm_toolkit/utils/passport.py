@@ -42,6 +42,14 @@ def is_the_data_basic(dataset):
 
     to_be_checked_coords = [c["lon"], c["lat"], c["Z"], c["time"]]
 
+    if "tag" not in dataset.attrs:
+        wrt.write_status(
+            "E-INFO",
+            "The dataset should contain a tag! "
+            + 'Add a tag using ds.attrs.update({"tag":"whatever"}).',
+        )
+        return False
+
     for dim in to_be_checked_coords:
         if dim not in data_coords:
             is_the_data_ok = False
