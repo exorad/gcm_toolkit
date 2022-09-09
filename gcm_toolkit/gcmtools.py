@@ -350,7 +350,12 @@ class GCMT:
         )
 
     def add_total_energy(
-        self, var_key_out=None, area_key="area_c", temp_key="T", tag=None
+        self,
+        var_key_out=None,
+        area_key="area_c",
+        temp_key="T",
+        return_all=False,
+        tag=None,
     ):
         """
         Calculate the total Energy of the GCM. See e.g.,
@@ -366,6 +371,8 @@ class GCMT:
             Variable key in the dataset for the area of grid cells
         temp_key: str, optional
             The key to look up the temperature
+        return_all: bool, optional
+            Also return the partial energies
         tag : str, optional
             The tag of the dataset that should be used.
             If no tag is provided,
@@ -375,11 +382,21 @@ class GCMT:
         -------
         energy : xarray.DataArray
             A dataArray with reduced dimensionality, containing the total energy.
+        therm_energy : xarray.DataArray, optional
+            A dataArray with reduced dimensionality, containing the thermal energy.
+        pot_energy : xarray.DataArray, optional
+            A dataArray with reduced dimensionality, containing the potential energy.
+        kin_energy : xarray.DataArray, optional
+            A dataArray with reduced dimensionality, containing the kinetic energy.
         """
 
         dsi = self.get_one_model(tag)
         return mani.m_add_total_energy(
-            dsi, var_key_out=var_key_out, area_key=area_key, temp_key=temp_key
+            dsi,
+            var_key_out=var_key_out,
+            area_key=area_key,
+            temp_key=temp_key,
+            return_all=return_all,
         )
 
     def add_total_momentum(

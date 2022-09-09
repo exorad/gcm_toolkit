@@ -51,7 +51,9 @@ def m_add_horizontal_average(
     return avg
 
 
-def m_add_total_energy(dsi, var_key_out=None, area_key="area_c", temp_key="T"):
+def m_add_total_energy(
+    dsi, var_key_out=None, area_key="area_c", temp_key="T", return_all=False
+):
     """
     Calculate the total Energy of the GCM. See e.g.,
     https://ui.adsabs.harvard.edu/abs/2014Icar..229..355P, Eq. 16
@@ -67,11 +69,20 @@ def m_add_total_energy(dsi, var_key_out=None, area_key="area_c", temp_key="T"):
         Variable key in the dataset for the area of grid cells
     temp_key: str, optional
         The key to look up the temperature
+    return_all: bool, optional
+        Also return the partial energies
 
     Returns
     -------
-    energy : xarray.DataArray
+    tot_energy : xarray.DataArray
         A dataArray with reduced dimensionality, containing the total energy.
+    therm_energy : xarray.DataArray, optional
+        A dataArray with reduced dimensionality, containing the thermal energy.
+    pot_energy : xarray.DataArray, optional
+        A dataArray with reduced dimensionality, containing the potential energy.
+    kin_energy : xarray.DataArray, optional
+        A dataArray with reduced dimensionality, containing the kinetic energy.
+
     """
     # print information
     wrt.write_status("STAT", "Calculate total energy")
@@ -85,19 +96,38 @@ def m_add_total_energy(dsi, var_key_out=None, area_key="area_c", temp_key="T"):
 
     dzdp, rho = _calc_hydrostat_eq(dsi_calc, temp_key)
     z_geo = dzdp.cumulative_integrate(coord=c["Z"])
-    d_energy = (
-        z_geo * dsi_calc.attrs[c["g"]]
-        + dsi_calc.attrs[c["cp"]] * dsi_calc[temp_key]
-        + 0.5 * (dsi_calc[c["U"]] ** 2 + dsi_calc[c["V"]] ** 2)
+
+    d_pot_energy = z_geo * dsi_calc.attrs[c["g"]]
+
+    d_kin_energy = 0.5 * (dsi_calc[c["U"]] ** 2 + dsi_calc[c["V"]] ** 2)
+
+    d_therm_energy = dsi_calc.attrs[c["cp"]] * dsi_calc[temp_key]
+
+    kin_energy = _integrate_over_mass(
+        quant_to_int=d_kin_energy, area=dsi_calc[area_key], dzdp=dzdp, rho=rho
     )
-    energy = _integrate_over_mass(
-        quant_to_int=d_energy, area=dsi_calc[area_key], dzdp=dzdp, rho=rho
+    therm_energy = _integrate_over_mass(
+        quant_to_int=d_therm_energy,
+        area=dsi_calc[area_key],
+        dzdp=dzdp,
+        rho=rho,
     )
+    pot_energy = _integrate_over_mass(
+        quant_to_int=d_pot_energy, area=dsi_calc[area_key], dzdp=dzdp, rho=rho
+    )
+
+    tot_energy = kin_energy + therm_energy + pot_energy
 
     if var_key_out is not None:
-        dsi.update({var_key_out: energy})
+        dsi.update({var_key_out: tot_energy})
+        dsi.update({var_key_out + "_th": therm_energy})
+        dsi.update({var_key_out + "_pot": pot_energy})
+        dsi.update({var_key_out + "_kin": kin_energy})
 
-    return energy
+    if return_all:
+        return tot_energy, therm_energy, pot_energy, kin_energy
+    else:
+        return tot_energy
 
 
 def _integrate_over_mass(quant_to_int, area, dzdp, rho):
