@@ -14,6 +14,7 @@
 import numpy as np
 import xarray as xr
 
+from ..core import writer as wrt
 from ..core.const import VARNAMES as c
 
 
@@ -497,4 +498,314 @@ class PrtInterface(Interface):
             stellar_intensity = np.interp(wlen * 1e-4, spec[:, 0], spec[:, 1])
             return stellar_intensity
 
+<<<<<<< HEAD:gcm_toolkit/utils/interface.py
         raise ValueError("Tstar is need to define a stellar spectra.")
+=======
+        raise ValueError('Tstar is need to define a stellar spectra.')
+
+
+class PACInterface(Interface):
+    """
+    Interface GCM data to a 1D or 2D PAC chemistry simulation.
+    (Note: PAC is not needed for these routines to work.)
+    """
+
+    def __init__(self, tools, pac_dim, dsi=None):
+        """
+        Constructs the Interface and links to either 1D or 2D PAC.
+
+        Parameters
+        ----------
+        tools: GCMTools Object
+            A GCMTools object that is linked to the interface
+        pac_dim: int
+            Type of PAC simulation '1' or '2' D
+        dsi: DataSet, optional
+            Shortcut to set the dataset to the one that is required.
+            (Otherwise, use the set_data method.)
+        """
+        super().__init__(tools)
+
+        if not (pac_dim == 1 or pac_dim == 2):
+            raise ValueError("Please enter a valid PAC dimension: '1' or '2' \
+                             for 1D or pseudo-2D.")
+        self.dim = pac_dim
+
+        if dsi is not None:
+            self.dsi = dsi
+
+    def write_inputfile(self, destination, kwargs_1D={}, kwargs_2D={}):
+        """
+        Transform the given GCM dataset to a pseudo-2D PAC
+        input file.
+
+        Parameters
+        ----------
+        destination: str
+            Path of the directory where the input file should be written to.
+        kwargs_1D: dict, optional
+            A dictionary containing all of the necessary keyword arguments for
+            a 1D PAC input file.
+        kwargs_2D: dict, optional
+            A dictionary containing all of the necessary keyword arguments for
+            a pseudo-2D PAC input file.
+        """
+        import os
+
+        # check if data is present
+        if self.dsi is None:
+            raise RuntimeError("First select the required dataset with the \
+                                set_data method.")
+        # check if the path exists
+        if not os.path.isdir(destination):
+            raise OSError("The given destination directory does not exist:\n" +
+                          destination)
+
+        # call the right method
+        if self.dim == 1:
+            self._write_1Dpac_inpfile(self.dsi, destination, **kwargs_1D)
+        elif self.dim == 2:
+            self._write_2Dpac_inpfile(self.dsi, destination, **kwargs_2D)
+
+    def _write_1Dpac_inpfile(self, dsi, destination,
+                            spec_file='', zab_file='', reac_file='', therm_file='',
+                            eddy_file='', star_file='',
+                            pressure_bot=None, pressure_top=None, np=None,
+                            R_star=1.0, R_planet=11.2, M_planet=317.8, a=0.01,
+                            zenith_angle=48.0, albedo=0.0, ipho_file='',
+                            use_mixing=True, use_photo=True, model_name=None):
+        """
+        Write a 1D PAC-input file based on the given GCM dataset.
+
+        Parameters
+        ----------
+        dsi: DataSet
+            GCM dataset that forms the basis of the input file.
+        destination: str
+            Path of the directory where the input file should be written to.
+        spec_file: string, optional
+            The name of the file containing abundances and species.
+            If no name is given, a placeholder name is written.
+        zab_file: string, optional
+            The name of the zab file (generated with ACE code).
+            If no name is given, a placeholder name is written.
+        reac_file: string, optional
+            The name of the reac file, containing all chemical reactions.
+            If no name is given, a placeholder name is written.
+        therm_file: string, optional
+            The name of the file containing the NASA thermodynamic data.
+            If no name is given, a placeholder name is written.
+        eddy_file: string, optional
+            The name of the file containg eddy diffusion coefficients.
+            If no name is given, a placeholder name is written.
+        star_file: string, optional
+            The name of the file containing the stellar spectrum.
+            If no name is given, a placeholder name is written.
+        pressure_bot: float, optional
+            Bottom/maximum pressure of the grid (in bar).
+            If no number is given, the bottom pressure of the dataset is used.
+        pressure_top: float, optional
+            Top/minimum pressure of the grid (in bar).
+            if no number is given, the top pressure of the dataset is used.
+        np: int, optional
+            Number of pressures in the vertical grid.
+            If no number is given, it is the same as that of the dataset.
+        R_star: float, optional
+            Stellar radius in solar radii. Default: 1 solar radius.
+        R_planet: float, optional
+            Planetary radius in Earth radii. Default: 11.2 (radius of Jupiter).
+        M_planet: float, optional
+            Planetary mass in Earth masses. Default: 317.8 (mass of Jupiter).
+        a: float, optional
+            Semi-major axis in AU. Default: 0.01.
+        zenith_angle: float, optional
+            Zenith angle for the irradiation in degrees. Default: 48 deg.
+        albedo: float, optional
+            Surface albedo of the planet. Default: 0.0 (no reflection).
+        ipho_file: string, optional
+            File containing all of the individual photochemical dissociations.
+            If no name is given, a placeholder name is written.
+        use_mixing: boolean, optional
+            Whether to use vertical mixing or not. Default: True.
+        use_photo: boolean, optional
+            Whether to use photochemistry/dissociations or not. Default: True
+        model_name: string, optional
+            The name of the chemistry model: *model_name*.inp.
+            If no name is given, the 'tag' of the dataset is used.
+        """
+        # Checks and assigning default values
+        if model_name is None:
+            model_name = dsi.tag
+
+        if not spec_file:
+            spec_file = 'template.spec'
+        if not zab_file:
+            zab_file = model_name + '.zab'
+        if not reac_file:
+            reac_file = 'template.reac'
+        if not therm_file:
+            therm_file = 'template.therm'
+        if not eddy_file:
+            eddy_file = model_name + '.eddy'
+        if not star_file:
+            star_file = 'template.star'
+        if not ipho_file:
+            ipho_file = 'template.ipho'
+
+        if pressure_bot is None:
+            pressure_bot = max(dsi.Z.values)
+        if pressure_top is None:
+            pressure_top = min(dsi.Z.values)
+        if dsi.p_unit == 'Pa':  # convert to bar if needed
+            pressure_bot = pressure_bot / 1e5
+            pressure_top = pressure_top / 1e5
+        if np is None:
+            np = len(dsi.Z.values)
+
+        # Write all parameters in the required format as output file
+        with open(destination +'/'+model_name+'.inp', 'w') as f:
+            f.write(spec_file + (35-len(spec_file))*' ' + '! species file\n')
+            f.write(zab_file + (35-len(zab_file))*' ' + '! z,p,T (initial abundances) file\n')
+            f.write('2  0                               ! No reaction files, (0/1) not/use iondip treatment\n')
+            f.write(reac_file + (35-len(reac_file))*' ' + '! reaction file\n')
+            f.write(therm_file + (35-len(therm_file))*' ' + '! reaction file\n')
+            f.write(eddy_file + ' 0' + (33-len(eddy_file))*' ' + '! eddy diffusion coefficient profile file\n')
+            f.write(star_file + (35-len(star_file))*' ' + '! stellar spectrum file\n')
+            f.write(ipho_file + (35-len(ipho_file))*' ' + '! photo cross sections info file\n')
+            f.write(f'{pressure_bot:.1f}d0  {pressure_top:.4e}  {np}            ! pressure [bar] at bottom/top, No heights\n')
+            f.write(f'{R_star:.3f}d0                            ! star radius [R(Sun)]\n')
+            f.write(f'{R_planet:.3f}d0  {M_planet:.2f}d0                 ! planet radius [R(Earth)], planet mass [m(Earth)]\n')
+            f.write(f'{a:.5f}d0  {zenith_angle:.1f}d0  {albedo:.1f}d0           ! orbital distance [AU], zenith angle [deg], surface albedo\n')
+            f.write(f'{int(use_mixing)}  {int(use_photo)}                               ! deactivate/activate (0/1) diffusion and photochemistry\n')
+            f.write('2                                  ! numerical method (1/2/3) (-1 is solid body rotation)\n')
+
+        wrt.write_status('INFO', 'File written: '+destination+'/'+model_name+'.inp')
+
+    def _write_2Dpac_inpfile(self, dsi, destination,
+                            spec_file='', zab_file='', reac_file='', therm_file='',
+                            eddy_file='', star_file='', lpt_file='',
+                            pressure_bot=None, pressure_top=None, np=None,
+                            R_star=1.0, R_planet=11.2, M_planet=317.8, a=0.01,
+                            zenith_angle=48.0, albedo=0.0,
+                            nlon=90, nrot=30, ipho_file='', use_2D_eddy=False,
+                            use_mixing=True, use_photo=True, model_name=None):
+        """
+        Write a pseudo-2D PAC-input file based on the given GCM dataset.
+
+        Parameters
+        ----------
+        dsi: DataSet
+            GCM dataset that forms the basis of the input file.
+        destination: str
+            Path of the directory where the input file should be written to.
+        spec_file: string, optional
+            The name of the file containing abundances and species.
+            If no name is given, a placeholder name is written.
+        zab_file: string, optional
+            The name of the zab file (generated with ACE code).
+            If no name is given, a placeholder name is written.
+        reac_file: string, optional
+            The name of the reac file, containing all chemical reactions.
+            If no name is given, a placeholder name is written.
+        therm_file: string, optional
+            The name of the file containing the NASA thermodynamic data.
+            If no name is given, a placeholder name is written.
+        eddy_file: string, optional
+            The name of the file containg eddy diffusion coefficients.
+            If no name is given, a placeholder name is written.
+        star_file: string, optional
+            The name of the file containing the stellar spectrum.
+            If no name is given, a placeholder name is written.
+        lpt_file: string, optional
+            The name of the lpt-file, containing longitude-pressure-temperature.
+            If no name is given, a placeholder name is written.
+        pressure_bot: float, optional
+            Bottom/maximum pressure of the grid (in bar).
+            If no number is given, the bottom pressure of the dataset is used.
+        pressure_top: float, optional
+            Top/minimum pressure of the grid (in bar).
+            if no number is given, the top pressure of the dataset is used.
+        np: int, optional
+            Number of pressures in the vertical grid.
+            If no number is given, it is the same as that of the dataset.
+        R_star: float, optional
+            Stellar radius in solar radii. Default: 1 solar radius.
+        R_planet: float, optional
+            Planetary radius in Earth radii. Default: 11.2 (radius of Jupiter).
+        M_planet: float, optional
+            Planetary mass in Earth masses. Default: 317.8 (mass of Jupiter).
+        a: float, optional
+            Semi-major axis in AU. Default: 0.01.
+        zenith_angle: float, optional
+            Zenith angle for the irradiation in degrees. Default: 48 deg.
+        albedo: float, optional
+            Surface albedo of the planet. Default: 0.0 (no reflection).
+        nlon: int, optional
+            Number of longitudinal cells in the chemistry code. Default: 90.
+        nrot: int, optional
+            Number of rotations the code should integrate for. Default: 30.
+        ipho_file: string, optional
+            File containing all of the individual photochemical dissociations.
+            If no name is given, a placeholder name is written.
+        use2Deddy: boolean, optional
+            A 1D (False; default) or 2D (True) eddy diffusion profile is used.
+        use_mixing: boolean, optional
+            Whether to use vertical mixing or not. Default: True.
+        use_photo: boolean, optional
+            Whether to use photochemistry/dissociations or not. Default: True
+        model_name: string, optional
+            The name of the chemistry model: *model_name*.inp.
+            If no name is given, the 'tag' of the dataset is used.
+        """
+        # Checks and assigning default values
+        if model_name is None:
+            model_name = dsi.tag
+
+        if not spec_file:
+            spec_file = 'template.spec'
+        if not zab_file:
+            zab_file = model_name + '.zab'
+        if not reac_file:
+            reac_file = 'template.reac'
+        if not therm_file:
+            therm_file = 'template.therm'
+        if not eddy_file:
+            eddy_file = model_name + '.eddy'
+        if not star_file:
+            star_file = 'template.star'
+        if not lpt_file:
+            lpt_file = model_name + '.lpt'
+        if not ipho_file:
+            ipho_file = 'template.ipho'
+
+        if pressure_bot is None:
+            pressure_bot = max(dsi.Z.values)
+        if pressure_top is None:
+            pressure_top = min(dsi.Z.values)
+        if dsi.p_unit == 'Pa':  # convert to bar if needed
+            pressure_bot = pressure_bot / 1e5
+            pressure_top = pressure_top / 1e5
+        if np is None:
+            np = len(dsi.Z.values)
+
+        # Write all parameters in the required format as output file
+        with open(destination+'/'+model_name+'.inp', 'w') as f:
+            f.write(spec_file + (35-len(spec_file))*' ' + '! species file\n')
+            f.write(zab_file + (35-len(zab_file))*' ' + '! z,p,T (initial abundances) file\n')
+            f.write('2  0                               ! No reaction files, (0/1) not/use iondip treatment\n')
+            f.write(reac_file + (35-len(reac_file))*' ' + '! reaction file\n')
+            f.write(therm_file + (35-len(therm_file))*' ' + '! reaction file\n')
+            f.write(eddy_file + f' {int(use_2D_eddy)}' + (33-len(eddy_file))*' ' + '! eddy diffusion coefficient profile file\n')
+            f.write(star_file + (35-len(star_file))*' ' + '! stellar spectrum file\n')
+            f.write(ipho_file + (35-len(spec_file))*' ' + '! photo cross sections info file\n')
+            f.write(f'{pressure_bot:.1f}d0  {pressure_top:.4e}  {np}            ! pressure [bar] at bottom/top, No heights\n')
+            f.write(f'{R_star:.3f}d0                            ! star radius [R(Sun)]\n')
+            f.write(f'{R_planet:.3f}d0  {M_planet:.2f}d0                 ! planet radius [R(Earth)], planet mass [m(Earth)]\n')
+            f.write(f'{a:.5f}d0  {zenith_angle:.1f}d0  {albedo:.1f}d0           ! orbital distance [AU], zenith angle [deg], surface albedo\n')
+            f.write(f'{int(use_mixing)}  {int(use_photo)}                               ! deactivate/activate (0/1) diffusion and photochemistry\n')
+            f.write('-1                                 ! numerical method (1/2/3) (-1 is solid body rotation)\n')
+            f.write(lpt_file + (35-len(lpt_file))*' ' + '! sbr: longitude-pressure-temperature structure file\n')
+            f.write(f'{nlon} {nrot}                              ! sbr: No longitudes per period, No rotation periods')
+
+        wrt.write_status('INFO', 'File written: '+destination+'/'+model_name+'.inp')
+>>>>>>> 759f67e (Enable writing PAC input files via interface):gcmt/utils/interface.py
