@@ -11,6 +11,7 @@
        - ...
 ==============================================================
 """
+import math
 import numpy as np
 import xarray as xr
 
@@ -808,4 +809,171 @@ class PACInterface(Interface):
             f.write(f'{nlon} {nrot}                              ! sbr: No longitudes per period, No rotation periods')
 
         wrt.write_status('INFO', 'File written: '+destination+'/'+model_name+'.inp')
+<<<<<<< HEAD:gcm_toolkit/utils/interface.py
 >>>>>>> 759f67e (Enable writing PAC input files via interface):gcmt/utils/interface.py
+=======
+
+
+    def generate_lptfile(self, destination, jet_speed=None, set_min_temp=None,
+                         eps=20, kwargs_thermosphere={}, plot_input=False,
+                         model_name=None):
+        """
+        Generate from the selected dataset a pseudo-2D PAC (Agundez+2014)
+        'lpt' input file (longitude [in units of pi], pressure [in
+        bar], temperature [in K]).
+
+        The zonal wind speed for the solid-body rotation of the chemical
+        atmosphere is extracted from the dataset. It is also possible to specify a value.
+
+        Parameters
+        ----------
+        destination: str
+            Path of the directory where the input file should be written to.
+        jet_speed: float, optional
+            Zonal wind value (in m/s) that is used in the solid-body rotation
+            mode of PAC. If no value is given, this parameter is extracted from
+            the GCM dataset.
+        set_min_temp: float, optional
+            If given, the atmosphere temperature is set to this value whenever
+            it would actually be lower.
+        eps: float, optional
+            Epsilon value (in degrees latitude). The meridional mean is
+            calculated between -eps and +20 around the equator.
+        kwargs_thermosphere: dict, optional
+            Optional set of arguments used to extend the atmosphere upwards.
+        plot_input: boolean, optional
+            Set to true if a plot of the input temperature data should be made,
+            in the same directory as the lpt-file.
+        model_name: string, optional
+            The name of the chemistry model: *model_name*.inp.
+            If no name is given, the 'tag' of the dataset is used.
+        """
+        # Check if data is present
+        if self.dsi is None:
+            raise RuntimeError("First select the required dataset with the \
+                                set_data method.")
+        # Check if the path exists
+        import os
+        if not os.path.isdir(destination):
+            raise OSError("The given destination directory does not exist:\n" +
+                          destination)
+        # Checks and assign model name
+        if model_name is None:
+            model_name = self.dsi.tag
+
+        # If needed, derive the zonal wind speed from the dataset
+        if not jet_speed:
+            jet_speed = self._extract_jet_speed(self.dsi, eps=eps)
+
+        # extract pressures
+        if self.dsi.p_unit == 'Pa':  # convert to bar if needed
+            p_bar = [ip/1e5 for ip in self.dsi.Z.values]
+        elif self.dsi.p_unit == 'bar':
+            p_bar = self.dsi.Z.values
+
+        # Define longitude sampling
+        lon_grid = np.linspace(-180, 178, 180)
+        # Again, but units of pi and start at substellar point: 0 (pi) = 2 (pi)
+        lon_grid_out = np.linspace(0, 2, 181)
+
+        # Interpolate temperature grid to new lon coordinates
+        # NOTE: Careful with extrapolation at the edges of the grid!
+        #       Cyclic interpolation would probably be more robust...
+        T = self.dsi.T.interp(lon=lon_grid, kwargs={'fill_value':'extrapolate'})
+        # Meridional mean of the equatorial region
+        T = T.sel(lat=slice(-eps,eps))
+        weights = np.cos(np.deg2rad(self.dsi.lat))
+        T = T.weighted(weights).mean(dim='lat')
+        # 'Roll' the data so that substellar is left and antistellar is center
+        T = T.roll(lon=-90, roll_coords=True)
+        T = T.values
+
+        # Restrict if a minimum temperature is given
+        if set_min_temp:
+            T[T < set_min_temp] = set_min_temp
+
+        # Writing the lpt-file
+        with open(destination+'/'+model_name+'.lpt', 'w') as f:
+            # header, zonal wind and grid info
+            f.write(f'  {jet_speed/1000:1.3f}     ! velocity [km/s]\n')
+            f.write(f'  {len(lon_grid_out)}       ! number of longitudes\n')
+            f.write(f'  {len(p_bar)}        ! number of pressures\n')
+            # pressures
+            f.write('! next line lists pressures [bar]\n')
+            for ip in p_bar:
+                f.write(f'     {ip:1.5E}')
+            f.write('\n')
+            # temperatures per longitude
+            f.write('! longitude[pi]          Tk[K]          ...\n')
+            for i in range(0, len(lon_grid)):
+                f.write(f'     {lon_grid_out[i]:1.4f}     ')
+                for k in range(0, len(p_bar)):
+                    f.write(f'      {T[k,i]:4.2f}')
+                f.write('\n')
+            # repeat first entry (substellar point)
+            f.write(f'     {lon_grid_out[-1]:1.4f}     ')
+            for k in range(0, len(p_bar)):
+                f.write(f'      {T[k,0]:4.2f}')
+
+        wrt.write_status('INFO', 'File written: '+destination+'/'+model_name+'.lpt')
+
+        # If required, also save a plot of the input data
+        if plot_input:
+            import matplotlib.pyplot as plt
+            fig = plt.figure('Lpt plot')
+            ax = plt.gca()
+            image = ax.pcolormesh(lon_grid_out, p_bar, T, cmap='inferno',
+                        linewidth=0, rasterized=True) # these options reduce
+                                                      # visual grid glitches
+            image.set_edgecolor('face')
+            cb = plt.colorbar(image)
+            # in-plot wind info
+            ax.text(lon_grid_out[2], p_bar[5], f'U = {jet_speed/1000:.1f} km/s',
+                    fontsize=12)
+            ax.set_yscale('log')
+            ax.invert_yaxis()
+            ax.set_xlabel(r'Longitude from substellar point ($\pi$)', fontsize=14)
+            ax.set_ylabel('Pressure (bar)', fontsize=14)
+            cb.set_label('Temperature (K)', fontsize=14)
+            plt.savefig(destination+f'/lpt_plot.pdf', format='pdf')
+            plt.close(fig)
+
+
+    def _extract_jet_speed(self, dsi, eps=20):
+        """Function to extract the jet stream speed in m/s as a single value
+        from the given dataset.
+
+        Parameters
+        ----------
+        dsi: DataSet
+            The GCM from which the wind speed is to be extracted.
+        eps: float, optional
+            Epsilon value (in degrees latitude). The meridional mean is
+            calculated between -eps and +20 around the equator.
+        Returns
+        -------
+        jet_speed: float
+            A single value for the zonal mean equatorial jet speed (in m/s).
+        """
+        weights = np.cos(np.deg2rad(dsi.lat))   # weight with cos(latitude)
+        U = dsi.U.sel(lat=slice(-eps,eps))      # take latitudinal band from -20 to +20 degrees (around equator)
+        U = U.weighted(weights).mean(dim='lat') # average latitudinal band meridonally
+
+        # average over pressure levels (10 bar and up)
+        if dsi.p_unit == 'Pa':  # convert to bar if needed
+            p_max = 1e6
+        elif dsi.p_unit == 'bar':
+            p_max = 10
+        U = U.sel(Z=slice(p_max, None)).mean(dim='Z')
+        jet_speed = U.mean(dim='lon')           # average end result zonally
+        jet_speed = jet_speed.values
+
+        # if result turns out to be negative, raise a warning
+        if jet_speed < 0:
+            msg = f'WARNING: zonal wind speed {zonalwindspeed} is negative!\n'
+            msg += 'Setting wind speed to 10 m/s.'
+            wrt.write_message(msg, color='WARN')
+            zonalwindspeed = 10
+
+        return jet_speed
+>>>>>>> 8449d82 (Added longitude-pressure-temperature write function for PAC.):gcmt/utils/interface.py
