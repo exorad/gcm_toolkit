@@ -865,11 +865,19 @@ class PACInterface(Interface):
         if not jet_speed:
             jet_speed = self._extract_jet_speed(self.dsi, eps=eps)
 
-        # extract pressures
+        # If required, extend temperatures upward with a thermosphere
+        if kwargs_thermosphere:
+            from ..utils import manipulations as man
+            T = man.m_extend_upward(self.dsi.T, **kwargs_thermosphere)
+        # If not, just work with the native temperature DataArray
+        else:
+            T = self.dsi.T
+
+        # Extract pressures
         if self.dsi.p_unit == 'Pa':  # convert to bar if needed
-            p_bar = [ip/1e5 for ip in self.dsi.Z.values]
+            p_bar = [ip/1e5 for ip in T.Z.values]
         elif self.dsi.p_unit == 'bar':
-            p_bar = self.dsi.Z.values
+            p_bar = T.Z.values
 
         # Define longitude sampling
         lon_grid = np.linspace(-180, 178, 180)
@@ -879,10 +887,10 @@ class PACInterface(Interface):
         # Interpolate temperature grid to new lon coordinates
         # NOTE: Careful with extrapolation at the edges of the grid!
         #       Cyclic interpolation would probably be more robust...
-        T = self.dsi.T.interp(lon=lon_grid, kwargs={'fill_value':'extrapolate'})
+        T = T.interp(lon=lon_grid, kwargs={'fill_value':'extrapolate'})
         # Meridional mean of the equatorial region
         T = T.sel(lat=slice(-eps,eps))
-        weights = np.cos(np.deg2rad(self.dsi.lat))
+        weights = np.cos(np.deg2rad(T.lat))
         T = T.weighted(weights).mean(dim='lat')
         # 'Roll' the data so that substellar is left and antistellar is center
         T = T.roll(lon=-90, roll_coords=True)
