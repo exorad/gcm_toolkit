@@ -267,6 +267,8 @@ class GCMT:
             'all': global average
             'night': only nightside (defined around +-180,0)
             'day': only dayside (defined around 0,0)
+            'morning': morning terminator (average around lon=[-100,-80])
+            'evening': evening terminator (average around lon=[80,100])
         area_key: str, optional
             Variable key in the dataset for the area of grid cells
         tag : str, optional

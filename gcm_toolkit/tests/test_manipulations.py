@@ -11,6 +11,7 @@ from gcm_toolkit.tests.test_gcmtools_common import (
 
 def test_horizontal_average(all_nc_testdata):
     """Create a minimal gcm_toolkit object and do simple tests on the horizontal average.
+    Note, that these tests only work, if you have a non isothermal test case!
     """
 
     dirname, expected = all_nc_testdata
@@ -24,9 +25,15 @@ def test_horizontal_average(all_nc_testdata):
         "T", var_key_out="T_g", area_key=area_key
     )
 
+    assert hasattr(dsi, "T_g")
+    assert (avg == dsi.T_g).all()
+    assert set(dsi.T_g.dims) == {"Z", "time"}
+
     avg_from_array = tools.add_horizontal_average(dsi.T, area_key=area_key)
+    assert np.isclose(avg_from_array, avg).all()
 
     avg_from_avg = tools.add_horizontal_average(dsi.T_g, area_key=area_key)
+    assert np.isclose(avg_from_avg, avg).all()
 
     with pytest.raises(ValueError):
         tools.add_horizontal_average(5, area_key=area_key)
@@ -37,7 +44,6 @@ def test_horizontal_average(all_nc_testdata):
         "T", area_key=area_key, part="night"
     )
 
-    # Note, that these tests only work, if you have a non isothermal test case!
     assert (avg_day != avg_night).all()
     assert (avg_day != avg).all()
 
@@ -45,11 +51,15 @@ def test_horizontal_average(all_nc_testdata):
     assert avg_day.sum() > avg.sum()
     assert avg.sum() > avg_night.sum()
 
-    assert np.isclose(avg_from_array, avg).all()
-    assert np.isclose(avg_from_avg, avg).all()
-    assert hasattr(dsi, "T_g")
-    assert (avg == dsi.T_g).all()
-    assert set(dsi.T_g.dims) == {"Z", "time"}
+    avg_morning = tools.add_horizontal_average(
+        "T", area_key=area_key, part="morning"
+    )
+    avg_evening = tools.add_horizontal_average(
+        "T", area_key=area_key, part="evening"
+    )
+
+    assert (avg_morning != avg_evening).all()
+    assert (avg_morning != avg).all()
 
 
 def test_total_energy(all_nc_testdata):

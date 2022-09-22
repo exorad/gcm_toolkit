@@ -34,6 +34,8 @@ def m_add_horizontal_average(
         'all': global average
         'night': only nightside (defined around +-180,0)
         'day': only dayside (defined around 0,0)
+        'morning': morning terminator (average around lon=[-100,-80])
+        'evening': evening terminator (average around lon=[80,100])
     area_key: str, optional
         Variable key in the dataset for the area of grid cells
 
@@ -63,11 +65,17 @@ def m_add_horizontal_average(
     # Determine the area over which we want to average:
     area = dsi[area_key].copy()
     if part == "day":
-        area[abs(dsi["lon"]) > 90.0] = 0.0
+        area[abs(dsi[c["lon"]]) > 90.0] = 0.0
         wrt.write_status("INFO", "Performing dayside average")
     elif part == "night":
-        area[abs(dsi["lon"]) < 90.0] = 0.0
+        area[abs(dsi[c["lon"]]) < 90.0] = 0.0
         wrt.write_status("INFO", "Performing nightside average")
+    elif part == "evening":
+        area[np.logical_or(dsi[c["lon"]] > 100, dsi[c["lon"]] < 80)] = 0.0
+        wrt.write_status("INFO", "Performing morning terminator average")
+    elif part == "morning":
+        area[np.logical_or(dsi[c["lon"]] > -80, dsi[c["lon"]] < -100)] = 0.0
+        wrt.write_status("INFO", "Performing evening terminator average")
     elif part == "all":
         wrt.write_status("INFO", "Performing global average")
     else:
