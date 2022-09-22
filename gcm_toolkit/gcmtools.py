@@ -240,7 +240,12 @@ class GCMT:
     #   Data manipulation
     # ==============================================================================================
     def add_horizontal_average(
-        self, var_key, var_key_out=None, area_key="area_c", tag=None
+        self,
+        var_key,
+        var_key_out=None,
+        part="all",
+        area_key="area_c",
+        tag=None,
     ):
         """
         Calculate horizontal averaged quantities. Horizontal averages
@@ -250,12 +255,18 @@ class GCMT:
 
         Parameters
         ----------
-        var_key: str
-            The key of the variable quantity that should be plotted.
+        var_key: str, xarray.DataArray
+            The key or array of the variable quantity that should be averaged.
+            If str, it will try to look up the key in the dataset.
+            If DataArray, it will use this one instead.
         var_key_out: str, optional
             variable name used to store the outcome.
             If not provided, this script will just
             return the averages and not change the dataset inplace.
+        part: str, optional
+            'all': global average
+            'night': only nightside (defined around +-180,0)
+            'day': only dayside (defined around 0,0)
         area_key: str, optional
             Variable key in the dataset for the area of grid cells
         tag : str, optional
@@ -271,7 +282,7 @@ class GCMT:
         """
         dsi = self.get_one_model(tag)
         return mani.m_add_horizontal_average(
-            dsi, var_key, var_key_out=var_key_out, area_key=area_key
+            dsi, var_key, var_key_out=var_key_out, part=part, area_key=area_key
         )
 
     def add_rcb(

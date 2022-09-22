@@ -2,13 +2,15 @@
 Functions to manipulate GCM data
 """
 import numpy as np
+import xarray as xr
+
 from ..core import writer as wrt
 from ..core.const import VARNAMES as c
 from ..core.units import convert_pressure
 
 
 def m_add_horizontal_average(
-    dsi, var_key, var_key_out=None, area_key="area_c"
+    dsi, var_key, var_key_out=None, part="all", area_key="area_c"
 ):
     """
     Calculate horizontal averaged quantities. Horizontal averages
@@ -20,11 +22,18 @@ def m_add_horizontal_average(
     ----------
     dsi: xarray.Dataset
         The dataset for which the calculation should be performed
-    var_key: str
-        The key of the variable quantity that should be plotted.
+    var_key: str, xarray.DataArray
+        The key or array of the variable quantity that should be averaged.
+        If str, it will try to look up the key in the dataset.
+        If DataArray, it will use this one instead.
     var_key_out: str, optional
-        variable name used to store the outcome. If not provided, this script will just
+        variable name used to store the outcome.
+        If not provided, this script will just
         return the averages and not change the dataset inplace.
+    part: str, optional
+        'all': global average
+        'night': only nightside (defined around +-180,0)
+        'day': only dayside (defined around 0,0)
     area_key: str, optional
         Variable key in the dataset for the area of grid cells
 
@@ -36,14 +45,37 @@ def m_add_horizontal_average(
     """
     # print information
     wrt.write_status("STAT", "Calculate horizontal average")
-    wrt.write_status("INFO", "Variable to be plotted: " + var_key)
     if var_key_out is not None:
         wrt.write_status("INFO", "Output variable: " + var_key_out)
     wrt.write_status("INFO", "Area of grid cells: " + area_key)
 
-    avg = (dsi[area_key] * dsi[var_key]).sum(dim=[c["lon"], c["lat"]]) / dsi[
-        area_key
-    ].sum(dim=[c["lon"], c["lat"]])
+    if isinstance(var_key, str):
+        data = dsi[var_key]
+        wrt.write_status("INFO", "Variable to be averaged: " + var_key)
+    elif isinstance(var_key, xr.DataArray):
+        data = var_key
+        wrt.write_status("INFO", "Variable to be averaged is taken from input")
+    else:
+        raise ValueError(
+            "var_key needs to be either str (key in Dataset) or DataArray"
+        )
+
+    # Determine the area over which we want to average:
+    area = dsi[area_key].copy()
+    if part == "day":
+        area[abs(dsi["lon"]) > 90.0] = 0.0
+        wrt.write_status("INFO", "Performing dayside average")
+    elif part == "night":
+        area[abs(dsi["lon"]) < 90.0] = 0.0
+        wrt.write_status("INFO", "Performing nightside average")
+    elif part == "all":
+        wrt.write_status("INFO", "Performing global average")
+    else:
+        raise ValueError("part needs to be either day, night or all")
+
+    avg = (area * data).sum(dim=[c["lon"], c["lat"]]) / area.sum(
+        dim=[c["lon"], c["lat"]]
+    )
 
     if var_key_out is not None:
         dsi.update({var_key_out: avg})

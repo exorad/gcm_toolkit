@@ -1,4 +1,7 @@
 """testing manipulations functions"""
+import numpy as np
+import pytest
+
 from gcm_toolkit import GCMT
 from gcm_toolkit.tests.test_gcmtools_common import (
     all_raw_testdata,
@@ -21,6 +24,29 @@ def test_horizontal_average(all_nc_testdata):
         "T", var_key_out="T_g", area_key=area_key
     )
 
+    avg_from_array = tools.add_horizontal_average(dsi.T, area_key=area_key)
+
+    avg_from_avg = tools.add_horizontal_average(dsi.T_g, area_key=area_key)
+
+    with pytest.raises(ValueError):
+        tools.add_horizontal_average(5, area_key=area_key)
+
+    avg_day = tools.add_horizontal_average("T", area_key=area_key, part="day")
+
+    avg_night = tools.add_horizontal_average(
+        "T", area_key=area_key, part="night"
+    )
+
+    # Note, that these tests only work, if you have a non isothermal test case!
+    assert (avg_day != avg_night).all()
+    assert (avg_day != avg).all()
+
+    assert avg_day.sum() > avg_night.sum()
+    assert avg_day.sum() > avg.sum()
+    assert avg.sum() > avg_night.sum()
+
+    assert np.isclose(avg_from_array, avg).all()
+    assert np.isclose(avg_from_avg, avg).all()
     assert hasattr(dsi, "T_g")
     assert (avg == dsi.T_g).all()
     assert set(dsi.T_g.dims) == {"Z", "time"}
