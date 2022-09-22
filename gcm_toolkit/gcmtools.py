@@ -293,6 +293,7 @@ class GCMT:
         var_key_out=None,
         area_key="area_c",
         temp_key="T",
+        part="all",
         tag=None,
     ):
         """
@@ -310,6 +311,13 @@ class GCMT:
             variable name used to store the outcome.
             If not provided, this script will just
             return the averages and not change the dataset inplace.
+        part: str, optional
+            Part of the atmosphere from which the RCB should be calculated
+            'all': global average
+            'night': only nightside (defined around +-180,0)
+            'day': only dayside (defined around 0,0)
+            'morning': morning terminator (average around lon=[-100,-80])
+            'evening': evening terminator (average around lon=[80,100])
         area_key: str, optional
             Variable key in the dataset for the area of grid cells
         temp_key: str, optional
@@ -330,6 +338,7 @@ class GCMT:
             dsi,
             tol=tol,
             var_key_out=var_key_out,
+            part=part,
             area_key=area_key,
             temp_key=temp_key,
         )

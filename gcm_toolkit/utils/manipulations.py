@@ -277,7 +277,12 @@ def m_add_theta(dsi, var_key_out=None, temp_key="T"):
 
 
 def m_add_rcb(
-    dsi, tol=0.01, var_key_out=None, area_key="area_c", temp_key="T"
+    dsi,
+    tol=0.01,
+    var_key_out=None,
+    part="all",
+    area_key="area_c",
+    temp_key="T",
 ):
     """
     Calculate the radiative convective boundary (rcb) by searching
@@ -317,7 +322,7 @@ def m_add_rcb(
     dsi_calc = convert_pressure(dsi_calc, dsi_calc.p_unit, "Pa")
 
     m_add_theta(dsi_calc, temp_key=temp_key, var_key_out="theta")
-    theta_g = m_add_horizontal_average(dsi_calc, var_key="theta")
+    theta_g = m_add_horizontal_average(dsi_calc, var_key="theta", part=part)
 
     rcb_loc = (
         abs(
