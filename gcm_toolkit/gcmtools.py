@@ -269,8 +269,12 @@ class GCMT:
             'day': only dayside (defined around 0,0)
             'morning': morning terminator (average around lon=[-100,-80])
             'evening': evening terminator (average around lon=[80,100])
-            Alternatively you may specify a dict in the following way:
-            part = {'lon': [-100,-80], 'lat':[-90,90]} (example for morn. term.)
+            Alternatively you may specify a dict in the following way
+            (example for morn. term.):
+            part = {'lon': [-100,-80], 'lat':[-90,90], 'inv':False}
+            The 'lon', 'lat' specify regions of lon and lat that should be used,
+            whereas 'inv' (optional, default False) gives the option to invert
+            the lon and lat regions (e.g., exclude instead of include for average)
         area_key: str, optional
             Variable key in the dataset for the area of grid cells
         tag : str, optional
@@ -319,8 +323,12 @@ class GCMT:
             'day': only dayside (defined around 0,0)
             'morning': morning terminator (average around lon=[-100,-80])
             'evening': evening terminator (average around lon=[80,100])
-            Alternatively you may specify a dict in the following way:
-            part = {'lon': [-100,-80], 'lat':[-90,90]} (example for morn. term.)
+            Alternatively you may specify a dict in the following way
+            (example for morn. term.):
+            part = {'lon': [-100,-80], 'lat':[-90,90], 'inv':False}
+            The 'lon', 'lat' specify regions of lon and lat that should be used,
+            whereas 'inv' (optional, default False) gives the option to invert
+            the lon and lat regions (e.g., exclude instead of include for average)
         area_key: str, optional
             Variable key in the dataset for the area of grid cells
         temp_key: str, optional

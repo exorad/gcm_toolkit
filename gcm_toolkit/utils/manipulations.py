@@ -36,8 +36,12 @@ def m_add_horizontal_average(
         'day': only dayside (defined around 0,0)
         'morning': morning terminator (average around lon=[-100,-80])
         'evening': evening terminator (average around lon=[80,100])
-        Alternatively you may specify a dict in the following way:
-        part = {'lon': [-100,-80], 'lat':[-90,90]} (example for morn. term.)
+        Alternatively you may specify a dict in the following way
+        (example for morn. term.):
+        part = {'lon': [-100,-80], 'lat':[-90,90], 'inv':False}
+        The 'lon', 'lat' specify regions of lon and lat that should be used,
+        whereas 'inv' (optional, default False) gives the option to invert
+        the lon and lat regions (e.g., exclude instead of include for average)
     area_key: str, optional
         Variable key in the dataset for the area of grid cells
 
@@ -66,49 +70,54 @@ def m_add_horizontal_average(
 
     # Determine the area over which we want to average:
     if isinstance(part, str):
-        if part == "day":
-            area = xr.where(abs(dsi[c["lon"]]) < 90.0, dsi[area_key], 0)
+        if part == "global":
+            part_internal = {}
+            wrt.write_status("INFO", "Performing global average")
+        elif part == "day":
+            part_internal = {"lon": [-90, 90]}
             wrt.write_status("INFO", "Performing dayside average")
         elif part == "night":
-            area = xr.where(abs(dsi[c["lon"]]) < 90.0, 0, dsi[area_key])
+            part_internal = {"lon": [-90, 90], "inv": True}
             wrt.write_status("INFO", "Performing nightside average")
         elif part == "evening":
-            area = xr.where(
-                np.logical_and(dsi[c["lon"]] > 80, dsi[c["lon"]] < 100),
-                dsi[area_key],
-                0,
-            )
+            part_internal = {"lon": [80, 100]}
             wrt.write_status("INFO", "Performing evening terminator average")
         elif part == "morning":
-            area = xr.where(
-                np.logical_and(dsi[c["lon"]] > -100, dsi[c["lon"]] < -80),
-                dsi[area_key],
-                0,
-            )
+            part_internal = {"lon": [-100, -80]}
             wrt.write_status("INFO", "Performing morning terminator average")
-        elif part == "global":
-            wrt.write_status("INFO", "Performing global average")
-            area = dsi[area_key]
         else:
             raise ValueError(
                 "If you specify a string for part, it needs to be either"
                 " morning, evening, day, night or global"
             )
-
     elif isinstance(part, dict):
-        lon_bool = np.logical_and(
-            dsi[c["lon"]] <= max(part["lon"]),
-            dsi[c["lon"]] >= min(part["lon"]),
-        )
-        lat_bool = np.logical_and(
-            dsi[c["lat"]] <= max(part["lat"]),
-            dsi[c["lat"]] >= min(part["lat"]),
-        )
-        combined_bool = np.logical_and(lat_bool, lon_bool)
-        area = xr.where(combined_bool, dsi[area_key], 0)
-
+        wrt.write_status("INFO", "Performing user specified average")
+        part_internal = part
     else:
         raise ValueError("Please use a dict or a string for part.")
+
+    if lon := part_internal.get("lon"):
+        lon_bool = np.logical_and(
+            dsi[c["lon"]] <= max(lon),
+            dsi[c["lon"]] >= min(lon),
+        )
+    else:
+        lon_bool = xr.ones_like(dsi[area_key], dtype=np.bool)
+
+    if lat := part_internal.get("lat"):
+        lat_bool = np.logical_and(
+            dsi[c["lat"]] <= max(lat),
+            dsi[c["lat"]] >= min(lat),
+        )
+    else:
+        lat_bool = xr.ones_like(dsi[area_key], dtype=np.bool)
+
+    combined_bool = np.logical_and(lat_bool, lon_bool)
+
+    if part_internal.get("inv", False):
+        area = xr.where(combined_bool, 0, dsi[area_key])
+    else:
+        area = xr.where(combined_bool, dsi[area_key], 0)
 
     avg = (area * data).sum(dim=[c["lon"], c["lat"]]) / area.sum(
         dim=[c["lon"], c["lat"]]
@@ -335,8 +344,12 @@ def m_add_rcb(
         'day': only dayside (defined around 0,0)
         'morning': morning terminator (average around lon=[-100,-80])
         'evening': evening terminator (average around lon=[80,100])
-        Alternatively you may specify a dict in the following way:
-        part = {'lon': [-100,-80], 'lat':[-90,90]} (example for morn. term.)
+        Alternatively you may specify a dict in the following way
+        (example for morn. term.):
+        part = {'lon': [-100,-80], 'lat':[-90,90], 'inv':False}
+        The 'lon', 'lat' specify regions of lon and lat that should be used,
+        whereas 'inv' (optional, default False) gives the option to invert
+        the lon and lat regions (e.g., exclude instead of include for average)
     area_key: str, optional
         Variable key in the dataset for the area of grid cells
     temp_key: str, optional
