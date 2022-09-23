@@ -243,7 +243,7 @@ class GCMT:
         self,
         var_key,
         var_key_out=None,
-        part="all",
+        part="global",
         area_key="area_c",
         tag=None,
     ):
@@ -263,12 +263,14 @@ class GCMT:
             variable name used to store the outcome.
             If not provided, this script will just
             return the averages and not change the dataset inplace.
-        part: str, optional
-            'all': global average
+        part: dict or str, optional
+            'global': global average
             'night': only nightside (defined around +-180,0)
             'day': only dayside (defined around 0,0)
             'morning': morning terminator (average around lon=[-100,-80])
             'evening': evening terminator (average around lon=[80,100])
+            Alternatively you may specify a dict in the following way:
+            part = {'lon': [-100,-80], 'lat':[-90,90]} (example for morn. term.)
         area_key: str, optional
             Variable key in the dataset for the area of grid cells
         tag : str, optional

@@ -61,6 +61,11 @@ def test_horizontal_average(all_nc_testdata):
     assert (avg_morning != avg_evening).all()
     assert (avg_morning != avg).all()
 
+    avg_morning_man = tools.add_horizontal_average(
+        "T", area_key=area_key, part={"lon": [-100, -80], "lat": [-90, 90]}
+    )
+    assert np.isclose(avg_morning_man, avg_morning).all()
+
 
 def test_total_energy(all_nc_testdata):
     """Create a minimal gcm_toolkit object and do simple tests on the total energy.

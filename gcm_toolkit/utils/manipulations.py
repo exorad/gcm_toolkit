@@ -10,7 +10,7 @@ from ..core.units import convert_pressure
 
 
 def m_add_horizontal_average(
-    dsi, var_key, var_key_out=None, part="all", area_key="area_c"
+    dsi, var_key, var_key_out=None, part="global", area_key="area_c"
 ):
     """
     Calculate horizontal averaged quantities. Horizontal averages
@@ -30,12 +30,14 @@ def m_add_horizontal_average(
         variable name used to store the outcome.
         If not provided, this script will just
         return the averages and not change the dataset inplace.
-    part: str, optional
-        'all': global average
+    part: dict or str, optional
+        'global': global average
         'night': only nightside (defined around +-180,0)
         'day': only dayside (defined around 0,0)
         'morning': morning terminator (average around lon=[-100,-80])
         'evening': evening terminator (average around lon=[80,100])
+        Alternatively you may specify a dict in the following way:
+        part = {'lon': [-100,-80], 'lat':[-90,90]} (example for morn. term.)
     area_key: str, optional
         Variable key in the dataset for the area of grid cells
 
@@ -63,23 +65,50 @@ def m_add_horizontal_average(
         )
 
     # Determine the area over which we want to average:
-    area = dsi[area_key].copy()
-    if part == "day":
-        area[abs(dsi[c["lon"]]) > 90.0] = 0.0
-        wrt.write_status("INFO", "Performing dayside average")
-    elif part == "night":
-        area[abs(dsi[c["lon"]]) < 90.0] = 0.0
-        wrt.write_status("INFO", "Performing nightside average")
-    elif part == "evening":
-        area[np.logical_or(dsi[c["lon"]] > 100, dsi[c["lon"]] < 80)] = 0.0
-        wrt.write_status("INFO", "Performing morning terminator average")
-    elif part == "morning":
-        area[np.logical_or(dsi[c["lon"]] > -80, dsi[c["lon"]] < -100)] = 0.0
-        wrt.write_status("INFO", "Performing evening terminator average")
-    elif part == "all":
-        wrt.write_status("INFO", "Performing global average")
+    if isinstance(part, str):
+        if part == "day":
+            area = xr.where(abs(dsi[c["lon"]]) < 90.0, dsi[area_key], 0)
+            wrt.write_status("INFO", "Performing dayside average")
+        elif part == "night":
+            area = xr.where(abs(dsi[c["lon"]]) < 90.0, 0, dsi[area_key])
+            wrt.write_status("INFO", "Performing nightside average")
+        elif part == "evening":
+            area = xr.where(
+                np.logical_and(dsi[c["lon"]] > 80, dsi[c["lon"]] < 100),
+                dsi[area_key],
+                0,
+            )
+            wrt.write_status("INFO", "Performing evening terminator average")
+        elif part == "morning":
+            area = xr.where(
+                np.logical_and(dsi[c["lon"]] > -100, dsi[c["lon"]] < -80),
+                dsi[area_key],
+                0,
+            )
+            wrt.write_status("INFO", "Performing morning terminator average")
+        elif part == "global":
+            wrt.write_status("INFO", "Performing global average")
+            area = dsi[area_key]
+        else:
+            raise ValueError(
+                "If you specify a string for part, it needs to be either"
+                " morning, evening, day, night or global"
+            )
+
+    elif isinstance(part, dict):
+        lon_bool = np.logical_and(
+            dsi[c["lon"]] <= max(part["lon"]),
+            dsi[c["lon"]] >= min(part["lon"]),
+        )
+        lat_bool = np.logical_and(
+            dsi[c["lat"]] <= max(part["lat"]),
+            dsi[c["lat"]] >= min(part["lat"]),
+        )
+        combined_bool = np.logical_and(lat_bool, lon_bool)
+        area = xr.where(combined_bool, dsi[area_key], 0)
+
     else:
-        raise ValueError("part needs to be either day, night or all")
+        raise ValueError("Please use a dict or a string for part.")
 
     avg = (area * data).sum(dim=[c["lon"], c["lat"]]) / area.sum(
         dim=[c["lon"], c["lat"]]
@@ -280,7 +309,7 @@ def m_add_rcb(
     dsi,
     tol=0.01,
     var_key_out=None,
-    part="all",
+    part="global",
     area_key="area_c",
     temp_key="T",
 ):
@@ -300,6 +329,14 @@ def m_add_rcb(
     var_key_out: str, optional
         variable name used to store the outcome. If not provided, this script will just
         return the averages and not change the dataset inplace.
+    part: dict or str, optional
+        'global': global average
+        'night': only nightside (defined around +-180,0)
+        'day': only dayside (defined around 0,0)
+        'morning': morning terminator (average around lon=[-100,-80])
+        'evening': evening terminator (average around lon=[80,100])
+        Alternatively you may specify a dict in the following way:
+        part = {'lon': [-100,-80], 'lat':[-90,90]} (example for morn. term.)
     area_key: str, optional
         Variable key in the dataset for the area of grid cells
     temp_key: str, optional
