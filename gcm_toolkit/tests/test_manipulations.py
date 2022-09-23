@@ -1,4 +1,7 @@
 """testing manipulations functions"""
+import numpy as np
+import pytest
+
 from gcm_toolkit import GCMT
 from gcm_toolkit.tests.test_gcmtools_common import (
     all_raw_testdata,
@@ -8,6 +11,7 @@ from gcm_toolkit.tests.test_gcmtools_common import (
 
 def test_horizontal_average(all_nc_testdata):
     """Create a minimal gcm_toolkit object and do simple tests on the horizontal average.
+    Note, that these tests only work, if you have a non isothermal test case!
     """
 
     dirname, expected = all_nc_testdata
@@ -24,6 +28,43 @@ def test_horizontal_average(all_nc_testdata):
     assert hasattr(dsi, "T_g")
     assert (avg == dsi.T_g).all()
     assert set(dsi.T_g.dims) == {"Z", "time"}
+
+    avg_from_array = tools.add_horizontal_average(dsi.T, area_key=area_key)
+    assert np.isclose(avg_from_array, avg).all()
+
+    avg_from_avg = tools.add_horizontal_average(dsi.T_g, area_key=area_key)
+    assert np.isclose(avg_from_avg, avg).all()
+
+    with pytest.raises(ValueError):
+        tools.add_horizontal_average(5, area_key=area_key)
+
+    avg_day = tools.add_horizontal_average("T", area_key=area_key, part="day")
+
+    avg_night = tools.add_horizontal_average(
+        "T", area_key=area_key, part="night"
+    )
+
+    assert (avg_day != avg_night).all()
+    assert (avg_day != avg).all()
+
+    assert avg_day.sum() > avg_night.sum()
+    assert avg_day.sum() > avg.sum()
+    assert avg.sum() > avg_night.sum()
+
+    avg_morning = tools.add_horizontal_average(
+        "T", area_key=area_key, part="morning"
+    )
+    avg_evening = tools.add_horizontal_average(
+        "T", area_key=area_key, part="evening"
+    )
+
+    assert (avg_morning != avg_evening).all()
+    assert (avg_morning != avg).all()
+
+    avg_morning_man = tools.add_horizontal_average(
+        "T", area_key=area_key, part={"lon": [-100, -80], "lat": [-90, 90]}
+    )
+    assert np.isclose(avg_morning_man, avg_morning).all()
 
 
 def test_total_energy(all_nc_testdata):

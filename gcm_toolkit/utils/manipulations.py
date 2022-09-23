@@ -2,13 +2,15 @@
 Functions to manipulate GCM data
 """
 import numpy as np
+import xarray as xr
+
 from ..core import writer as wrt
 from ..core.const import VARNAMES as c
 from ..core.units import convert_pressure
 
 
 def m_add_horizontal_average(
-    dsi, var_key, var_key_out=None, area_key="area_c"
+    dsi, var_key, var_key_out=None, part="global", area_key="area_c"
 ):
     """
     Calculate horizontal averaged quantities. Horizontal averages
@@ -20,11 +22,22 @@ def m_add_horizontal_average(
     ----------
     dsi: xarray.Dataset
         The dataset for which the calculation should be performed
-    var_key: str
-        The key of the variable quantity that should be plotted.
+    var_key: str, xarray.DataArray
+        The key or array of the variable quantity that should be averaged.
+        If str, it will try to look up the key in the dataset.
+        If DataArray, it will use this one instead.
     var_key_out: str, optional
-        variable name used to store the outcome. If not provided, this script will just
+        variable name used to store the outcome.
+        If not provided, this script will just
         return the averages and not change the dataset inplace.
+    part: dict or str, optional
+        'global': global average
+        'night': only nightside (defined around +-180,0)
+        'day': only dayside (defined around 0,0)
+        'morning': morning terminator (average around lon=[-100,-80])
+        'evening': evening terminator (average around lon=[80,100])
+        Alternatively you may specify a dict in the following way:
+        part = {'lon': [-100,-80], 'lat':[-90,90]} (example for morn. term.)
     area_key: str, optional
         Variable key in the dataset for the area of grid cells
 
@@ -36,14 +49,70 @@ def m_add_horizontal_average(
     """
     # print information
     wrt.write_status("STAT", "Calculate horizontal average")
-    wrt.write_status("INFO", "Variable to be plotted: " + var_key)
     if var_key_out is not None:
         wrt.write_status("INFO", "Output variable: " + var_key_out)
     wrt.write_status("INFO", "Area of grid cells: " + area_key)
 
-    avg = (dsi[area_key] * dsi[var_key]).sum(dim=[c["lon"], c["lat"]]) / dsi[
-        area_key
-    ].sum(dim=[c["lon"], c["lat"]])
+    if isinstance(var_key, str):
+        data = dsi[var_key]
+        wrt.write_status("INFO", "Variable to be averaged: " + var_key)
+    elif isinstance(var_key, xr.DataArray):
+        data = var_key
+        wrt.write_status("INFO", "Variable to be averaged is taken from input")
+    else:
+        raise ValueError(
+            "var_key needs to be either str (key in Dataset) or DataArray"
+        )
+
+    # Determine the area over which we want to average:
+    if isinstance(part, str):
+        if part == "day":
+            area = xr.where(abs(dsi[c["lon"]]) < 90.0, dsi[area_key], 0)
+            wrt.write_status("INFO", "Performing dayside average")
+        elif part == "night":
+            area = xr.where(abs(dsi[c["lon"]]) < 90.0, 0, dsi[area_key])
+            wrt.write_status("INFO", "Performing nightside average")
+        elif part == "evening":
+            area = xr.where(
+                np.logical_and(dsi[c["lon"]] > 80, dsi[c["lon"]] < 100),
+                dsi[area_key],
+                0,
+            )
+            wrt.write_status("INFO", "Performing evening terminator average")
+        elif part == "morning":
+            area = xr.where(
+                np.logical_and(dsi[c["lon"]] > -100, dsi[c["lon"]] < -80),
+                dsi[area_key],
+                0,
+            )
+            wrt.write_status("INFO", "Performing morning terminator average")
+        elif part == "global":
+            wrt.write_status("INFO", "Performing global average")
+            area = dsi[area_key]
+        else:
+            raise ValueError(
+                "If you specify a string for part, it needs to be either"
+                " morning, evening, day, night or global"
+            )
+
+    elif isinstance(part, dict):
+        lon_bool = np.logical_and(
+            dsi[c["lon"]] <= max(part["lon"]),
+            dsi[c["lon"]] >= min(part["lon"]),
+        )
+        lat_bool = np.logical_and(
+            dsi[c["lat"]] <= max(part["lat"]),
+            dsi[c["lat"]] >= min(part["lat"]),
+        )
+        combined_bool = np.logical_and(lat_bool, lon_bool)
+        area = xr.where(combined_bool, dsi[area_key], 0)
+
+    else:
+        raise ValueError("Please use a dict or a string for part.")
+
+    avg = (area * data).sum(dim=[c["lon"], c["lat"]]) / area.sum(
+        dim=[c["lon"], c["lat"]]
+    )
 
     if var_key_out is not None:
         dsi.update({var_key_out: avg})
@@ -237,7 +306,12 @@ def m_add_theta(dsi, var_key_out=None, temp_key="T"):
 
 
 def m_add_rcb(
-    dsi, tol=0.01, var_key_out=None, area_key="area_c", temp_key="T"
+    dsi,
+    tol=0.01,
+    var_key_out=None,
+    part="global",
+    area_key="area_c",
+    temp_key="T",
 ):
     """
     Calculate the radiative convective boundary (rcb) by searching
@@ -255,6 +329,14 @@ def m_add_rcb(
     var_key_out: str, optional
         variable name used to store the outcome. If not provided, this script will just
         return the averages and not change the dataset inplace.
+    part: dict or str, optional
+        'global': global average
+        'night': only nightside (defined around +-180,0)
+        'day': only dayside (defined around 0,0)
+        'morning': morning terminator (average around lon=[-100,-80])
+        'evening': evening terminator (average around lon=[80,100])
+        Alternatively you may specify a dict in the following way:
+        part = {'lon': [-100,-80], 'lat':[-90,90]} (example for morn. term.)
     area_key: str, optional
         Variable key in the dataset for the area of grid cells
     temp_key: str, optional
@@ -277,7 +359,7 @@ def m_add_rcb(
     dsi_calc = convert_pressure(dsi_calc, dsi_calc.p_unit, "Pa")
 
     m_add_theta(dsi_calc, temp_key=temp_key, var_key_out="theta")
-    theta_g = m_add_horizontal_average(dsi_calc, var_key="theta")
+    theta_g = m_add_horizontal_average(dsi_calc, var_key="theta", part=part)
 
     rcb_loc = (
         abs(
