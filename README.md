@@ -3,6 +3,7 @@
 [![codecov](https://codecov.io/gh/exorad/gcm_toolkit/branch/main/graph/badge.svg?token=OTEPCHABXI)](https://codecov.io/gh/exorad/gcm_toolkit)
 [![PyPi version](https://badgen.net/pypi/v/gcm-toolkit/)](https://pypi.org/project/gcm-toolkit/)
 [![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://gcm-toolkit.readthedocs.io/?badge=latest)
+[![DOI](https://zenodo.org/badge/457401047.svg)](https://zenodo.org/badge/latestdoi/457401047)
 
 > *gcm_toolkit* is an open-source python package to read, post-process, and plot 3D GCM data. The goal is to have an
 > easy to use invironment for new GCM users, while allowing for direct access to the data for more experienced users.
