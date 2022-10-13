@@ -845,7 +845,7 @@ class PACInterface(Interface):
             Set to true if a plot of the input temperature data should be made,
             in the same directory as the lpt-file.
         model_name: string, optional
-            The name of the chemistry model: *model_name*.inp.
+            The name of the chemistry model: *model_name*.lpt.
             If no name is given, the 'tag' of the dataset is used.
         """
         # Check if data is present
@@ -984,4 +984,221 @@ class PACInterface(Interface):
             zonalwindspeed = 10
 
         return jet_speed
+<<<<<<< HEAD:gcm_toolkit/utils/interface.py
 >>>>>>> 8449d82 (Added longitude-pressure-temperature write function for PAC.):gcmt/utils/interface.py
+=======
+
+
+    def generate_aptfiles(self, destination, lons=[], eps=20,
+                          kwargs_thermosphere={}, plot_input=False,
+                          model_name=None):
+        """Function to write apt-files (altitude [in km], pressure [in bar],
+        temperature [in K]), to use as input in the ACE chemical equilibrium
+        code.
+        A text-file summarizing all longitudes is also written.
+
+        Parameters
+        ----------
+        destination: str
+            Path of the directory where the input file should be written to.
+        lons: [float], optional
+            List of the longitudes of the vertical columns of this dataset that
+            need to be sampled and written to apt-files.
+            If multiple are given, multiple apt-files will be written.
+            If none are given, the substellar point is selected.
+        eps: float, optional
+            Epsilon value (in degrees latitude). The meridional mean is
+            calculated between -eps and +20 around the equator.
+        kwargs_thermosphere: dict, optional
+            Optional set of arguments used to extend the atmosphere upwards.
+        plot_input: boolean, optional
+            Set to true if a plot of the input temperature data should be made,
+            in the same directory as the apt-file.
+        model_name: string, optional
+            The name of the chemistry model: *model_name*_*lon*.apt.
+            If no name is given, the 'tag' of the dataset is used.
+        """
+        # Check if data is present
+        if self.dsi is None:
+            raise RuntimeError("First select the required dataset with the \
+                                set_data method.")
+        # Check if the path exists
+        import os
+        if not os.path.isdir(destination):
+            raise OSError("The given destination directory does not exist:\n" +
+                          destination)
+        # Checks and assign model name
+        if model_name is None:
+            model_name = self.dsi.tag
+        # If a previous list of apt-files is still present, remove it.
+        try:
+            os.remove(destination + '/apt_list.txt')
+        except OSError:
+            pass
+        # If no longitude is given, just take the substellar point at 0 degrees
+        if not list(lons):
+            lons=[0]
+        # If an overview plot of the input is needed, prepare it here.
+        if plot_input:
+            import matplotlib
+            import matplotlib.pyplot as plt
+            fig_many = plt.figure()
+            ax_many = plt.gca()
+            norm = matplotlib.colors.Normalize(vmin=0, vmax=180)
+            cmap = matplotlib.cm.get_cmap('cividis')
+
+        # If required, extend temperatures upward with a thermosphere
+        if kwargs_thermosphere:
+            from ..utils import manipulations as man
+            Tsource = man.m_extend_upward(self.dsi.T, **kwargs_thermosphere)
+        else:
+            Tsource = self.dsi.T
+
+        # For each longitude given...
+        for lon in lons:
+            # Extract the corresponding longitude
+            T = Tsource.sel(lon=lon, method='nearest').sel(lat=slice(-eps, eps))
+            w = np.cos(np.deg2rad(self.dsi.lat))     # weighted with cos(lat)
+            T = T.weighted(w).mean(dim='lat')        # meridional average
+
+            # Calculate height based on hydrostatic equilibrium, and renormalize
+            # so that 1 bar <--> 0 m
+            R_p = self.dsi.R_p            # radius in m
+            G = 6.674e-11                 # gravitational const in m3 kg−1 s−2
+            M_p = self.dsi.g * R_p**2 / G # mass in kg
+            R_spec = self.dsi.R           # specific gas constant in J kg-1 K-1
+            p_ref = 1e5                   # reference pressure in pascal (1 bar)
+            # pressures should be in bar, except for the altitude-routine
+            if self.dsi.p_unit == 'bar':
+                p = T.Z.values
+                p_pascal = [ip*1e5 for ip in p]
+            elif self.dsi.p_unit == 'Pa':
+                p_pascal = T.Z.values
+                p = [ip/1e5 for ip in p_pascal]
+
+            alt = self._p_to_alt(p_pascal, T, M_p, R_p, R_spec, p_ref)
+
+            # Construct full filename:
+            full_path = destination + '/' + model_name + f'_{int(lon)}.apt'
+
+            # Write the file:
+            # should be written in order of decreasing pressures:
+            if p[1] < p[0]:
+                index_order = range(0, len(p))             # write in same order
+            elif p[1] > p[0]:
+                index_order = range(len(p)-1, -1, -1)   # write in reverse order
+            with open(full_path, 'w') as f:
+                    f.write('! altitude[km]   pressure[bar]   temperature[K]\n')
+                    for k in index_order:
+                        line = '  ' + '{:4.4f}'.format(alt[k]/1000) + '   ' + \
+                                '  ' + '{:1.4E}'.format(p[k]) + '  ' + \
+                                '  ' + '{:4.2f}'.format(T.values[k]) + '\n'
+                        f.write(line)
+            wrt.write_status('INFO', 'File written: ' + full_path)
+
+            # Remember the apt-file in a list for easy submission
+            with open(destination+'apt_list.txt', 'a') as listfile:
+                listfile.write(model_name + f'_{int(lon)}.apt\n')
+
+            # If required, a control plot is saved to show the input data
+            if plot_input:
+                mycol = cmap(norm(180-abs(lon)))
+                if lon > 0:
+                    ls = '--'
+                else:
+                    ls = '-'
+                ax_many.plot(T.values, p, ls, color=mycol, linewidth=2)
+
+        if plot_input:
+            ax_many.set_yscale('log')
+            ax_many.invert_yaxis()
+            ax_many.set_xlabel('Temperature (K)', fontsize=16)
+            ax_many.set_ylabel('Pressure (bar)', fontsize=16)
+            plt.savefig(destination+f'PT_profile_all.pdf', format='pdf')
+            plt.close(fig_many)
+
+
+    def _p_to_alt(self, p, T, M_p, R_p, R_spec=3589, p_ref=1.e7):
+        """ Compute the corresponding height (in m) for a given list of
+        pressures, assuming a hydrostatic atmosphere. The gravity changes as a
+        function of the vertical layers (R + dz), but is assumed constant within
+        one layer. The surface gravity (g = G M/ R^2) is assumed to be at the
+        reference pressure. The algorithm works in 4 parts:
+            1) a pivot near the reference pressure (= surface gravity) is found
+            2) integrated from pivot upward
+            3) integrated from pivot downward
+            4) small correction because the pivot is not exactly at p_ref
+
+        Parameters
+        ----------
+        p: [float]
+            Pressures (in pascal!).
+        T: [float]
+            Corresponding temperatures in kelvin.
+        M_p: float
+            Planet mass in kg.
+        R_p: float
+            Planet radius in m.
+        R_spec: float, optional
+            Specific gas constant of the atmosphere (R_spec=2/7*cp for diatomic gas).
+        p_ref: float, optional
+            Reference pressure in pascal.
+
+        Returns
+        -------
+        alt_scaled: [float]
+            List of altitudes (in meter) corresponding to the given pressures.
+        """
+        from scipy import interpolate
+
+        # Find index of the reference pressure (gravity = 0)
+        for i in range(0, len(p)):
+            if p[i] < p_ref:
+                pivot = i
+                break
+
+        # Initialize height profile
+        z = np.zeros(len(p))
+
+        # Reconstructing the height with numerical integration (upper part)
+        for i in range(pivot, len(p)):
+            if i == pivot:  # first iteration
+                gl = 6.674e-11 * M_p / (R_p)**2     # surface gravity
+
+                Tp = interpolate.interp1d(p, T, 'quadratic')    # find T(p_ref)
+                T_pref = Tp(p_ref)
+                Tl = 0.5*(T[i] + T_pref)    # average temperature in this layer
+                Hl = R_spec * Tl / gl       # average scale height in this layer
+
+                # calculate first height as layer thickness between p(pivot) and
+                # p_ref
+                z[i] = Hl*math.log(p_ref/p[i])
+
+            else: # calculate height for i
+                gl = 6.674e-11 * M_p / (R_p + z[i-1])**2    # gravity at bottom
+                                                            # edge of this layer
+
+                Tl = 0.5*(T[i] + T[i-1])    # average temperature in this layer
+                Hl = R_spec * Tl / gl       # average scale height in this layer
+
+                # calculate new height as previous + layer thickness
+                z[i] = z[i-1] + Hl * math.log(p[i-1]/p[i])
+
+        # Reconstructing the height with numerical integration (bottom part)
+        for i in range(pivot-1, -1, -1):
+            gl = 6.674e-11 * M_p / (R_p + z[i+1])**2    # gravity at top
+                                                        # edge of this layer
+
+            Tl = 0.5*(T[i] + T[i+1])    # average temperature in this layer
+            Hl = R_spec * Tl / gl       # average scale height in this layer
+
+            # calculate new height as above - new layer thickness
+            z[i] = z[i+1] - Hl * math.log(p[i]/p[i+1])
+
+        # Apply (small) offset to the reference pressure
+        hf = interpolate.interp1d(p, z, 'quadratic')
+        offset = hf(p_ref)
+        alt_scaled = [thisz - offset for thisz in z]
+
+        return alt_scaled
+>>>>>>> cb2fc8a (Implemented function to write apt-files.):gcmt/utils/interface.py
