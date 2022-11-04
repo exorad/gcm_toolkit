@@ -1098,7 +1098,7 @@ class PACInterface(Interface):
 
             # Remember the apt-file in a list for easy submission
             with open(destination+'apt_list.txt', 'a') as listfile:
-                listfile.write(model_name + f'_{int(lon)}.apt\n')
+                listfile.write(model_name + f'_{int(lon)}\n')
 
             # If required, a control plot is saved to show the input data
             if plot_input:
