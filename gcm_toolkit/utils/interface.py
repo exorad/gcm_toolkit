@@ -499,9 +499,6 @@ class PrtInterface(Interface):
             stellar_intensity = np.interp(wlen * 1e-4, spec[:, 0], spec[:, 1])
             return stellar_intensity
 
-<<<<<<< HEAD:gcm_toolkit/utils/interface.py
-        raise ValueError("Tstar is need to define a stellar spectra.")
-=======
         raise ValueError('Tstar is need to define a stellar spectra.')
 
 
@@ -809,9 +806,6 @@ class PACInterface(Interface):
             f.write(f'{nlon} {nrot}                              ! sbr: No longitudes per period, No rotation periods')
 
         wrt.write_status('INFO', 'File written: '+destination+'/'+model_name+'.inp')
-<<<<<<< HEAD:gcm_toolkit/utils/interface.py
->>>>>>> 759f67e (Enable writing PAC input files via interface):gcmt/utils/interface.py
-=======
 
 
     def generate_lptfile(self, destination, jet_speed=None, set_min_temp=None,
@@ -984,10 +978,6 @@ class PACInterface(Interface):
             zonalwindspeed = 10
 
         return jet_speed
-<<<<<<< HEAD:gcm_toolkit/utils/interface.py
->>>>>>> 8449d82 (Added longitude-pressure-temperature write function for PAC.):gcmt/utils/interface.py
-=======
-
 
     def generate_aptfiles(self, destination, lons=[], eps=20,
                           kwargs_thermosphere={}, plot_input=False,
@@ -1201,4 +1191,3 @@ class PACInterface(Interface):
         alt_scaled = [thisz - offset for thisz in z]
 
         return alt_scaled
->>>>>>> cb2fc8a (Implemented function to write apt-files.):gcmt/utils/interface.py
