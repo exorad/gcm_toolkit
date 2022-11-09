@@ -164,3 +164,27 @@ def test_horizontal_overturning(all_nc_testdata):
     assert hasattr(dsi, "psi")
     assert (psi == dsi.psi).all()
     assert set(dsi.psi.dims) == {"Z", "time", "lat", "lon"}
+
+
+def test_extend_upward(all_nc_testdata):
+    """Create a minimal gcm_toolkit object and test both methods of extending
+    the upper atmospheric temperature."""
+
+    dirname, expected = all_nc_testdata
+
+    tools = GCMT()
+    tools.read_reduced(data_path=dirname)
+    dsi = tools.get_models()
+
+    T_iso = tools.extend_upward(1e-8, method='isothermal')
+
+    assert len(T_iso.Z) == len(dsi.Z) + 20
+    assert min(T_iso.Z) == 1e-8
+
+    T_the = tools.extend_upward(1e-8, method='thermosphere',
+                                  T_therm=10000, p_therm_high=1e-6)
+
+    assert len(T_the.Z) == len(dsi.Z) + 20
+    assert min(T_the.Z) == 1e-8
+    assert (T_the.sel(Z=slice(1e-6,1e-8)) < 10000).all()
+    assert (T_the.sel(Z=slice(1e-6,1e-8)) >= T_iso.sel(Z=slice(1e-6,1e-8))).all()
