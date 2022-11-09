@@ -498,11 +498,11 @@ def m_extend_upward(temp_array, p_low, method=None, n_p=20, T_therm=None,
     nz = len(new_coords['Z'])
     nlat = len(new_coords['lat'])
     nlon = len(new_coords['lon'])
-    try:
+    if 'time' in temp_array.dims:
         nt = len(new_coords['time'])
         time_coord = True # flag for an explicit time coordinate --> 4D array
         extended_values = np.zeros((nt, nz, nlat, nlon))
-    except TypeError:
+    else:
         nt = 1
         time_coord = False # no explicit time coordinate --> 3D array
         extended_values = np.zeros((nz, nlat, nlon))
@@ -533,7 +533,10 @@ def m_extend_upward(temp_array, p_low, method=None, n_p=20, T_therm=None,
             for ilon in range(0, nlon):
                 for ilat in range(0, nlat):
                     # ... save the top temperature as minimum
-                    T_min = temp_array.isel(Z=-1, lat=ilat, lon=ilon)
+                    if time_coord:
+                        T_min = temp_array.isel(time=it, Z=-1, lat=ilat, lon=ilon)
+                    else:
+                        T_min = temp_array.isel(Z=-1, lat=ilat, lon=ilon)
                     # ... calculate angle of incidence
                     mu = math.cos(math.radians(T_min.lon)) * \
                          abs( math.cos(math.radians(T_min.lat)) )
