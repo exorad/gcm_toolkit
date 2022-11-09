@@ -102,7 +102,7 @@ def m_add_horizontal_average(
             dsi[c["lon"]] >= min(lon),
         )
     else:
-        lon_bool = xr.ones_like(dsi[area_key], dtype=np.bool)
+        lon_bool = xr.ones_like(dsi[area_key], dtype=bool)
 
     if lat := part_internal.get("lat"):
         lat_bool = np.logical_and(
@@ -110,7 +110,7 @@ def m_add_horizontal_average(
             dsi[c["lat"]] >= min(lat),
         )
     else:
-        lat_bool = xr.ones_like(dsi[area_key], dtype=np.bool)
+        lat_bool = xr.ones_like(dsi[area_key], dtype=bool)
 
     combined_bool = np.logical_and(lat_bool, lon_bool)
 
