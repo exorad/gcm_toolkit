@@ -202,3 +202,27 @@ def test_general_interface(all_nc_testdata, petitradtrans_testdata):
 
     with pytest.raises(ValueError):
         interface.chemistry.to_prt(["wrong_species"], np.array(0.5))
+
+
+def test_PAC_interface(all_nc_testdata):
+    """General test for PAC interface class."""
+    dirname, expected = all_nc_testdata
+
+    tools = GCMT(p_unit="bar", time_unit="day")  # create a GCMT object
+    tools.read_reduced(data_path=dirname)
+
+    from gcm_toolkit.utils.interface import PACInterface
+
+    pac1d = PACInterface(tools, 1)
+    pac2d = PACInterface(tools, 2)
+    with pytest.raises(ValueError):
+        PACInterface(tools, 3)
+
+    pac1d.set_data(time=expected["times"][-1])
+    pac2d.set_data(time=expected["times"][-1])
+
+    with pytest.raises(OSError):
+        pac1d.write_inputfile('non/existent/path')
+        pac2d.write_inputfile('non/existent/path')
+        pac2d.generate_lptfile('non/existent/path')
+        pac2d.generate_aptfiles('non/existent/path')
