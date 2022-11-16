@@ -496,6 +496,45 @@ class GCMT:
             dsi, v_data=v_data, var_key_out=var_key_out
         )
 
+    def extend_upward(self, p_low, method=None, n_p=20, T_therm=None,
+                      p_therm_high=None, tag=None):
+        """
+        Extend temperatures of the tagged dataset upward to the given pressure value.
+        Multiple methods can be used to extend the data upwards:
+            - 'isothermal' copies the temperature at lowest pressure and adds layers
+              of the same temperature on top
+            - 'thermosphere' imposes a simple parametrized thermosphere with a hot
+              day-side and gradual decrease to an isothermal night-side
+              (cfr. Baeyens+2022, Section 4.2)
+        Parameters
+        ----------
+        p_low: float or list
+            If a float is given, extend to the given low-pressure limit using an
+            arbitrarily chosen pressure-spacing. If a list is given, use these as
+            pressures to compute temperature extension.
+        method: string
+            Method by which the temperature is to be extended.
+        n_p: int, optional
+            Number of pressure layers that should be added (only used in case p_low
+            is a single number).
+        T_therm: float, optional
+            Maximal day-side temperature for the upper thermosphere (required for
+            the 'thermosphere' method.)
+        p_therm_high: float, optional
+            The high-pressure limit at which thermospheric heating should start, in
+            native pressure units (required for the 'thermosphere' method).
+        tag : str, optional
+            The tag of the dataset that should be used. If no tag is provided,
+            and multiple datasets are available, an error is raised.
+        Returns
+        -------
+        temp_array_ext: DataArray
+            The extended temperature array.
+        """
+        dsi = self.get_one_model(tag)
+        return mani.m_extend_upward(dsi.T, p_low, method=method, n_p=n_p,
+                                    T_therm=T_therm, p_therm_high=p_therm_high)
+
     # ======================================================
     #   Reading and writing functions
     # ======================================================

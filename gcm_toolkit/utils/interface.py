@@ -11,9 +11,11 @@
        - ...
 ==============================================================
 """
+import math
 import numpy as np
 import xarray as xr
 
+from ..core import writer as wrt
 from ..core.const import VARNAMES as c
 
 
@@ -497,4 +499,695 @@ class PrtInterface(Interface):
             stellar_intensity = np.interp(wlen * 1e-4, spec[:, 0], spec[:, 1])
             return stellar_intensity
 
-        raise ValueError("Tstar is need to define a stellar spectra.")
+        raise ValueError('Tstar is need to define a stellar spectra.')
+
+
+class PACInterface(Interface):
+    """
+    Interface GCM data to a 1D or 2D PAC chemistry simulation.
+    (Note: PAC is not needed for these routines to work.)
+    """
+
+    def __init__(self, tools, pac_dim, dsi=None):
+        """
+        Constructs the Interface and links to either 1D or 2D PAC.
+
+        Parameters
+        ----------
+        tools: GCMTools Object
+            A GCMTools object that is linked to the interface
+        pac_dim: int
+            Type of PAC simulation '1' or '2' D
+        dsi: DataSet, optional
+            Shortcut to set the dataset to the one that is required.
+            (Otherwise, use the set_data method.)
+        """
+        super().__init__(tools)
+
+        if not (pac_dim == 1 or pac_dim == 2):
+            raise ValueError("Please enter a valid PAC dimension: '1' or '2' \
+                             for 1D or pseudo-2D.")
+        self.dim = pac_dim
+
+        if dsi is not None:
+            self.dsi = dsi
+
+    def write_inputfile(self, destination, kwargs_1D={}, kwargs_2D={}):
+        """
+        Transform the given GCM dataset to a pseudo-2D PAC
+        input file.
+
+        Parameters
+        ----------
+        destination: str
+            Path of the directory where the input file should be written to.
+        kwargs_1D: dict, optional
+            A dictionary containing all of the necessary keyword arguments for
+            a 1D PAC input file.
+        kwargs_2D: dict, optional
+            A dictionary containing all of the necessary keyword arguments for
+            a pseudo-2D PAC input file.
+        """
+        import os
+
+        # check if data is present
+        if self.dsi is None:
+            raise RuntimeError("First select the required dataset with the \
+                                set_data method.")
+        # check if the path exists
+        if not os.path.isdir(destination):
+            raise OSError("The given destination directory does not exist:\n" +
+                          destination)
+
+        # call the right method
+        if self.dim == 1:
+            self._write_1Dpac_inpfile(self.dsi, destination, **kwargs_1D)
+        elif self.dim == 2:
+            self._write_2Dpac_inpfile(self.dsi, destination, **kwargs_2D)
+
+    def _write_1Dpac_inpfile(self, dsi, destination,
+                            spec_file='', zab_file='', reac_file='', therm_file='',
+                            eddy_file='', star_file='',
+                            pressure_bot=None, pressure_top=None, np=None,
+                            R_star=1.0, R_planet=11.2, M_planet=317.8, a=0.01,
+                            zenith_angle=48.0, albedo=0.0, ipho_file='',
+                            use_mixing=True, use_photo=True, model_name=None):
+        """
+        Write a 1D PAC-input file based on the given GCM dataset.
+
+        Parameters
+        ----------
+        dsi: DataSet
+            GCM dataset that forms the basis of the input file.
+        destination: str
+            Path of the directory where the input file should be written to.
+        spec_file: string, optional
+            The name of the file containing abundances and species.
+            If no name is given, a placeholder name is written.
+        zab_file: string, optional
+            The name of the zab file (generated with ACE code).
+            If no name is given, a placeholder name is written.
+        reac_file: string, optional
+            The name of the reac file, containing all chemical reactions.
+            If no name is given, a placeholder name is written.
+        therm_file: string, optional
+            The name of the file containing the NASA thermodynamic data.
+            If no name is given, a placeholder name is written.
+        eddy_file: string, optional
+            The name of the file containg eddy diffusion coefficients.
+            If no name is given, a placeholder name is written.
+        star_file: string, optional
+            The name of the file containing the stellar spectrum.
+            If no name is given, a placeholder name is written.
+        pressure_bot: float, optional
+            Bottom/maximum pressure of the grid (in bar).
+            If no number is given, the bottom pressure of the dataset is used.
+        pressure_top: float, optional
+            Top/minimum pressure of the grid (in bar).
+            if no number is given, the top pressure of the dataset is used.
+        np: int, optional
+            Number of pressures in the vertical grid.
+            If no number is given, it is the same as that of the dataset.
+        R_star: float, optional
+            Stellar radius in solar radii. Default: 1 solar radius.
+        R_planet: float, optional
+            Planetary radius in Earth radii. Default: 11.2 (radius of Jupiter).
+        M_planet: float, optional
+            Planetary mass in Earth masses. Default: 317.8 (mass of Jupiter).
+        a: float, optional
+            Semi-major axis in AU. Default: 0.01.
+        zenith_angle: float, optional
+            Zenith angle for the irradiation in degrees. Default: 48 deg.
+        albedo: float, optional
+            Surface albedo of the planet. Default: 0.0 (no reflection).
+        ipho_file: string, optional
+            File containing all of the individual photochemical dissociations.
+            If no name is given, a placeholder name is written.
+        use_mixing: boolean, optional
+            Whether to use vertical mixing or not. Default: True.
+        use_photo: boolean, optional
+            Whether to use photochemistry/dissociations or not. Default: True
+        model_name: string, optional
+            The name of the chemistry model: *model_name*.inp.
+            If no name is given, the 'tag' of the dataset is used.
+        """
+        # Checks and assigning default values
+        if model_name is None:
+            model_name = dsi.tag
+
+        if not spec_file:
+            spec_file = 'template.spec'
+        if not zab_file:
+            zab_file = model_name + '.zab'
+        if not reac_file:
+            reac_file = 'template.reac'
+        if not therm_file:
+            therm_file = 'template.therm'
+        if not eddy_file:
+            eddy_file = model_name + '.eddy'
+        if not star_file:
+            star_file = 'template.star'
+        if not ipho_file:
+            ipho_file = 'template.ipho'
+
+        if pressure_bot is None:
+            pressure_bot = max(dsi.Z.values)
+        if pressure_top is None:
+            pressure_top = min(dsi.Z.values)
+        if dsi.p_unit == 'Pa':  # convert to bar if needed
+            pressure_bot = pressure_bot / 1e5
+            pressure_top = pressure_top / 1e5
+        if np is None:
+            np = len(dsi.Z.values)
+
+        # Write all parameters in the required format as output file
+        with open(destination +'/'+model_name+'.inp', 'w') as f:
+            f.write(spec_file + (35-len(spec_file))*' ' + '! species file\n')
+            f.write(zab_file + (35-len(zab_file))*' ' + '! z,p,T (initial abundances) file\n')
+            f.write('2  0                               ! No reaction files, (0/1) not/use iondip treatment\n')
+            f.write(reac_file + (35-len(reac_file))*' ' + '! reaction file\n')
+            f.write(therm_file + (35-len(therm_file))*' ' + '! reaction file\n')
+            f.write(eddy_file + ' 0' + (33-len(eddy_file))*' ' + '! eddy diffusion coefficient profile file\n')
+            f.write(star_file + (35-len(star_file))*' ' + '! stellar spectrum file\n')
+            f.write(ipho_file + (35-len(ipho_file))*' ' + '! photo cross sections info file\n')
+            f.write(f'{pressure_bot:.1f}d0  {pressure_top:.4e}  {np}            ! pressure [bar] at bottom/top, No heights\n')
+            f.write(f'{R_star:.3f}d0                            ! star radius [R(Sun)]\n')
+            f.write(f'{R_planet:.3f}d0  {M_planet:.2f}d0                 ! planet radius [R(Earth)], planet mass [m(Earth)]\n')
+            f.write(f'{a:.5f}d0  {zenith_angle:.1f}d0  {albedo:.1f}d0           ! orbital distance [AU], zenith angle [deg], surface albedo\n')
+            f.write(f'{int(use_mixing)}  {int(use_photo)}                               ! deactivate/activate (0/1) diffusion and photochemistry\n')
+            f.write('2                                  ! numerical method (1/2/3) (-1 is solid body rotation)\n')
+
+        wrt.write_status('INFO', 'File written: '+destination+'/'+model_name+'.inp')
+
+    def _write_2Dpac_inpfile(self, dsi, destination,
+                            spec_file='', zab_file='', reac_file='', therm_file='',
+                            eddy_file='', star_file='', lpt_file='',
+                            pressure_bot=None, pressure_top=None, np=None,
+                            R_star=1.0, R_planet=11.2, M_planet=317.8, a=0.01,
+                            zenith_angle=48.0, albedo=0.0,
+                            nlon=90, nrot=30, ipho_file='', use_2D_eddy=False,
+                            use_mixing=True, use_photo=True, model_name=None):
+        """
+        Write a pseudo-2D PAC-input file based on the given GCM dataset.
+
+        Parameters
+        ----------
+        dsi: DataSet
+            GCM dataset that forms the basis of the input file.
+        destination: str
+            Path of the directory where the input file should be written to.
+        spec_file: string, optional
+            The name of the file containing abundances and species.
+            If no name is given, a placeholder name is written.
+        zab_file: string, optional
+            The name of the zab file (generated with ACE code).
+            If no name is given, a placeholder name is written.
+        reac_file: string, optional
+            The name of the reac file, containing all chemical reactions.
+            If no name is given, a placeholder name is written.
+        therm_file: string, optional
+            The name of the file containing the NASA thermodynamic data.
+            If no name is given, a placeholder name is written.
+        eddy_file: string, optional
+            The name of the file containg eddy diffusion coefficients.
+            If no name is given, a placeholder name is written.
+        star_file: string, optional
+            The name of the file containing the stellar spectrum.
+            If no name is given, a placeholder name is written.
+        lpt_file: string, optional
+            The name of the lpt-file, containing longitude-pressure-temperature.
+            If no name is given, a placeholder name is written.
+        pressure_bot: float, optional
+            Bottom/maximum pressure of the grid (in bar).
+            If no number is given, the bottom pressure of the dataset is used.
+        pressure_top: float, optional
+            Top/minimum pressure of the grid (in bar).
+            if no number is given, the top pressure of the dataset is used.
+        np: int, optional
+            Number of pressures in the vertical grid.
+            If no number is given, it is the same as that of the dataset.
+        R_star: float, optional
+            Stellar radius in solar radii. Default: 1 solar radius.
+        R_planet: float, optional
+            Planetary radius in Earth radii. Default: 11.2 (radius of Jupiter).
+        M_planet: float, optional
+            Planetary mass in Earth masses. Default: 317.8 (mass of Jupiter).
+        a: float, optional
+            Semi-major axis in AU. Default: 0.01.
+        zenith_angle: float, optional
+            Zenith angle for the irradiation in degrees. Default: 48 deg.
+        albedo: float, optional
+            Surface albedo of the planet. Default: 0.0 (no reflection).
+        nlon: int, optional
+            Number of longitudinal cells in the chemistry code. Default: 90.
+        nrot: int, optional
+            Number of rotations the code should integrate for. Default: 30.
+        ipho_file: string, optional
+            File containing all of the individual photochemical dissociations.
+            If no name is given, a placeholder name is written.
+        use2Deddy: boolean, optional
+            A 1D (False; default) or 2D (True) eddy diffusion profile is used.
+        use_mixing: boolean, optional
+            Whether to use vertical mixing or not. Default: True.
+        use_photo: boolean, optional
+            Whether to use photochemistry/dissociations or not. Default: True
+        model_name: string, optional
+            The name of the chemistry model: *model_name*.inp.
+            If no name is given, the 'tag' of the dataset is used.
+        """
+        # Checks and assigning default values
+        if model_name is None:
+            model_name = dsi.tag
+
+        if not spec_file:
+            spec_file = 'template.spec'
+        if not zab_file:
+            zab_file = model_name + '.zab'
+        if not reac_file:
+            reac_file = 'template.reac'
+        if not therm_file:
+            therm_file = 'template.therm'
+        if not eddy_file:
+            eddy_file = model_name + '.eddy'
+        if not star_file:
+            star_file = 'template.star'
+        if not lpt_file:
+            lpt_file = model_name + '.lpt'
+        if not ipho_file:
+            ipho_file = 'template.ipho'
+
+        if pressure_bot is None:
+            pressure_bot = max(dsi.Z.values)
+        if pressure_top is None:
+            pressure_top = min(dsi.Z.values)
+        if dsi.p_unit == 'Pa':  # convert to bar if needed
+            pressure_bot = pressure_bot / 1e5
+            pressure_top = pressure_top / 1e5
+        if np is None:
+            np = len(dsi.Z.values)
+
+        # Write all parameters in the required format as output file
+        with open(destination+'/'+model_name+'.inp', 'w') as f:
+            f.write(spec_file + (35-len(spec_file))*' ' + '! species file\n')
+            f.write(zab_file + (35-len(zab_file))*' ' + '! z,p,T (initial abundances) file\n')
+            f.write('2  0                               ! No reaction files, (0/1) not/use iondip treatment\n')
+            f.write(reac_file + (35-len(reac_file))*' ' + '! reaction file\n')
+            f.write(therm_file + (35-len(therm_file))*' ' + '! reaction file\n')
+            f.write(eddy_file + f' {int(use_2D_eddy)}' + (33-len(eddy_file))*' ' + '! eddy diffusion coefficient profile file\n')
+            f.write(star_file + (35-len(star_file))*' ' + '! stellar spectrum file\n')
+            f.write(ipho_file + (35-len(spec_file))*' ' + '! photo cross sections info file\n')
+            f.write(f'{pressure_bot:.1f}d0  {pressure_top:.4e}  {np}            ! pressure [bar] at bottom/top, No heights\n')
+            f.write(f'{R_star:.3f}d0                            ! star radius [R(Sun)]\n')
+            f.write(f'{R_planet:.3f}d0  {M_planet:.2f}d0                 ! planet radius [R(Earth)], planet mass [m(Earth)]\n')
+            f.write(f'{a:.5f}d0  {zenith_angle:.1f}d0  {albedo:.1f}d0           ! orbital distance [AU], zenith angle [deg], surface albedo\n')
+            f.write(f'{int(use_mixing)}  {int(use_photo)}                               ! deactivate/activate (0/1) diffusion and photochemistry\n')
+            f.write('-1                                 ! numerical method (1/2/3) (-1 is solid body rotation)\n')
+            f.write(lpt_file + (35-len(lpt_file))*' ' + '! sbr: longitude-pressure-temperature structure file\n')
+            f.write(f'{nlon} {nrot}                              ! sbr: No longitudes per period, No rotation periods')
+
+        wrt.write_status('INFO', 'File written: '+destination+'/'+model_name+'.inp')
+
+
+    def generate_lptfile(self, destination, jet_speed=None, set_min_temp=None,
+                         eps=20, kwargs_thermosphere={}, plot_input=False,
+                         model_name=None):
+        """
+        Generate from the selected dataset a pseudo-2D PAC (Agundez+2014)
+        'lpt' input file (longitude [in units of pi], pressure [in
+        bar], temperature [in K]).
+
+        The zonal wind speed for the solid-body rotation of the chemical
+        atmosphere is extracted from the dataset. It is also possible to specify a value.
+
+        Parameters
+        ----------
+        destination: str
+            Path of the directory where the input file should be written to.
+        jet_speed: float, optional
+            Zonal wind value (in m/s) that is used in the solid-body rotation
+            mode of PAC. If no value is given, this parameter is extracted from
+            the GCM dataset.
+        set_min_temp: float, optional
+            If given, the atmosphere temperature is set to this value whenever
+            it would actually be lower.
+        eps: float, optional
+            Epsilon value (in degrees latitude). The meridional mean is
+            calculated between -eps and +20 around the equator.
+        kwargs_thermosphere: dict, optional
+            Optional set of arguments used to extend the atmosphere upwards.
+        plot_input: boolean, optional
+            Set to true if a plot of the input temperature data should be made,
+            in the same directory as the lpt-file.
+        model_name: string, optional
+            The name of the chemistry model: *model_name*.lpt.
+            If no name is given, the 'tag' of the dataset is used.
+        """
+        # Check if data is present
+        if self.dsi is None:
+            raise RuntimeError("First select the required dataset with the \
+                                set_data method.")
+        # Check if the path exists
+        import os
+        if not os.path.isdir(destination):
+            raise OSError("The given destination directory does not exist:\n" +
+                          destination)
+        # Checks and assign model name
+        if model_name is None:
+            model_name = self.dsi.tag
+
+        # If needed, derive the zonal wind speed from the dataset
+        if not jet_speed:
+            jet_speed = self._extract_jet_speed(self.dsi, eps=eps)
+
+        # If required, extend temperatures upward with a thermosphere
+        if kwargs_thermosphere:
+            from ..utils import manipulations as man
+            T = man.m_extend_upward(self.dsi.T, **kwargs_thermosphere)
+        # If not, just work with the native temperature DataArray
+        else:
+            T = self.dsi.T
+
+        # Extract pressures
+        if self.dsi.p_unit == 'Pa':  # convert to bar if needed
+            p_bar = [ip/1e5 for ip in T.Z.values]
+        elif self.dsi.p_unit == 'bar':
+            p_bar = T.Z.values
+
+        # Define longitude sampling
+        lon_grid = np.linspace(-180, 178, 180)
+        # Again, but units of pi and start at substellar point: 0 (pi) = 2 (pi)
+        lon_grid_out = np.linspace(0, 2, 181)
+
+        # Interpolate temperature grid to new lon coordinates
+        # NOTE: Careful with extrapolation at the edges of the grid!
+        #       Cyclic interpolation would probably be more robust...
+        T = T.interp(lon=lon_grid, kwargs={'fill_value':'extrapolate'})
+        # Meridional mean of the equatorial region
+        T = T.sel(lat=slice(-eps,eps))
+        weights = np.cos(np.deg2rad(T.lat))
+        T = T.weighted(weights).mean(dim='lat')
+        # 'Roll' the data so that substellar is left and antistellar is center
+        T = T.roll(lon=-90, roll_coords=True)
+        T = T.values
+
+        # Restrict if a minimum temperature is given
+        if set_min_temp:
+            T[T < set_min_temp] = set_min_temp
+
+        # Writing the lpt-file
+        with open(destination+'/'+model_name+'.lpt', 'w') as f:
+            # header, zonal wind and grid info
+            f.write(f'  {jet_speed/1000:1.3f}     ! velocity [km/s]\n')
+            f.write(f'  {len(lon_grid_out)}       ! number of longitudes\n')
+            f.write(f'  {len(p_bar)}        ! number of pressures\n')
+            # pressures
+            f.write('! next line lists pressures [bar]\n')
+            for ip in p_bar:
+                f.write(f'     {ip:1.5E}')
+            f.write('\n')
+            # temperatures per longitude
+            f.write('! longitude[pi]          Tk[K]          ...\n')
+            for i in range(0, len(lon_grid)):
+                f.write(f'     {lon_grid_out[i]:1.4f}     ')
+                for k in range(0, len(p_bar)):
+                    f.write(f'      {T[k,i]:4.2f}')
+                f.write('\n')
+            # repeat first entry (substellar point)
+            f.write(f'     {lon_grid_out[-1]:1.4f}     ')
+            for k in range(0, len(p_bar)):
+                f.write(f'      {T[k,0]:4.2f}')
+
+        wrt.write_status('INFO', 'File written: '+destination+'/'+model_name+'.lpt')
+
+        # If required, also save a plot of the input data
+        if plot_input:
+            import matplotlib.pyplot as plt
+            fig = plt.figure('Lpt plot')
+            ax = plt.gca()
+            image = ax.pcolormesh(lon_grid_out, p_bar, T, cmap='inferno',
+                        linewidth=0, rasterized=True) # these options reduce
+                                                      # visual grid glitches
+            image.set_edgecolor('face')
+            cb = plt.colorbar(image)
+            # in-plot wind info
+            ax.text(lon_grid_out[2], p_bar[5], f'U = {jet_speed/1000:.1f} km/s',
+                    fontsize=12)
+            ax.set_yscale('log')
+            ax.invert_yaxis()
+            ax.set_xlabel(r'Longitude from substellar point ($\pi$)', fontsize=14)
+            ax.set_ylabel('Pressure (bar)', fontsize=14)
+            cb.set_label('Temperature (K)', fontsize=14)
+            plt.savefig(destination+f'/lpt_plot.pdf', format='pdf')
+            plt.close(fig)
+
+
+    def _extract_jet_speed(self, dsi, eps=20):
+        """Function to extract the jet stream speed in m/s as a single value
+        from the given dataset.
+
+        Parameters
+        ----------
+        dsi: DataSet
+            The GCM from which the wind speed is to be extracted.
+        eps: float, optional
+            Epsilon value (in degrees latitude). The meridional mean is
+            calculated between -eps and +20 around the equator.
+        Returns
+        -------
+        jet_speed: float
+            A single value for the zonal mean equatorial jet speed (in m/s).
+        """
+        weights = np.cos(np.deg2rad(dsi.lat))   # weight with cos(latitude)
+        U = dsi.U.sel(lat=slice(-eps,eps))      # take latitudinal band from -20 to +20 degrees (around equator)
+        U = U.weighted(weights).mean(dim='lat') # average latitudinal band meridonally
+
+        # average over pressure levels (10 bar and up)
+        if dsi.p_unit == 'Pa':  # convert to bar if needed
+            p_max = 1e6
+        elif dsi.p_unit == 'bar':
+            p_max = 10
+        U = U.sel(Z=slice(p_max, None)).mean(dim='Z')
+        jet_speed = U.mean(dim='lon')           # average end result zonally
+        jet_speed = jet_speed.values
+
+        # if result turns out to be negative, raise a warning
+        if jet_speed < 0:
+            msg = f'WARNING: zonal wind speed {zonalwindspeed} is negative!\n'
+            msg += 'Setting wind speed to 10 m/s.'
+            wrt.write_message(msg, color='WARN')
+            zonalwindspeed = 10
+
+        return jet_speed
+
+    def generate_aptfiles(self, destination, lons=[], eps=20,
+                          kwargs_thermosphere={}, plot_input=False,
+                          model_name=None):
+        """Function to write apt-files (altitude [in km], pressure [in bar],
+        temperature [in K]), to use as input in the ACE chemical equilibrium
+        code.
+        A text-file summarizing all longitudes is also written.
+
+        Parameters
+        ----------
+        destination: str
+            Path of the directory where the input file should be written to.
+        lons: [float], optional
+            List of the longitudes of the vertical columns of this dataset that
+            need to be sampled and written to apt-files.
+            If multiple are given, multiple apt-files will be written.
+            If none are given, the substellar point is selected.
+        eps: float, optional
+            Epsilon value (in degrees latitude). The meridional mean is
+            calculated between -eps and +20 around the equator.
+        kwargs_thermosphere: dict, optional
+            Optional set of arguments used to extend the atmosphere upwards.
+        plot_input: boolean, optional
+            Set to true if a plot of the input temperature data should be made,
+            in the same directory as the apt-file.
+        model_name: string, optional
+            The name of the chemistry model: *model_name*_*lon*.apt.
+            If no name is given, the 'tag' of the dataset is used.
+        """
+        # Check if data is present
+        if self.dsi is None:
+            raise RuntimeError("First select the required dataset with the \
+                                set_data method.")
+        # Check if the path exists
+        import os
+        if not os.path.isdir(destination):
+            raise OSError("The given destination directory does not exist:\n" +
+                          destination)
+        # Checks and assign model name
+        if model_name is None:
+            model_name = self.dsi.tag
+        # If a previous list of apt-files is still present, remove it.
+        try:
+            os.remove(destination + '/apt_list.txt')
+        except OSError:
+            pass
+        # If no longitude is given, just take the substellar point at 0 degrees
+        if not list(lons):
+            lons=[0]
+        # If an overview plot of the input is needed, prepare it here.
+        if plot_input:
+            import matplotlib
+            import matplotlib.pyplot as plt
+            fig_many = plt.figure()
+            ax_many = plt.gca()
+            norm = matplotlib.colors.Normalize(vmin=0, vmax=180)
+            cmap = matplotlib.cm.get_cmap('cividis')
+
+        # If required, extend temperatures upward with a thermosphere
+        if kwargs_thermosphere:
+            from ..utils import manipulations as man
+            Tsource = man.m_extend_upward(self.dsi.T, **kwargs_thermosphere)
+        else:
+            Tsource = self.dsi.T
+
+        # For each longitude given...
+        for lon in lons:
+            # Extract the corresponding longitude
+            T = Tsource.sel(lon=lon, method='nearest').sel(lat=slice(-eps, eps))
+            w = np.cos(np.deg2rad(self.dsi.lat))     # weighted with cos(lat)
+            T = T.weighted(w).mean(dim='lat')        # meridional average
+
+            # Calculate height based on hydrostatic equilibrium, and renormalize
+            # so that 1 bar <--> 0 m
+            R_p = self.dsi.R_p            # radius in m
+            G = 6.674e-11                 # gravitational const in m3 kg−1 s−2
+            M_p = self.dsi.g * R_p**2 / G # mass in kg
+            R_spec = self.dsi.R           # specific gas constant in J kg-1 K-1
+            p_ref = 1e5                   # reference pressure in pascal (1 bar)
+            # pressures should be in bar, except for the altitude-routine
+            if self.dsi.p_unit == 'bar':
+                p = T.Z.values
+                p_pascal = [ip*1e5 for ip in p]
+            elif self.dsi.p_unit == 'Pa':
+                p_pascal = T.Z.values
+                p = [ip/1e5 for ip in p_pascal]
+
+            alt = self._p_to_alt(p_pascal, T, M_p, R_p, R_spec, p_ref)
+
+            # Construct full filename:
+            full_path = destination + '/' + model_name + f'_{int(lon)}.apt'
+
+            # Write the file:
+            # should be written in order of decreasing pressures:
+            if p[1] < p[0]:
+                index_order = range(0, len(p))             # write in same order
+            elif p[1] > p[0]:
+                index_order = range(len(p)-1, -1, -1)   # write in reverse order
+            with open(full_path, 'w') as f:
+                    f.write('! altitude[km]   pressure[bar]   temperature[K]\n')
+                    for k in index_order:
+                        line = '  ' + '{:4.4f}'.format(alt[k]/1000) + '   ' + \
+                                '  ' + '{:1.4E}'.format(p[k]) + '  ' + \
+                                '  ' + '{:4.2f}'.format(T.values[k]) + '\n'
+                        f.write(line)
+            wrt.write_status('INFO', 'File written: ' + full_path)
+
+            # Remember the apt-file in a list for easy submission
+            with open(destination+'apt_list.txt', 'a') as listfile:
+                listfile.write(model_name + f'_{int(lon)}\n')
+
+            # If required, a control plot is saved to show the input data
+            if plot_input:
+                mycol = cmap(norm(180-abs(lon)))
+                if lon > 0:
+                    ls = '--'
+                else:
+                    ls = '-'
+                ax_many.plot(T.values, p, ls, color=mycol, linewidth=2)
+
+        if plot_input:
+            ax_many.set_yscale('log')
+            ax_many.invert_yaxis()
+            ax_many.set_xlabel('Temperature (K)', fontsize=16)
+            ax_many.set_ylabel('Pressure (bar)', fontsize=16)
+            plt.savefig(destination+f'PT_profile_all.pdf', format='pdf')
+            plt.close(fig_many)
+
+
+    def _p_to_alt(self, p, T, M_p, R_p, R_spec=3589, p_ref=1.e7):
+        """ Compute the corresponding height (in m) for a given list of
+        pressures, assuming a hydrostatic atmosphere. The gravity changes as a
+        function of the vertical layers (R + dz), but is assumed constant within
+        one layer. The surface gravity (g = G M/ R^2) is assumed to be at the
+        reference pressure. The algorithm works in 4 parts:
+            1) a pivot near the reference pressure (= surface gravity) is found
+            2) integrated from pivot upward
+            3) integrated from pivot downward
+            4) small correction because the pivot is not exactly at p_ref
+
+        Parameters
+        ----------
+        p: [float]
+            Pressures (in pascal!).
+        T: [float]
+            Corresponding temperatures in kelvin.
+        M_p: float
+            Planet mass in kg.
+        R_p: float
+            Planet radius in m.
+        R_spec: float, optional
+            Specific gas constant of the atmosphere (R_spec=2/7*cp for diatomic gas).
+        p_ref: float, optional
+            Reference pressure in pascal.
+
+        Returns
+        -------
+        alt_scaled: [float]
+            List of altitudes (in meter) corresponding to the given pressures.
+        """
+        from scipy import interpolate
+
+        # Find index of the reference pressure (gravity = 0)
+        for i in range(0, len(p)):
+            if p[i] < p_ref:
+                pivot = i
+                break
+
+        # Initialize height profile
+        z = np.zeros(len(p))
+
+        # Reconstructing the height with numerical integration (upper part)
+        for i in range(pivot, len(p)):
+            if i == pivot:  # first iteration
+                gl = 6.674e-11 * M_p / (R_p)**2     # surface gravity
+
+                Tp = interpolate.interp1d(p, T, 'quadratic')    # find T(p_ref)
+                T_pref = Tp(p_ref)
+                Tl = 0.5*(T[i] + T_pref)    # average temperature in this layer
+                Hl = R_spec * Tl / gl       # average scale height in this layer
+
+                # calculate first height as layer thickness between p(pivot) and
+                # p_ref
+                z[i] = Hl*math.log(p_ref/p[i])
+
+            else: # calculate height for i
+                gl = 6.674e-11 * M_p / (R_p + z[i-1])**2    # gravity at bottom
+                                                            # edge of this layer
+
+                Tl = 0.5*(T[i] + T[i-1])    # average temperature in this layer
+                Hl = R_spec * Tl / gl       # average scale height in this layer
+
+                # calculate new height as previous + layer thickness
+                z[i] = z[i-1] + Hl * math.log(p[i-1]/p[i])
+
+        # Reconstructing the height with numerical integration (bottom part)
+        for i in range(pivot-1, -1, -1):
+            gl = 6.674e-11 * M_p / (R_p + z[i+1])**2    # gravity at top
+                                                        # edge of this layer
+
+            Tl = 0.5*(T[i] + T[i+1])    # average temperature in this layer
+            Hl = R_spec * Tl / gl       # average scale height in this layer
+
+            # calculate new height as above - new layer thickness
+            z[i] = z[i+1] - Hl * math.log(p[i]/p[i+1])
+
+        # Apply (small) offset to the reference pressure
+        hf = interpolate.interp1d(p, z, 'quadratic')
+        offset = hf(p_ref)
+        alt_scaled = [thisz - offset for thisz in z]
+
+        return alt_scaled
