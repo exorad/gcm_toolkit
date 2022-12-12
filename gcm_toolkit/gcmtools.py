@@ -468,10 +468,13 @@ class GCMT:
         self, v_data="V", var_key_out=None, tag=None
     ):
         """
-        Calculate meridional overturning streamfunction.
-
-        See e.g. Carone et al. (2017), Eq. 7
-
+        Calculate meridional overturning streamfunction. This quantity psi is
+        computed by integrating the zonal-mean meridional velocity \bar V along
+        pressure, and weighting with 2*pi*R_p / g times the cosine of latitude,
+        where R_p is the planetary radius and g is the surface gravity:
+        bar{psi} = 2 pi R_p / g cos{lat} int{bar{V} dp'}
+        (see e.g. Carone et al. (2018), Eq. 7)
+    
         Parameters
         ----------
         v_data: str
