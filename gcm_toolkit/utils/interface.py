@@ -809,8 +809,8 @@ class PACInterface(Interface):
 
 
     def generate_lptfile(self, destination, jet_speed=None, set_min_temp=None,
-                         eps=20, kwargs_thermosphere={}, plot_input=False,
-                         model_name=None):
+                         eps=20, tave=False, kwargs_thermosphere={},
+                         plot_input=False, model_name=None):
         """
         Generate from the selected dataset a pseudo-2D PAC (Agundez+2014)
         'lpt' input file (longitude [in units of pi], pressure [in
@@ -833,6 +833,9 @@ class PACInterface(Interface):
         eps: float, optional
             Epsilon value (in degrees latitude). The meridional mean is
             calculated between -eps and +20 around the equator.
+        tave: boolean, optional
+            Flag whether the regular snapshot data should be used (default), or
+            the time averaged data.
         kwargs_thermosphere: dict, optional
             Optional set of arguments used to extend the atmosphere upwards.
         plot_input: boolean, optional
@@ -854,18 +857,23 @@ class PACInterface(Interface):
         # Checks and assign model name
         if model_name is None:
             model_name = self.dsi.tag
+        # Assign temperature key
+        if tave:
+            t_key = 'Ttave'
+        else:
+            t_key = 'T'
 
         # If needed, derive the zonal wind speed from the dataset
         if not jet_speed:
-            jet_speed = self._extract_jet_speed(self.dsi, eps=eps)
+            jet_speed = self._extract_jet_speed(self.dsi, eps=eps, tave=tave)
 
         # If required, extend temperatures upward with a thermosphere
         if kwargs_thermosphere:
             from ..utils import manipulations as man
-            T = man.m_extend_upward(self.dsi.T, **kwargs_thermosphere)
+            T = man.m_extend_upward(self.dsi[t_key], **kwargs_thermosphere)
         # If not, just work with the native temperature DataArray
         else:
-            T = self.dsi.T
+            T = self.dsi[t_key]
 
         # Extract pressures
         if self.dsi.p_unit == 'Pa':  # convert to bar if needed
@@ -941,7 +949,7 @@ class PACInterface(Interface):
             plt.close(fig)
 
 
-    def _extract_jet_speed(self, dsi, eps=20):
+    def _extract_jet_speed(self, dsi, eps=20, tave=False):
         """Function to extract the jet stream speed in m/s as a single value
         from the given dataset.
 
@@ -952,13 +960,22 @@ class PACInterface(Interface):
         eps: float, optional
             Epsilon value (in degrees latitude). The meridional mean is
             calculated between -eps and +20 around the equator.
+        tave: boolean, optional
+            Flag whether the regular snapshot data should be used (default), or
+            the time averaged data.
         Returns
         -------
         jet_speed: float
             A single value for the zonal mean equatorial jet speed (in m/s).
         """
+        # Assign the correct variable key
+        if tave:
+            u_key = 'uVeltave'
+        else:
+            u_key = 'U'
+
         weights = np.cos(np.deg2rad(dsi.lat))   # weight with cos(latitude)
-        U = dsi.U.sel(lat=slice(-eps,eps))      # take latitudinal band from -20 to +20 degrees (around equator)
+        U = dsi[u_key].sel(lat=slice(-eps,eps)) # take latitudinal band from -20 to +20 degrees (around equator)
         U = U.weighted(weights).mean(dim='lat') # average latitudinal band meridonally
 
         # average over pressure levels (10 bar and up)
@@ -979,7 +996,7 @@ class PACInterface(Interface):
 
         return jet_speed
 
-    def generate_aptfiles(self, destination, lons=[], eps=20,
+    def generate_aptfiles(self, destination, lons=[], eps=20, tave=False,
                           kwargs_thermosphere={}, plot_input=False,
                           model_name=None):
         """Function to write apt-files (altitude [in km], pressure [in bar],
@@ -999,6 +1016,9 @@ class PACInterface(Interface):
         eps: float, optional
             Epsilon value (in degrees latitude). The meridional mean is
             calculated between -eps and +20 around the equator.
+        tave: boolean, optional
+            Flag whether the regular snapshot data should be used (default), or
+            the time averaged data.
         kwargs_thermosphere: dict, optional
             Optional set of arguments used to extend the atmosphere upwards.
         plot_input: boolean, optional
@@ -1020,6 +1040,11 @@ class PACInterface(Interface):
         # Checks and assign model name
         if model_name is None:
             model_name = self.dsi.tag
+        # Assign temperature key
+        if tave:
+            t_key = 'Ttave'
+        else:
+            t_key = 'T'
         # If a previous list of apt-files is still present, remove it.
         try:
             os.remove(destination + '/apt_list.txt')
@@ -1040,9 +1065,9 @@ class PACInterface(Interface):
         # If required, extend temperatures upward with a thermosphere
         if kwargs_thermosphere:
             from ..utils import manipulations as man
-            Tsource = man.m_extend_upward(self.dsi.T, **kwargs_thermosphere)
+            Tsource = man.m_extend_upward(self.dsi[t_key], **kwargs_thermosphere)
         else:
-            Tsource = self.dsi.T
+            Tsource = self.dsi[t_key]
 
         # For each longitude given...
         for lon in lons:
