@@ -209,6 +209,7 @@ class Interface:
         regrid_lowres: bool, optional
             Can be useful, if your GCMT uses a very detailed grid
         """
+        print(self.tools.get_one_model(tag))
         dsi = self.tools.get_one_model(tag).sel(time=time)
 
         if regrid_lowres:
@@ -486,6 +487,134 @@ class PrtInterface(Interface):
             dims=["phase", "wlen"],
             coords={"phase": phases, "wlen": spectra.wlen},
         )
+
+    def calc_transit_spectrum(
+            self,
+            mmw,
+            lat_points=4,
+            lon_resolution=10,
+            gravity=None,
+            rplanet=None,
+            pressure_0=None,
+            co_ratio=0.55,
+            feh_ratio=0.0,
+    ):
+        """
+        Calculate the transit spectrum. This function avarages T-p profiles in
+        the terminator region and uses poorman equilbriums chemistry.
+
+        Parameters
+        ----------
+        mmw: float or 1D-array
+            Mean molecular weight (in atomic units). Will be globally uniform if
+            float or horizonatally uniform if 1D.
+        lat_points : int
+            Number of latitude points considered per terminator.
+        lon_resolution : float
+            Longitude angle to avarage over at the equator of the terminators. In !degrees!.
+        gravity: float
+            surface gravity in !cgs!. Will default to the value provided by GCMT.
+        rplanet: float
+            planet radius in !cm!. Will default to the value provided by GCMT.
+        pressure_0: float
+            pressure level of the gravity and radius. Will default to the value provided by GCMT.
+        co_ratio: float, optional
+            The C/O ratio. Currently only one global value allowed. Defaults to 0.55.
+        feh_ratio: float, optional
+            The metalicity ratio. Currently only one global value allowed.
+            Defaults to 0.0.
+
+        Returns
+        -------
+        spectra: xr.DataArray
+            Dataarray containing the spectrum.
+            The spectrum is normed to the stellar spectrum.
+
+        """
+        from petitRADTRANS.poor_mans_nonequ_chem import interpol_abundances
+        from petitRADTRANS import nat_cst as nc
+
+        # prepare chemistry input (make them 1D arrays)
+        pres = self.dsi[c["Z"]].values
+        co_ratios = np.ones_like(pres) * co_ratio
+        feh_ratios = np.ones_like(pres) * feh_ratio
+
+        # check if gravity is given, if not use gcm value
+        if gravity is None:
+            gravity = self.dsi.attrs.get(c["g"]) * 100
+
+        # check if radius is given, if not use gcm value
+        if rplanet is None:
+            rplanet = self.dsi.attrs.get(c["R_p"])
+
+        # check if pressure is given, if not use gcm value
+        if pressure_0 is None:
+            pressure_0 = np.max(pres)
+
+        # Avaraging over terminator regions in longitude space
+        ds_clouds_evening = self.dsi.where((self.dsi['lon'] > 90 - lon_resolution/2) * (self.dsi['lon'] < 90 + lon_resolution/2), drop=True).mean('lon')
+        ds_clouds_morning = self.dsi.where((self.dsi['lon'] > -90 - lon_resolution/2) * (self.dsi['lon'] < -90 + lon_resolution/2), drop=True).mean('lon')
+
+        # calculate latitude angle
+        lat_step = 180 / lat_points
+
+        # avarage over latitude space
+        spectra_list = []
+        for lat in range(lat_points):
+            tmp_morning = ds_clouds_morning.where((ds_clouds_evening['lat'] > lat*lat_step - 90) * (ds_clouds_evening['lat'] < (lat+1)*lat_step - 90), drop=True).mean('lat')
+            tmp_evening = ds_clouds_evening.where((ds_clouds_evening['lat'] > lat*lat_step - 90) * (ds_clouds_evening['lat'] < (lat+1)*lat_step - 90), drop=True).mean('lat')
+
+            # calculate chemistry
+            temp = tmp_morning['T'].values[::-1]
+            abus = interpol_abundances(co_ratios, feh_ratios, temp, pres)
+            abus['H2O_HITEMP'] = abus['H2O']
+            abus['CO_all_iso_HITEMP'] = abus['CO']
+            abus['Na_allard'] = abus['Na']
+            abus['K_allard'] = abus['K']
+            # calcualte mass fractions
+            mass_fracs = abus
+            # calcualte transmision spectra for the morning terminator of current lat point
+            self.prt.calc_transm(temp,
+                                 mass_fracs,
+                                 gravity,
+                                 mmw*np.ones_like(temp),
+                                 R_pl=rplanet*100,
+                                 P0_bar=pressure_0)
+            # add the spectra to the list
+            spectra_list.append(self.prt.transm_rad)
+
+            # calculate chemistry
+            temp = tmp_evening['T'].values[::-1]
+            abus = interpol_abundances(co_ratios, feh_ratios, temp, pres)
+            abus['H2O_HITEMP'] = abus['H2O']
+            abus['CO_all_iso_HITEMP'] = abus['CO']
+            abus['Na_allard'] = abus['Na']
+            abus['K_allard'] = abus['K']
+            # calcualte mass fractions
+            mass_fracs = abus
+            # calcualte transmision spectra for the morning terminator of current lat point
+            self.prt.calc_transm(temp,
+                                 mass_fracs,
+                                 gravity,
+                                 mmw*np.ones_like(temp),
+                                 R_pl=rplanet*100,
+                                 P0_bar=pressure_0)
+            # add the spectra to the list
+            spectra_list.append(self.prt.transm_rad)
+
+        # avarage over all profiles (area avaraged)
+        spectra = np.zeros_like(spectra_list[0])
+        i = 0
+        for profs in spectra_list:
+            spectra += profs**2
+            i += 1
+        spectra = np.sqrt(spectra/i)
+
+        # calcualte wavelengths
+        wavelengths = nc.c/self.prt.freq/1e-4
+
+        # return the final spectra
+        return wavelengths, spectra
 
     def _get_stellar_spec(self, wlen, t_star):
         """
