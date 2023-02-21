@@ -535,8 +535,8 @@ class PrtInterface(Interface):
 
         # prepare chemistry input (make them 1D arrays)
         pres = self.dsi[c["Z"]].values
-        co_ratios = np.ones_like(pres) * co_ratio
-        feh_ratios = np.ones_like(pres) * feh_ratio
+        co_ratios = np.ones_like(self.dsi[c["Z"]].values) * co_ratio
+        feh_ratios = np.ones_like(self.dsi[c["Z"]].values) * feh_ratio
         tlist = [('H2O', 'H2O_HITEMP'),
                  ('H2O', 'H2O_Exomol_R_1'),
                  ('CO', 'CO_all_iso_HITEMP'),
@@ -556,8 +556,12 @@ class PrtInterface(Interface):
             pressure_0 = np.max(pres)
 
         # Avaraging over terminator regions in longitude space
-        ds_clouds_evening = self.dsi.where((self.dsi['lon'] > 90 - lon_resolution/2) * (self.dsi['lon'] < 90 + lon_resolution/2), drop=True).mean('lon')
-        ds_clouds_morning = self.dsi.where((self.dsi['lon'] > -90 - lon_resolution/2) * (self.dsi['lon'] < -90 + lon_resolution/2), drop=True).mean('lon')
+        ds_clouds_evening = self.dsi.where((self.dsi['lon'] > 90 - lon_resolution/2) *
+                                           (self.dsi['lon'] < 90 + lon_resolution/2),
+                                           drop=True).mean('lon')
+        ds_clouds_morning = self.dsi.where((self.dsi['lon'] > -90 - lon_resolution/2) *
+                                           (self.dsi['lon'] < -90 + lon_resolution/2),
+                                           drop=True).mean('lon')
 
         # calculate latitude angle
         lat_step = 180 / lat_points
@@ -565,8 +569,12 @@ class PrtInterface(Interface):
         # avarage over latitude space
         spectra_list = []
         for lat in range(lat_points):
-            tmp_morning = ds_clouds_morning.where((ds_clouds_evening['lat'] > lat*lat_step - 90) * (ds_clouds_evening['lat'] < (lat+1)*lat_step - 90), drop=True).mean('lat')
-            tmp_evening = ds_clouds_evening.where((ds_clouds_evening['lat'] > lat*lat_step - 90) * (ds_clouds_evening['lat'] < (lat+1)*lat_step - 90), drop=True).mean('lat')
+            tmp_morning = ds_clouds_morning.where((ds_clouds_evening['lat'] > lat*lat_step-90) *
+                                                  (ds_clouds_evening['lat'] < (lat+1)*lat_step-90),
+                                                  drop=True).mean('lat')
+            tmp_evening = ds_clouds_evening.where((ds_clouds_evening['lat'] > lat*lat_step-90) *
+                                                  (ds_clouds_evening['lat'] < (lat+1)*lat_step-90),
+                                                  drop=True).mean('lat')
 
             # calculate chemistry
             temp = tmp_morning['T'].values[::-1]
