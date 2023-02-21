@@ -497,6 +497,7 @@ class PrtInterface(Interface):
             pressure_0=None,
             co_ratio=0.55,
             feh_ratio=0.0,
+            mass_frac=None,
     ):
         """
         Calculate the transit spectrum. This function avarages T-p profiles in
@@ -522,6 +523,12 @@ class PrtInterface(Interface):
         feh_ratio: float, optional
             The metalicity ratio. Currently only one global value allowed.
             Defaults to 0.0.
+        mass_frac: List[List[Dict]], optional
+            The mass fractions for each t_p point. Structure is as follows: mass_frac[i][j]['key']
+            - i: [2 elements] 0 for morning terminator, 1 for evening terminator
+            - j: [lat_points elements] latitude point starting from lowest (closeset to lat = -90) to highest (closest to lat = 90)
+            - dict must contain all mass fractions  elements given as opacity species to prt
+
 
         Returns
         -------
@@ -576,17 +583,19 @@ class PrtInterface(Interface):
                                                   (ds_clouds_evening['lat'] < (lat+1)*lat_step-90),
                                                   drop=True).mean('lat')
 
-            # calculate chemistry
+            # get temperature profile
             temp = tmp_morning['T'].values[::-1]
-            abus = interpol_abundances(co_ratios, feh_ratios, temp, pres)
-            for key in tlist:
-                if key[0] in abus:
-                    abus[key[1]] = abus[key[0]]
-            # calcualte mass fractions
-            mass_fracs = abus
+            # calculate chemistry in mass fractions
+            if mass_frac is None:
+                abus = interpol_abundances(co_ratios, feh_ratios, temp, pres)
+                for key in tlist:
+                    if key[0] in abus:
+                        abus[key[1]] = abus[key[0]]
+            else:
+                abus = mass_frac[0][lat]
             # calcualte transmision spectra for the morning terminator of current lat point
             self.prt.calc_transm(temp,
-                                 mass_fracs,
+                                 abus,
                                  gravity,
                                  mmw*np.ones_like(temp),
                                  R_pl=rplanet*100,
@@ -594,17 +603,19 @@ class PrtInterface(Interface):
             # add the spectra to the list
             spectra_list.append(self.prt.transm_rad)
 
-            # calculate chemistry
+            # get temperature profile
             temp = tmp_evening['T'].values[::-1]
-            abus = interpol_abundances(co_ratios, feh_ratios, temp, pres)
-            for key in tlist:
-                if key[0] in abus:
-                    abus[key[1]] = abus[key[0]]
-            # calcualte mass fractions
-            mass_fracs = abus
+            # calculate chemistry in mass fractions
+            if mass_frac is None:
+                abus = interpol_abundances(co_ratios, feh_ratios, temp, pres)
+                for key in tlist:
+                    if key[0] in abus:
+                        abus[key[1]] = abus[key[0]]
+            else:
+                abus = mass_frac[1][lat]
             # calcualte transmision spectra for the morning terminator of current lat point
             self.prt.calc_transm(temp,
-                                 mass_fracs,
+                                 abus,
                                  gravity,
                                  mmw*np.ones_like(temp),
                                  R_pl=rplanet*100,
