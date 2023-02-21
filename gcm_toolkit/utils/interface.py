@@ -209,7 +209,6 @@ class Interface:
         regrid_lowres: bool, optional
             Can be useful, if your GCMT uses a very detailed grid
         """
-        print(self.tools.get_one_model(tag))
         dsi = self.tools.get_one_model(tag).sel(time=time)
 
         if regrid_lowres:
@@ -538,6 +537,11 @@ class PrtInterface(Interface):
         pres = self.dsi[c["Z"]].values
         co_ratios = np.ones_like(pres) * co_ratio
         feh_ratios = np.ones_like(pres) * feh_ratio
+        tlist = [('H2O', 'H2O_HITEMP'),
+                 ('H2O', 'H2O_Exomol_R_1'),
+                 ('CO', 'CO_all_iso_HITEMP'),
+                 ('Na', 'Na_allard'),
+                 ('K', 'K_allard')]
 
         # check if gravity is given, if not use gcm value
         if gravity is None:
@@ -567,10 +571,9 @@ class PrtInterface(Interface):
             # calculate chemistry
             temp = tmp_morning['T'].values[::-1]
             abus = interpol_abundances(co_ratios, feh_ratios, temp, pres)
-            abus['H2O_HITEMP'] = abus['H2O']
-            abus['CO_all_iso_HITEMP'] = abus['CO']
-            abus['Na_allard'] = abus['Na']
-            abus['K_allard'] = abus['K']
+            for key in tlist:
+                if key[0] in abus:
+                    abus[key[1]] = abus[key[0]]
             # calcualte mass fractions
             mass_fracs = abus
             # calcualte transmision spectra for the morning terminator of current lat point
@@ -586,10 +589,9 @@ class PrtInterface(Interface):
             # calculate chemistry
             temp = tmp_evening['T'].values[::-1]
             abus = interpol_abundances(co_ratios, feh_ratios, temp, pres)
-            abus['H2O_HITEMP'] = abus['H2O']
-            abus['CO_all_iso_HITEMP'] = abus['CO']
-            abus['Na_allard'] = abus['Na']
-            abus['K_allard'] = abus['K']
+            for key in tlist:
+                if key[0] in abus:
+                    abus[key[1]] = abus[key[0]]
             # calcualte mass fractions
             mass_fracs = abus
             # calcualte transmision spectra for the morning terminator of current lat point
