@@ -181,7 +181,8 @@ class Interface:
         self.chemistry = _Chemistry()
         self.dsi = None
 
-    def set_data(self, time, tag=None, regrid_lowres=False):
+    def set_data(self, time, tag=None, regrid_lowres=False,
+                 terminator_avg=False, lat_points=1, lon_resolution=10):
         """
         Set the data to be used for the interface
 
@@ -193,10 +194,20 @@ class Interface:
             tag of the model to be used
         regrid_lowres: bool, optional
             Can be useful, if your GCMT uses a very detailed grid
+        terminator_avg: bool, optional
+            terminator avaraging. This requires lat_points and lon_resolution.
+        lat_points: int, optional
+            number of equally spaced latitude grid points for each terminator (morning and evening)
+        lon_resolution: float, optional
+            longitudinal opening angle for terminator avareging
         """
-        self._set_data_common(time, tag=tag, regrid_lowres=regrid_lowres)
 
-    def _set_data_common(self, time, tag=None, regrid_lowres=False):
+        self._set_data_common(time, tag=tag, regrid_lowres=regrid_lowres,
+                              terminator_avg=terminator_avg, lat_points=lat_points,
+                              lon_resolution=lon_resolution)
+
+    def _set_data_common(self, time, tag=None, regrid_lowres=False,
+                         terminator_avg=False, lat_points=1, lon_resolution=10):
         """
         Set the data to be used for the interface
 
@@ -208,8 +219,65 @@ class Interface:
             tag of the model to be used
         regrid_lowres: bool, optional
             Can be useful, if your GCMT uses a very detailed grid
+        terminator_avg: bool, optional
+            terminator avaraging. This requires lat_points and lon_resolution.
+        lat_points: int, optional
+            number of equally spaced latitude grid points for each terminator (morning and evening)
+        lon_resolution: float, optional
+            longitudinal opening angle for terminator avareging
         """
+        # check input legality
+        if sum([regrid_lowres, terminator_avg]) > 1:
+            raise ValueError('In the function Interface.set_data, multiple regriding options '
+                             'were selected, but only one can be given.')
+
         dsi = self.tools.get_one_model(tag).sel(time=time)
+
+        if terminator_avg:
+            # avarage over longitudinal opening angle. Note, this step also corrects
+            # for smaller areas at polar regions
+            ds_morning = dsi.where((dsi[c['lon']] > -90 - lon_resolution/2) *
+                                   (dsi[c['lon']] < -90 + lon_resolution/2)).mean(c['lon'])
+            ds_evening = dsi.where((dsi[c['lon']] > 90 - lon_resolution/2) *
+                                   (dsi[c['lon']] < 90 + lon_resolution/2)).mean(c['lon'])
+
+            # set latitude step size
+            lat_step = 180 / lat_points
+            lat_x = np.linspace(-90+lat_step/2, 90-lat_step/2, lat_points)
+
+            # generate new dataset
+            ds_transit = xr.Dataset(
+                data_vars=dict(
+                ),
+                coords=dict(
+                    lat=([c["lat"]], lat_x),
+                    lon=([c["lon"]], [-90, 90]),
+                    Z_l=([c["Z_l"]], dsi[c['Z_l']].values),
+                    Z=([c["Z"]], dsi[c['Z']].values)
+                ),
+                attrs=dsi.attrs
+            )
+
+            # empty array to fill with temperature data
+            tmp = np.zeros((lat_points, 2, len(dsi[c["Z"]].values)))
+
+            # avarage in latitude space
+            for lat in range(lat_points):
+                tmp[lat, 0, :] = ds_morning.where((ds_morning[c['lat']] > lat*lat_step - 90) *
+                                                  (ds_morning[c['lat']] < (lat+1)*lat_step - 90)
+                                                  ).mean(c['lat'])['T'].values
+                tmp[lat, 1, :] = ds_evening.where((ds_evening[c['lat']] > lat*lat_step - 90) *
+                                                  (ds_evening[c['lat']] < (lat+1)*lat_step - 90)
+                                                  ).mean(c['lat'])['T'].values
+
+            # saving results
+            ds_transit[c['T']] = ((c['lat'], c['lon'], c['Z_l']), tmp)
+
+            # add mark that data is ready for tranist callcuations
+            ds_transit.attrs['transit'] = True
+
+            # return prepared dataset
+            dsi = ds_transit
 
         if regrid_lowres:
             dlon = 15
@@ -225,6 +293,7 @@ class Interface:
 
         self.dsi = dsi
         self.chemistry.set_data(dsi)
+        self.chemistry.abunds = xr.Dataset()
 
     def chem_from_poorman(self, temp_key="T", co_ratio=0.55, feh_ratio=0.0):
         """
@@ -271,7 +340,8 @@ class PrtInterface(Interface):
         super().__init__(tools)
         self.prt = prt
 
-    def set_data(self, time, tag=None, regrid_lowres=False):
+    def set_data(self, time, tag=None, regrid_lowres=False,
+                 terminator_avg=False, lat_points=1, lon_resolution=10):
         """
         Set the data to be used for the interface
 
@@ -283,8 +353,17 @@ class PrtInterface(Interface):
             tag of the model to be used
         regrid_lowres: bool, optional
             Can be useful, if your GCMT uses a very detailed grid
+        terminator_avg: bool, optional
+            terminator avaraging. This requires lat_points and lon_resolution.
+        lat_points: int, optional
+            number of equally spaced latitude grid points for each terminator (morning and evening)
+        lon_resolution: float, optional
+            longitudinal opening angle for terminator avareging
         """
-        self._set_data_common(time, tag=tag, regrid_lowres=regrid_lowres)
+
+        self._set_data_common(time, tag=tag, regrid_lowres=regrid_lowres,
+                              terminator_avg=terminator_avg, lat_points=lat_points,
+                              lon_resolution=lon_resolution)
 
         if self.dsi.p_unit == "bar":
             press = self.dsi.Z.values
@@ -486,6 +565,128 @@ class PrtInterface(Interface):
             dims=["phase", "wlen"],
             coords={"phase": phases, "wlen": spectra.wlen},
         )
+
+    def calc_transit_spectrum(
+            self,
+            mmw,
+            gravity=None,
+            rplanet=None,
+            pressure_0=None,
+            mass_frac=None,
+    ):
+        """
+        Calculate the transit spectrum. This function avarages T-p profiles in
+        the terminator region and uses poorman equilbriums chemistry.
+
+        Parameters
+        ----------
+        mmw: float or 1D-array
+            Mean molecular weight (in atomic units). Will be globally uniform if
+            float or horizonatally uniform if 1D.
+        gravity: float
+            surface gravity in !cgs!. Will default to the value provided by GCMT.
+        rplanet: float
+            planet radius in !cm!. Will default to the value provided by GCMT.
+        pressure_0: float
+            pressure level of the gravity and radius. Will default to the value provided by GCMT.
+        mass_frac: List[List[Dict]], optional
+            The mass fractions for each t_p point. Structure is as follows: mass_frac[i][j]['key']
+            - i: [2 elements] 0 for morning terminator, 1 for evening terminator
+            - j: [lat_points elements] latitude point starting from lowest
+                 (closeset to lat = -90) to highest (closest to lat = 90)
+            - dict must contain all mass fractions  elements given as opacity species to prt
+
+
+        Returns
+        -------
+        wavelengths: xr.DataArray
+            Wavelengths of the output spectra in micron
+        spectra: xr.DataArray
+            transit radius in cm
+
+        """
+
+        # check if data was appropriatly prepared
+        if 'transit' not in self.dsi.attrs:
+            raise ValueError('To use PrtInterface.calc_transit_spectrum() '
+                             'the data needs to be prepared with set_data(..., '
+                             'terminator_avg=True, ...).')
+
+        # check if gravity is given, if not use gcm value
+        if gravity is None:
+            gravity = self.dsi.attrs.get(c["g"]) * 100
+
+        # check if radius is given, if not use gcm value
+        if rplanet is None:
+            rplanet = self.dsi.attrs.get(c["R_p"]) * 100
+
+        # check if pressure is given, if not use gcm value
+        if pressure_0 is None:
+            pressure_0 = np.max(self.prt.press)*1e-6
+
+        # get profile for each latitude and each terminator
+        spectra_list = []
+        for i, lat in enumerate(self.dsi[c['lat']].values):
+            # add morning terminator spectra
+            spectra_list.append(self._get_1_transit_spectra([i, lat], -90, mass_frac, gravity,
+                                                            mmw, rplanet, pressure_0))
+
+            # add evening terminator spectra
+            spectra_list.append(self._get_1_transit_spectra([i, lat], 90, mass_frac, gravity,
+                                                            mmw, rplanet, pressure_0))
+
+        # avarage over all profiles (area avaraged)
+        spectra = (np.asarray(spectra_list))**2/len(np.asarray(spectra_list))
+        spectra = np.sqrt(np.sum(spectra, axis=0))
+
+        # calcualte wavelengths in micron
+        wavelengths = 29979245800.0/self.prt.freq/1e-4
+
+        # return the final spectra
+        return wavelengths, spectra
+
+    def _get_1_transit_spectra(self, lat, lon, mass_frac, gravity, mmw, rplanet, pressure_0):
+        # get temperature profile
+        temp = self.dsi.sel(lat=lat[1], lon=lon)[c['T']].values
+
+        # calculate chemistry in mass fractions
+        if mass_frac is None:
+            chem = self.chemistry.abunds.sel(lat=lat[1], lon=lon)
+            abus = {}
+
+            # from xarray to dict
+            for key in chem.data_vars:
+                abus[key] = chem[key].values
+            del abus['T']
+
+            # flip the script
+            for key in abus:
+                abus[key] = abus[key][::-1]
+        else:
+            abus = mass_frac[0][lat[0]]
+
+        # check if all opacity species are in mass fractions
+        for key in self.prt.line_species:
+            if key not in abus:
+                # if a species is missing, check for partial matches
+                for k_abus in abus:
+                    if k_abus in key:
+                        abus[key] = abus[k_abus]
+                        break
+                else:
+                    # if a species can not be found fully or partally, give error
+                    raise ValueError('Opacity species ' + key + ' missing in mass fraction input')
+
+        # calcualte transmision spectra for the morning terminator of current lat point
+        self.prt.calc_transm(temp[::-1],
+                             abus,
+                             gravity,
+                             mmw*np.ones_like(temp),
+                             R_pl=rplanet,
+                             P0_bar=pressure_0)
+
+        # add the spectra to the list
+        return self.prt.transm_rad
 
     def _get_stellar_spec(self, wlen, t_star):
         """

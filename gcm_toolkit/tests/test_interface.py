@@ -101,6 +101,16 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
             normalize=True,
         )
 
+    # test transit calculation set up
+    interface.set_data(time=expected["times"][-1], terminator_avg=True)
+    assert (interface.dsi['lon'].values == [-90, 90]).all()
+    assert interface.dsi['lat'].values == [0]
+
+    # test transit calculation
+    interface.chem_from_poorman("T", co_ratio=0.55, feh_ratio=0.0)
+    wave, spectra = interface.calc_transit_spectrum(mmw=2.33)
+    assert sum(wave) == 28.373223101833855
+
     # Test if Pa works
     interface.dsi.attrs["p_unit"] = "Pa"
     interface.set_data(time=expected["times"][-1])
