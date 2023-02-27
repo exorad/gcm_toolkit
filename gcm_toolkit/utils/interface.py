@@ -651,7 +651,6 @@ class PrtInterface(Interface):
 
         # calculate chemistry in mass fractions
         if mass_frac is None:
-            print(self.chemistry.abunds)
             chem = self.chemistry.abunds.sel(lat=lat[1], lon=lon)
             abus = {}
 
