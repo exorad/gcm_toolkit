@@ -4,8 +4,6 @@ There are several ways to install the package.
 We recommend using anaconda.
 ``gcm_toolkit`` has been tested to work on linux and mac.
 
-.. note::
-    Using Windows is not recommended and will not work in combination with MITgcm raw data.
 
 Using anaconda
 ----------------
@@ -16,13 +14,16 @@ Create an anaconda environment.
     conda create -n 'GCM' -y
     conda activate GCM
 
-Install a few dependencies (optional include the following packages: ``jupyterlab`` and ``cartopy``.)
+Install a few optional packages
 
 .. code-block:: bash
 
     conda install -c conda-forge cubedsphere jupyterlab cartopy -y
     pip install git+https://github.com/MITgcm/xmitgcm.git
 
+.. note::
+    The ``cubedsphere`` package has many dependencies and it is only needed for reading in and converting raw MITgcm files.
+    It might not work in several environments.
 
 Install ``gcm_toolkit``.
 
