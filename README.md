@@ -51,7 +51,7 @@ Please install the following packages beforehand:
 **general:**
 xarray, netcdf4
 
-**exPERT/MITgcm:**
+**exPERT/MITgcm - raw files:**
 xmitgcm, xgcm, f90nml,
 [cubedsphere](https://cubedsphere.readthedocs.io/en/latest/index.html)
 

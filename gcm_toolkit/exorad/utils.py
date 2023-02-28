@@ -3,12 +3,8 @@ utils to work with cubedsphere
 """
 import os
 
-import cubedsphere as cs
-import cubedsphere.const as c
 import numpy as np
-import xgcm
 from f90nml import Parser
-from xgcm.autogenerate import generate_grid_ds
 
 
 class MITgcmDataParser(Parser):
@@ -81,6 +77,9 @@ def convert_winds_and_t(dsi, temp_dim, w_dim):
     ds: Dataset
         dataset with converted dimension
     """
+    import cubedsphere as cs
+    import cubedsphere.const as c
+
     kappa = dsi.attrs["R"] / dsi.attrs["cp"]
     dsi[temp_dim] = dsi[temp_dim] * (dsi[c.Z] / dsi.attrs["p_ref"]) ** kappa
 
@@ -128,6 +127,8 @@ def exorad_postprocessing(dsi, outdir=None, datafile=None):
     ds:
         Dataset to be returned
     """
+    import cubedsphere.const as c
+
     stri = "please specify a datafile or a folder where we can find a datafile"
     assert outdir is not None or datafile is not None, stri
 
@@ -190,6 +191,9 @@ def add_distances(dsi, radius):
     ds  : xarray.DataArray distance inferred from dlon
     dy  : xarray.DataArray distance inferred from dlat
     """
+    import cubedsphere.const as c
+    import xgcm
+    from xgcm.autogenerate import generate_grid_ds
 
     def dll_dist(dlon, dlat, lon, lat, radius):
         """Converts lat/lon differentials into distances in meters
