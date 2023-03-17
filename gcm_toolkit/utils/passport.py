@@ -170,7 +170,7 @@ def is_the_data_basic(dataset):
     return is_the_data_ok
 
 
-def is_the_data_cloudy(dataset):
+def is_the_data_cloudy(dataset, clouds_only=False):
     """
     Check if the dataset fulfills the minimal requirements for
     a dataset to be used with gcm_toolkit.
@@ -187,9 +187,10 @@ def is_the_data_cloudy(dataset):
         requirements or False if not.
     """
 
-    # check first if the dataset fulfills the basic requirements
     is_the_data_ok = True
-    if not is_the_data_basic(dataset):
+
+    # check first if the dataset fulfills the basic requirements
+    if not clouds_only and not is_the_data_basic(dataset):
         # variable to check if everything is OK
         is_the_data_ok = False
 
@@ -204,28 +205,20 @@ def is_the_data_cloudy(dataset):
         )
         is_the_data_ok = False
 
+    if "ClDs" not in data_variables:
+        wrt.write_status(
+            "WARN",
+            "ClDs (cloud particle radius) is missing from the dataset "
+            + str(dataset.attrs["tag"]),
+        )
+        is_the_data_ok = False
+
     if "ClDr" not in data_variables:
         wrt.write_status(
             "WARN",
-            "ClDr (cloud particle radius) is missing from the dataset "
+            "ClDr (cloud particle density) is missing from the dataset "
             + str(dataset.attrs["tag"]),
-        )
-        is_the_data_ok = False
-
-    if "ClKs" not in data_variables:
-        wrt.write_status(
-            "WARN",
-            "ClKs (cloud scattering opacity) is missing from the dataset "
-            + str(dataset.attrs["tag"]),
-        )
-        is_the_data_ok = False
-
-    if "ClKa" not in data_variables:
-        wrt.write_status(
-            "WARN",
-            "ClKa (cloud absorption opacity) is missing from the dataset "
-            + str(dataset.attrs["tag"]),
-        )
+            )
         is_the_data_ok = False
 
     # return status of the check

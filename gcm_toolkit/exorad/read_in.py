@@ -65,7 +65,6 @@ def m_read_from_mitgcm(
     prefix = kwargs.pop("prefix", ["T", "U", "V", "W"])
 
     # add optional cloud parameters to the read in function:
-    print(kwargs)
     cloud_kwargs = dict(
         ClAb=dict(dims=['k', 'j', 'i'],
                   attrs=dict(standard_name='ClAb',
@@ -130,7 +129,6 @@ def m_read_from_mitgcm(
     )
     if 'extra_variables' in kwargs:
         kwargs['extra_variables'].update(cloud_kwargs)
-        input('YAAY')
     else:
         kwargs['extra_variables'] = cloud_kwargs
 
@@ -188,6 +186,16 @@ def m_read_from_mitgcm(
 
     if loaded_dsi is not None:
         dsi = xr.merge([dsi, loaded_dsi])
+
+    # change the names of the cloud variables
+    if 'ClAb' in dsi.keys():
+        print(dsi)
+        dsi = dsi.rename({'Cl01': 'ClVf_TiO2[s]', 'Cl02': 'ClVf_Mg2SiO4[s]', 'Cl03': 'ClVf_SiO[s]',
+                          'Cl04': 'ClVf_SiO2[s]', 'Cl05': 'ClVf_Fe[s]', 'Cl06': 'ClVf_Al2O3[s]',
+                          'Cl07': 'ClVf_CaTiO3[s]', 'Cl08': 'ClVf_FeO[s]', 'Cl09': 'ClVf_FeS[s]',
+                          'Cl10': 'ClVf_Fe2O3[s]', 'Cl11': 'ClVf_MgO[s]', 'Cl12': 'ClVf_MgSiO3[s]',
+                          'Cl13': 'ClVf_CaSiO3[s]', 'Cl14': 'ClVf_Fe2SiO4[s]', 'Cl15': 'ClVf_C[s]',
+                          'Cl16': 'ClVf_KCl[s]'})
 
     return dsi
 
