@@ -714,8 +714,9 @@ class PrtInterface(Interface):
                     cloud_particle_density=self.dsi.sel(lat=lat[1], lon=lon[1])['ClDr'].values,
                     volume_fraction=vol_fracs
                     )
-                cloud_data[:, :, 0] = qabs * csec
-                cloud_data[:, :, 1] = qsca * csec
+                for k in range(len(csec)):
+                    cloud_data[k, :, 0] = qabs[k] * csec[k]
+                    cloud_data[k, :, 1] = qsca[k] * csec[k]
             else:
                 cloud_data[:, :, 0] = clouds[lon[0], lat[0], :, :, 0]
                 cloud_data[:, :, 1] = clouds[lon[0], lat[0], :, :, 1]

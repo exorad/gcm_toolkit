@@ -69,9 +69,7 @@ def cloud_opacities(wavelengths, cloud_radius, cloud_abundances, cloud_particle_
     qsca = np.zeros((len_h, len_w))
 
     # calculate effective medium theory for each height and each wavelength
-    print(len(wavelengths))
     eff = eff_func(volume_fraction, wavelengths)
-    print('HELL YEA')
 
     # load mie calculation library
     import miepython
@@ -79,7 +77,7 @@ def cloud_opacities(wavelengths, cloud_radius, cloud_abundances, cloud_particle_
     # loop over all inputs:
     for w in range(len_w):
         for h in range(len_h):
-
+            print('mie', w, h)
             # prepare input parameters for mie calculation
             m = complex(eff[w, h, 0], -eff[w, h, 1])
             x = 2*np.pi*cloud_radius[h]/wavelengths[w]
@@ -128,28 +126,39 @@ def eff_func(volume_fraction, wavelength):
     # prepare output
     eff = np.zeros((len_w, len_h, 2))
 
+    # get all ref indexes
+    work = np.zeros((len_b, len_h, len_w, 3))
+    for k, key in enumerate(volume_fraction):
+        temp = _cloud_nk_data(key, wavelength)
+        for h in range(len_h):
+            work[k, h, :, 1:] = temp
+
+    # get all volume fractions
+    for w in range(len_w):
+        for h in range(len_h):
+            for k, key in enumerate(volume_fraction):
+                work[k, h, w, 0] = volume_fraction[key][h]
+
     # loop over all height points
     for w in range(len_w):
         for h in range(len_h):
-            print(w,h)
-            # define working array
-            # [species, (vol mix, real ref.in., imag ref.in.)]
-            work = np.zeros((len_b, 3))
-
-            # fill in data
-            for k, key in enumerate(volume_fraction):
-                work[k, 0] = volume_fraction[key][h]
-                work[k, 1:] = _cloud_nk_data(key, wavelength[w])
-
+            print('eff', w, h)
             # initial guess using linear approximation
             eff_0 = np.zeros((2,))
-            eff_0[0] = sum(work[:, 0] * work[:, 1])
-            eff_0[1] = sum(work[:, 0] * work[:, 2])
+            eff_0[0] = sum(work[:, h, w, 0] * work[:, h, w, 1])
+            eff_0[1] = sum(work[:, h, w, 0] * work[:, h, w, 2])
 
             # calculate effective medium theory with Bruggemann minimization
-            eff[w, h] = minimize(_func, eff_0, args=work).x
+            eff[w, h] = minimize(_func, eff_0, args=work[:, h, w, :]).x
 
-            # LLL method
+            # # LLL method
+            # val = complex(0,0)
+            # for k, key in enumerate(volume_fraction):
+            #     val += work[k, 0] * complex(work[k, 1], work[k, 2])**(1/3)
+            # val = val**3
+            # tmp = np.sqrt(val.real**2 + val.imag**2)
+            # eff[w, h, 0] = np.sqrt(0.5*(val.real + tmp))
+            # eff[w, h, 1] = np.sqrt(0.5*(-val.real + tmp)) * val.imag/np.abs(val.imag)
 
     return eff
 
