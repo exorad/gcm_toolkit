@@ -262,7 +262,6 @@ class Interface:
                 attrs=dsi.attrs
             )
 
-
             # avarage in latitude space
             for key in ds_evening.keys():
                 if key in ['T', 'ClAb', 'ClDs', 'ClDr'] or 'ClVf' in key:
@@ -278,7 +277,6 @@ class Interface:
 
                     # saving results
                     ds_transit[key] = ((c['lat'], c['lon'], c['Z_l']), tmp)
-
 
             # add mark that data is ready for tranist callcuations
             ds_transit.attrs['transit'] = True
@@ -581,6 +579,7 @@ class PrtInterface(Interface):
             pressure_0=None,
             mass_frac=None,
             clouds=None,
+            use_bruggemann=False
     ):
         """
         Calculate the transit spectrum. This function avarages T-p profiles in
@@ -614,7 +613,9 @@ class PrtInterface(Interface):
             - h: [number of pressure points] this needs to be equivalent to the pressure
                 structure of the gcm.
             - k: 0 for kappa_absorption and 1 for kappa_scatering
-
+        use_bruggemann: bool
+            If this flag is set to true, bruggemann mixing is used. This is
+            more accurate but takes much longer to calculate.
 
         Returns
         -------
@@ -750,7 +751,7 @@ class PrtInterface(Interface):
         cloud_data = np.zeros((2, len(self.prt.freq), len(self.prt.press)))
 
         # check if clouds are wished
-        if do_clouds is not None:
+        if do_clouds:
             # adjust prt for clouds
             self.prt.clouds_mix_opa = types.MethodType(patch_cloud_mix_opa, self.prt)
             self.prt.calc_transm = types.MethodType(patch_calc_transm, self.prt)
