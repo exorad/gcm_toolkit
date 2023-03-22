@@ -19,7 +19,8 @@ import xarray as xr
 from ..core import writer as wrt
 from ..core.const import VARNAMES as c
 from ..utils.passport import is_the_data_cloudy
-from ..utils.clouds import cloud_opacities, patch_mix_opa_tot, patch_calc_transm
+from ..utils.clouds import cloud_opacities, patch_cloud_mix_opa, patch_calc_transm, \
+                           patch_delete_clouds
 
 
 class _Chemistry:
@@ -261,12 +262,12 @@ class Interface:
                 attrs=dsi.attrs
             )
 
-            # empty array to fill with temperature data
-            tmp = np.zeros((lat_points, 2, len(dsi[c["Z"]].values)))
 
             # avarage in latitude space
             for key in ds_evening.keys():
                 if key in ['T', 'ClAb', 'ClDs', 'ClDr'] or 'ClVf' in key:
+                    # empty array to fill with data
+                    tmp = np.zeros((lat_points, 2, len(dsi[c["Z"]].values)))
                     for lat in range(lat_points):
                         tmp[lat, 0, :] = ds_morning.where((ds_morning[c['lat']] > lat*lat_step - 90) *
                                                           (ds_morning[c['lat']] < (lat+1)*lat_step - 90)
@@ -277,6 +278,7 @@ class Interface:
 
                     # saving results
                     ds_transit[key] = ((c['lat'], c['lon'], c['Z_l']), tmp)
+
 
             # add mark that data is ready for tranist callcuations
             ds_transit.attrs['transit'] = True
@@ -602,14 +604,15 @@ class PrtInterface(Interface):
                  (closeset to lat = -90) to highest (closest to lat = 90)
             - dict must contain all mass fractions  elements given as opacity species to prt
         clouds: Union[np.ndarray[i, j, h, w, k], bool], optional
-            The cloud opacities for each t_p point. Structure is as follows: mass_frac[i][j][h][w][k]
+            The cloud opacities for each t_p point. Structure is as follows:
+            mass_frac[i][j][w][h][k]
             - i: [2 elements] 0 for morning terminator, 1 for evening terminator
             - j: [lat_points elements] latitude point starting from lowest
                  (closeset to lat = -90) to highest (closest to lat = 90)
-            - h: [number of pressure points] this needs to be equivalent to the pressure
-                structure of the gcm.
             - w: [number of wavelength bins] this has to be equivalent to the wavelength
                  structure of prt.
+            - h: [number of pressure points] this needs to be equivalent to the pressure
+                structure of the gcm.
             - k: 0 for kappa_absorption and 1 for kappa_scatering
 
 
@@ -641,22 +644,31 @@ class PrtInterface(Interface):
             pressure_0 = np.max(self.prt.press)*1e-6
 
         # check if clouds are wished
+        do_clouds = False
         if clouds is not None:
             # check if clouds are possible
             if not is_the_data_cloudy(self.dsi, clouds_only=True):
                 raise ValueError('Not all required data to consider clouds within '
                                  'petitRADTRANS are available within the GCM given.')
+            # sort out if input was bool or list
+            if type(clouds) == bool:
+                # set cloud flag to input
+                do_clouds = clouds
+            else:
+                do_clouds = True
 
         # get profile for each latitude and each terminator
         spectra_list = []
         for i, lat in enumerate(self.dsi[c['lat']].values):
             # add morning terminator spectra
             spectra_list.append(self._get_1_transit_spectra([i, lat], [0, -90], mass_frac, gravity,
-                                                            mmw, rplanet, pressure_0, clouds))
+                                                            mmw, rplanet, pressure_0,
+                                                            do_clouds, clouds))
 
             # add evening terminator spectra
             spectra_list.append(self._get_1_transit_spectra([i, lat], [1, 90], mass_frac, gravity,
-                                                            mmw, rplanet, pressure_0, clouds))
+                                                            mmw, rplanet, pressure_0,
+                                                            do_clouds, clouds))
 
         # avarage over all profiles (area avaraged)
         spectra = (np.asarray(spectra_list))**2/len(np.asarray(spectra_list))
@@ -668,8 +680,53 @@ class PrtInterface(Interface):
         # return the final spectra
         return wavelengths, spectra
 
-    def _get_1_transit_spectra(self, lat, lon, mass_frac, gravity, mmw, rplanet, pressure_0, clouds):
-        print(lat[0], lon[0])
+    def _get_1_transit_spectra(self, lat, lon, mass_frac, gravity, mmw, rplanet,
+                               pressure_0, do_clouds, clouds):
+        """
+        Calculate the transit spectrum. This function avarages T-p profiles in
+        the terminator region and uses poorman equilbriums chemistry.
+
+        Parameters
+        ----------
+        lat: Tuple
+            Tuple containing latitude index and latitude angle.
+        lon: Tuple
+            Tuple containing longitude index and latitude angle.
+        mass_frac: Union[None, List[List[Dict]]]
+            The mass fractions for each t_p point. Structure is as follows: mass_frac[i][j]['key']
+            - i: [2 elements] 0 for morning terminator, 1 for evening terminator
+            - j: [lat_points elements] latitude point starting from lowest
+                 (closeset to lat = -90) to highest (closest to lat = 90)
+            - dict must contain all mass fractions  elements given as opacity species to prt
+        gravity: float
+            surface gravity in !cgs!.
+        mmw: float or 1D-array
+            Mean molecular weight (in atomic units). Will be globally uniform if
+            float or horizonatally uniform if 1D.
+        rplanet: float
+            planet radius in !cm!.
+        pressure_0: float
+            pressure level of the gravity and radius.
+        do_clouds: bool
+            Flag if clouds should be included or not
+        clouds: Union[np.ndarray[i, j, h, w, k], bool]
+            The cloud opacities for each t_p point. Structure is as follows:
+            mass_frac[i][j][w][h][k]
+            - i: [2 elements] 0 for morning terminator, 1 for evening terminator
+            - j: [lat_points elements] latitude point starting from lowest
+                 (closeset to lat = -90) to highest (closest to lat = 90)
+            - w: [number of wavelength bins] this has to be equivalent to the wavelength
+                 structure of prt.
+            - h: [number of pressure points] this needs to be equivalent to the pressure
+                structure of the gcm.
+            - k: 0 for kappa_absorption and 1 for kappa_scatering
+
+        Returns
+        -------
+        prt.transmision object
+            petitRADTRAN transmission object
+
+        """
         # get temperature profile
         temp = self.dsi.sel(lat=lat[1], lon=lon[1])[c['T']].values
 
@@ -689,15 +746,15 @@ class PrtInterface(Interface):
         else:
             abus = mass_frac[0][lat[0]]
 
-            # check if clouds are wished
-        if clouds is not None:
+        # prepare array for cloud data
+        cloud_data = np.zeros((2, len(self.prt.freq), len(self.prt.press)))
 
+        # check if clouds are wished
+        if do_clouds is not None:
             # adjust prt for clouds
-            self.prt.mix_opa_tot = types.MethodType(patch_mix_opa_tot, self.prt)
+            self.prt.clouds_mix_opa = types.MethodType(patch_cloud_mix_opa, self.prt)
             self.prt.calc_transm = types.MethodType(patch_calc_transm, self.prt)
-
-            # prepare array
-            cloud_data = np.zeros((len(self.prt.press), len(self.prt.freq), 2))
+            self.prt.delete_clouds = types.MethodType(patch_delete_clouds, self.prt)
 
             # load or calculate cloud opacities
             if type(clouds) == bool:
@@ -705,23 +762,27 @@ class PrtInterface(Interface):
                 vol_fracs = {}
                 for key in self.dsi.keys():
                     if 'ClVf' in key:
-                        vol_fracs[key[5:]] = self.dsi.sel(lat=lat[1], lon=lon[1])[key].values
+                        vol_fracs[key[5:]] = self.dsi.sel(lat=lat[1], lon=lon[1])[key].values[::-1]
 
+                # calculate cloud opacities
+                # qabs is the absorption efficiency, qsca the scattering efficiency
+                # and csec the cross-section
                 qabs, qsca, csec = cloud_opacities(
-                    wavelengths=self.prt.freq * 299792458 * 1e5,
-                    cloud_radius=self.dsi.sel(lat=lat[1], lon=lon[1])['ClDs'].values,
-                    cloud_abundances=self.dsi.sel(lat=lat[1], lon=lon[1])['ClAb'].values,
-                    cloud_particle_density=self.dsi.sel(lat=lat[1], lon=lon[1])['ClDr'].values,
+                    wavelengths=299792458 / self.prt.freq,
+                    cloud_radius=self.dsi.sel(lat=lat[1], lon=lon[1])['ClDs'].values[::-1]*1e-6,
+                    cloud_abundances=self.dsi.sel(lat=lat[1], lon=lon[1])['ClAb'].values[::-1],
+                    cloud_particle_density=self.dsi.sel(lat=lat[1], lon=lon[1])['ClDr'].values[::-1],
                     volume_fraction=vol_fracs
                     )
-                for k in range(len(csec)):
-                    cloud_data[k, :, 0] = qabs[k] * csec[k]
-                    cloud_data[k, :, 1] = qsca[k] * csec[k]
-            else:
-                cloud_data[:, :, 0] = clouds[lon[0], lat[0], :, :, 0]
-                cloud_data[:, :, 1] = clouds[lon[0], lat[0], :, :, 1]
 
-            # calculate cloud opacities
+                # save opacity kappas
+                for k in range(len(csec)):
+                    cloud_data[0, :, k] = qabs[k] * csec[k]
+                    cloud_data[1, :, k] = qsca[k] * csec[k]
+            else:
+                # load data from input if given
+                cloud_data[0, :, :] = clouds[lon[0], lat[0], :, :, 0]
+                cloud_data[1, :, :] = clouds[lon[0], lat[0], :, :, 1]
 
         # check if all opacity species are in mass fractions
         for key in self.prt.line_species:
@@ -736,7 +797,7 @@ class PrtInterface(Interface):
                     raise ValueError('Opacity species ' + key + ' missing in mass fraction input')
 
         # calculate transmission spectra for the morning terminator of current lat point
-        if clouds is not None:
+        if do_clouds:
             self.prt.calc_transm(temp[::-1], abus, gravity, mmw*np.ones_like(temp),
                                  R_pl=rplanet, P0_bar=pressure_0, clouds=cloud_data)
         else:
