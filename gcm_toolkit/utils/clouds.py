@@ -300,7 +300,7 @@ def _cloud_nk_data(species, wavelength):
                     else:
                         # non-conducting interpolation, linear decreasing k, constant n
                         ref_index[wav, 0] = float(data[-1].split()[1])
-                        ref_index[wav, 1] = float(data[-1].split()[2])*\
+                        ref_index[wav, 1] = float(data[-1].split()[2]) * \
                                             float(data[-1].split()[0])/wave
 
             # stop searching the files
@@ -340,13 +340,13 @@ def patch_delete_clouds(self, clouds=None):
         self.line_struc_kappas = self.line_struc_kappas[:, :, :-1, :]
 
 
-def patch_calc_transm(self,temp,abunds,gravity,mmw,P0_bar,R_pl, \
-                sigma_lnorm = None, \
-                fsed = None, Kzz = None, radius = None, \
-                Pcloud = None, \
-                kappa_zero = None, \
-                gamma_scat = None, \
-                contribution = False, haze_factor = None, \
+def patch_calc_transm(self,temp,abunds,gravity,mmw,P0_bar,R_pl,
+                sigma_lnorm = None,
+                fsed = None, Kzz = None, radius = None,
+                Pcloud = None,
+                kappa_zero = None,
+                gamma_scat = None,
+                contribution = False, haze_factor = None,
                 gray_opacity = None, variable_gravity=True, clouds=None):
     """
     This function is used to update petitRADTRANS to include clouds.
@@ -358,7 +358,7 @@ def patch_calc_transm(self,temp,abunds,gravity,mmw,P0_bar,R_pl, \
     self.haze_factor = haze_factor
     self.kappa_zero = kappa_zero
     self.gamma_scat = gamma_scat
-    self.mix_opa_tot(abunds,mmw,gravity,sigma_lnorm,fsed,Kzz,radius)
+    self.mix_opa_tot(abunds, mmw, gravity, sigma_lnorm, fsed, Kzz, radius)
     self.clouds_mix_opa(clouds)
-    self.calc_tr_rad(P0_bar,R_pl,gravity,mmw,contribution,variable_gravity)
+    self.calc_tr_rad(P0_bar, R_pl, gravity, mmw, contribution, variable_gravity)
     self.delete_clouds(clouds)
