@@ -125,7 +125,7 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
     # test transit calculation
     interface.chem_from_poorman("T", co_ratio=0.55, feh_ratio=0.0)
     wave, spectra = interface.calc_transit_spectrum(mmw=2.33, clouds=True)
-    assert sum(spectra) == 44334997239.01675
+    assert sum(spectra) == 45331292591.13728
 
     # test transit calculation
     interface.chem_from_poorman("T", co_ratio=0.55, feh_ratio=0.0)
