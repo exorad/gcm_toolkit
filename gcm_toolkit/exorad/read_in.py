@@ -189,7 +189,6 @@ def m_read_from_mitgcm(
 
     # change the names of the cloud variables
     if 'ClAb' in dsi.keys():
-        print(dsi)
         dsi = dsi.rename({'Cl01': 'ClVf_TiO2[s]', 'Cl02': 'ClVf_Mg2SiO4[s]', 'Cl03': 'ClVf_SiO[s]',
                           'Cl04': 'ClVf_SiO2[s]', 'Cl05': 'ClVf_Fe[s]', 'Cl06': 'ClVf_Al2O3[s]',
                           'Cl07': 'ClVf_CaTiO3[s]', 'Cl08': 'ClVf_FeO[s]', 'Cl09': 'ClVf_FeS[s]',
