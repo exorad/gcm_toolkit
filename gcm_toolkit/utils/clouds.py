@@ -327,8 +327,7 @@ def patch_cloud_mix_opa(self, clouds=None):
         self.line_struc_kappas = np.zeros((lsk.shape[0], lsk.shape[1],
                                            lsk.shape[2]+1, lsk.shape[3]))
         self.line_struc_kappas[:, :, :-1, :] = lsk
-        for j in range(len(self.line_struc_kappas[:, 0, 0, 0])):
-            self.line_struc_kappas[j, :, -1, :] = clouds[0]
+self.line_struc_kappas[:, :, -1, :] = np.ones_like(self.line_struc_kappas[:, :, -1, :])*clouds[0][np.newaxis,:,:]
         self.continuum_opa_scat_emis += clouds[1]
 
 
