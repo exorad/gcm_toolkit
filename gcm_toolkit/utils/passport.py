@@ -9,9 +9,9 @@
  value error if the conditions are not fulfilled.
 ==============================================================
 """
+import numpy as np
 from ..core import writer as wrt
 from ..core.const import VARNAMES as c
-import numpy as np
 
 
 def is_the_data_basic(dataset):

@@ -240,10 +240,10 @@ class Interface:
         if terminator_avg:
             # avarage over longitudinal opening angle. Note, this step also corrects
             # for smaller areas at polar regions
-            ds_morning = dsi.where((dsi[c['lon']] > -90 - lon_resolution/2) *
-                                   (dsi[c['lon']] < -90 + lon_resolution/2)).mean(c['lon'])
-            ds_evening = dsi.where((dsi[c['lon']] > 90 - lon_resolution/2) *
-                                   (dsi[c['lon']] < 90 + lon_resolution/2)).mean(c['lon'])
+            ds_m = dsi.where((dsi[c['lon']] > -90 - lon_resolution/2) *
+                             (dsi[c['lon']] < -90 + lon_resolution/2)).mean(c['lon'])
+            ds_e = dsi.where((dsi[c['lon']] > 90 - lon_resolution/2) *
+                             (dsi[c['lon']] < 90 + lon_resolution/2)).mean(c['lon'])
 
             # set latitude step size
             lat_step = 180 / lat_points
@@ -263,17 +263,17 @@ class Interface:
             )
 
             # avarage in latitude space
-            for key in ds_evening.keys():
+            for key in ds_e.keys():
                 if key in ['T', 'ClAb', 'ClDs', 'ClDr'] or 'ClVf' in key:
                     # empty array to fill with data
                     tmp = np.zeros((lat_points, 2, len(dsi[c["Z"]].values)))
                     for lat in range(lat_points):
-                        tmp[lat, 0, :] = ds_morning.where((ds_morning[c['lat']] > lat*lat_step - 90) *
-                                                          (ds_morning[c['lat']] < (lat+1)*lat_step - 90)
-                                                          ).mean(c['lat'])[key].values
-                        tmp[lat, 1, :] = ds_evening.where((ds_evening[c['lat']] > lat*lat_step - 90) *
-                                                          (ds_evening[c['lat']] < (lat+1)*lat_step - 90)
-                                                          ).mean(c['lat'])[key].values
+                        tmp[lat, 0, :] = ds_m.where((ds_m[c['lat']] > lat*lat_step - 90) *
+                                                    (ds_m[c['lat']] < (lat+1) * lat_step - 90)
+                                                    ).mean(c['lat'])[key].values
+                        tmp[lat, 1, :] = ds_e.where((ds_e[c['lat']] > lat*lat_step - 90) *
+                                                    (ds_e[c['lat']] < (lat+1)*lat_step - 90)
+                                                    ).mean(c['lat'])[key].values
 
                     # saving results
                     ds_transit[key] = ((c['lat'], c['lon'], c['Z_l']), tmp)
@@ -613,7 +613,7 @@ class PrtInterface(Interface):
             - h: [number of pressure points] this needs to be equivalent to the pressure
                 structure of the gcm.
             - k: 0 for kappa_absorption and 1 for kappa_scatering
-        use_bruggemann: bool
+        use_bruggemann: bool, optional
             If this flag is set to true, bruggemann mixing is used. This is
             more accurate but takes much longer to calculate.
 
@@ -664,12 +664,12 @@ class PrtInterface(Interface):
             # add morning terminator spectra
             spectra_list.append(self._get_1_transit_spectra([i, lat], [0, -90], mass_frac, gravity,
                                                             mmw, rplanet, pressure_0,
-                                                            do_clouds, clouds))
+                                                            do_clouds, clouds, use_bruggemann))
 
             # add evening terminator spectra
             spectra_list.append(self._get_1_transit_spectra([i, lat], [1, 90], mass_frac, gravity,
                                                             mmw, rplanet, pressure_0,
-                                                            do_clouds, clouds))
+                                                            do_clouds, clouds, use_bruggemann))
 
         # avarage over all profiles (area avaraged)
         spectra = (np.asarray(spectra_list))**2/len(np.asarray(spectra_list))
@@ -682,7 +682,7 @@ class PrtInterface(Interface):
         return wavelengths, spectra
 
     def _get_1_transit_spectra(self, lat, lon, mass_frac, gravity, mmw, rplanet,
-                               pressure_0, do_clouds, clouds):
+                               pressure_0, do_clouds, clouds, use_bruggemann):
         """
         Calculate the transit spectrum. This function avarages T-p profiles in
         the terminator region and uses poorman equilbriums chemistry.
@@ -721,6 +721,9 @@ class PrtInterface(Interface):
             - h: [number of pressure points] this needs to be equivalent to the pressure
                 structure of the gcm.
             - k: 0 for kappa_absorption and 1 for kappa_scatering
+        use_bruggemann: bool
+            If this flag is set to true, bruggemann mixing is used. This is
+            more accurate but takes much longer to calculate.
 
         Returns
         -------
@@ -769,11 +772,12 @@ class PrtInterface(Interface):
                 # qabs is the absorption efficiency, qsca the scattering efficiency
                 # and csec the cross-section
                 qabs, qsca, csec = cloud_opacities(
-                    wavelengths=299792458 / self.prt.freq,
-                    cloud_radius=self.dsi.sel(lat=lat[1], lon=lon[1])['ClDs'].values[::-1]*1e-6,
-                    cloud_abundances=self.dsi.sel(lat=lat[1], lon=lon[1])['ClAb'].values[::-1],
-                    cloud_particle_density=self.dsi.sel(lat=lat[1], lon=lon[1])['ClDr'].values[::-1],
-                    volume_fraction=vol_fracs
+                    299792458 / self.prt.freq,
+                    self.dsi.sel(lat=lat[1], lon=lon[1])['ClDs'].values[::-1]*1e-6,
+                    self.dsi.sel(lat=lat[1], lon=lon[1])['ClAb'].values[::-1],
+                    self.dsi.sel(lat=lat[1], lon=lon[1])['ClDr'].values[::-1],
+                    vol_fracs,
+                    use_bruggemann
                     )
 
                 # save opacity kappas
@@ -1424,12 +1428,12 @@ class PACInterface(Interface):
             elif p[1] > p[0]:
                 index_order = range(len(p)-1, -1, -1)   # write in reverse order
             with open(full_path, 'w') as f:
-                    f.write('! altitude[km]   pressure[bar]   temperature[K]\n')
-                    for k in index_order:
-                        line = '  ' + '{:4.4f}'.format(alt[k]/1000) + '   ' + \
-                                '  ' + '{:1.4E}'.format(p[k]) + '  ' + \
-                                '  ' + '{:4.2f}'.format(T.values[k]) + '\n'
-                        f.write(line)
+                f.write('! altitude[km]   pressure[bar]   temperature[K]\n')
+                for k in index_order:
+                    line = '  ' + '{:4.4f}'.format(alt[k]/1000) + '   ' + \
+                            '  ' + '{:1.4E}'.format(p[k]) + '  ' + \
+                            '  ' + '{:4.2f}'.format(T.values[k]) + '\n'
+                    f.write(line)
             wrt.write_status('INFO', 'File written: ' + full_path)
 
             # Remember the apt-file in a list for easy submission
