@@ -251,14 +251,13 @@ class Interface:
 
             # generate new dataset
             ds_transit = xr.Dataset(
-                data_vars=dict(
-                ),
-                coords=dict(
-                    lat=([c["lat"]], lat_x),
-                    lon=([c["lon"]], [-90, 90]),
-                    Z_l=([c["Z_l"]], dsi[c['Z_l']].values),
-                    Z=([c["Z"]], dsi[c['Z']].values)
-                ),
+                data_vars={},
+                coords={
+                    'lat': ([c["lat"]], lat_x),
+                    'lon': ([c["lon"]], [-90, 90]),
+                    'Z_l': ([c["Z_l"]], dsi[c['Z_l']].values),
+                    'Z': ([c["Z"]], dsi[c['Z']].values)
+                },
                 attrs=dsi.attrs
             )
 
@@ -652,7 +651,7 @@ class PrtInterface(Interface):
                 raise ValueError('Not all required data to consider clouds within '
                                  'petitRADTRANS are available within the GCM given.')
             # sort out if input was bool or list
-            if type(clouds) == bool:
+            if isinstance(clouds, bool):
                 # set cloud flag to input
                 do_clouds = clouds
             else:
@@ -761,7 +760,7 @@ class PrtInterface(Interface):
             self.prt.delete_clouds = types.MethodType(patch_delete_clouds, self.prt)
 
             # load or calculate cloud opacities
-            if type(clouds) == bool:
+            if isinstance(clouds, bool):
                 # find all volume fractions
                 vol_fracs = {}
                 for key in self.dsi.keys():
@@ -781,7 +780,7 @@ class PrtInterface(Interface):
                     )
 
                 # save opacity kappas
-                for k in range(len(csec)):
+                for k, _ in enumerate(csec):
                     cloud_data[0, :, k] = qabs[k] * csec[k]
                     cloud_data[1, :, k] = qsca[k] * csec[k]
             else:

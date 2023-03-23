@@ -232,7 +232,7 @@ def _cloud_nk_data(species, wavelength):
     wave_temp = wavelength * 1e6
 
     # prepare output
-    if type(wave_temp) is not np.ndarray:
+    if not isinstance(wave_temp, np.ndarray):
         wave_temp = np.asarray([wave_temp])
     ref_index = np.zeros((len(wave_temp), 2))
 
