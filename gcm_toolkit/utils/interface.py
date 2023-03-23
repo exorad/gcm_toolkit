@@ -646,16 +646,17 @@ class PrtInterface(Interface):
         # check if clouds are wished
         do_clouds = False
         if clouds is not None:
-            # check if clouds are possible
-            if not is_the_data_cloudy(self.dsi, clouds_only=True):
-                raise ValueError('Not all required data to consider clouds within '
-                                 'petitRADTRANS are available within the GCM given.')
-            # sort out if input was bool or list
             if isinstance(clouds, bool):
                 # set cloud flag to input
                 do_clouds = clouds
             else:
                 do_clouds = True
+
+            # check if clouds are possible
+            if do_clouds and not is_the_data_cloudy(self.dsi, clouds_only=True):
+                raise ValueError('Not all required data to consider clouds within '
+                                 'petitRADTRANS are available within the GCM given.')
+            # sort out if input was bool or list
 
         # get profile for each latitude and each terminator
         spectra_list = []
