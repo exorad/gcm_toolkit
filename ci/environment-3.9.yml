@@ -4,7 +4,6 @@ channels:
 dependencies:
   - python=3.9
   - cubedsphere
-  - miepython
   - pytest
   - codecov
   - pytest-cov
@@ -16,3 +15,4 @@ dependencies:
   - pip
   - pip:
       - git+https://github.com/MITgcm/xmitgcm.git
+      - miepython
