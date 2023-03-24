@@ -64,6 +64,74 @@ def m_read_from_mitgcm(
     # determine the prefixes that should be loaded
     prefix = kwargs.pop("prefix", ["T", "U", "V", "W"])
 
+    # add optional cloud parameters to the read in function:
+    cloud_kwargs = {
+        'ClAb': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'ClAb',
+                           'long_name': 'ClAb', 'units': ''}},
+        'ClDs': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'ClDs',
+                           'long_name': 'ClDs', 'units': ''}},
+        'ClDr': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'ClDr',
+                           'long_name': 'ClDr', 'units': ''}},
+        'ClDd': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'ClDd',
+                           'long_name': 'ClDd', 'units': ''}},
+        'Cl01': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl01',
+                           'long_name': 'Cl01', 'units': ''}},
+        'Cl02': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl02',
+                           'long_name': 'Cl02', 'units': ''}},
+        'Cl03': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl03',
+                           'long_name': 'Cl03', 'units': ''}},
+        'Cl04': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl04',
+                           'long_name': 'Cl04', 'units': ''}},
+        'Cl05': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl05',
+                           'long_name': 'Cl05', 'units': ''}},
+        'Cl06': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl06',
+                           'long_name': 'Cl06', 'units': ''}},
+        'Cl07': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl07',
+                           'long_name': 'Cl07', 'units': ''}},
+        'Cl08': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl08',
+                           'long_name': 'Cl08', 'units': ''}},
+        'Cl09': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl09',
+                           'long_name': 'Cl09', 'units': ''}},
+        'Cl10': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl10',
+                           'long_name': 'Cl01', 'units': ''}},
+        'Cl11': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl11',
+                           'long_name': 'Cl01', 'units': ''}},
+        'Cl12': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl12',
+                           'long_name': 'Cl12', 'units': ''}},
+        'Cl13': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl13',
+                           'long_name': 'Cl13', 'units': ''}},
+        'Cl14': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl14',
+                           'long_name': 'Cl14', 'units': ''}},
+        'Cl15': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl15',
+                           'long_name': 'Cl15', 'units': ''}},
+        'Cl16': {'dims': ['k', 'j', 'i'],
+                 'attrs': {'standard_name': 'Cl16',
+                           'long_name': 'Cl16', 'units': ''}},
+    }
+    if 'extra_variables' in kwargs:
+        kwargs['extra_variables'].update(cloud_kwargs)
+    else:
+        kwargs['extra_variables'] = cloud_kwargs
+
     # determine the final iteration if needed
     if iters == "last":
         all_iters = find_iters_mitgcm(data_path, prefix)
@@ -118,6 +186,15 @@ def m_read_from_mitgcm(
 
     if loaded_dsi is not None:
         dsi = xr.merge([dsi, loaded_dsi])
+
+    # change the names of the cloud variables
+    if 'ClAb' in dsi.keys():
+        dsi = dsi.rename({'Cl01': 'ClVf_TiO2[s]', 'Cl02': 'ClVf_Mg2SiO4[s]', 'Cl03': 'ClVf_SiO[s]',
+                          'Cl04': 'ClVf_SiO2[s]', 'Cl05': 'ClVf_Fe[s]', 'Cl06': 'ClVf_Al2O3[s]',
+                          'Cl07': 'ClVf_CaTiO3[s]', 'Cl08': 'ClVf_FeO[s]', 'Cl09': 'ClVf_FeS[s]',
+                          'Cl10': 'ClVf_Fe2O3[s]', 'Cl11': 'ClVf_MgO[s]', 'Cl12': 'ClVf_MgSiO3[s]',
+                          'Cl13': 'ClVf_CaSiO3[s]', 'Cl14': 'ClVf_Fe2SiO4[s]', 'Cl15': 'ClVf_C[s]',
+                          'Cl16': 'ClVf_KCl[s]'})
 
     return dsi
 
