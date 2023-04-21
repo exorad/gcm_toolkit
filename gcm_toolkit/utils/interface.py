@@ -794,7 +794,7 @@ class PrtInterface(Interface):
             if key not in abus:
                 # if a species is missing, check for partial matches
                 for k_abus in abus:
-                    if k_abus in key:
+                    if k_abus+'_' in key:
                         abus[key] = abus[k_abus]
                         break
                 else:
