@@ -344,6 +344,8 @@ class PrtInterface(Interface):
         super().__init__(tools)
         self.prt = prt
 
+        wrt.write_status("STAT", "Created Interface class for gcm_toolkit and petitRADTRANS")
+
     def set_data(self, time, tag=None, regrid_lowres=False,
                  terminator_avg=False, lat_points=1, lon_resolution=10):
         """
@@ -364,6 +366,13 @@ class PrtInterface(Interface):
         lon_resolution: float, optional
             longitudinal opening angle for terminator avareging
         """
+
+        wrt.write_status("STAT", "Selected data set for petitRADTRANS interface")
+        wrt.write_status("INFO", "time: " + str(time))
+        wrt.write_status("INFO", "tag: " + tag)
+        if terminator_avg:
+            wrt.write_status("INFO", "Data set ready for transmission spectrum calculation")
+
 
         self._set_data_common(time, tag=tag, regrid_lowres=regrid_lowres,
                               terminator_avg=terminator_avg, lat_points=lat_points,
@@ -642,6 +651,22 @@ class PrtInterface(Interface):
         # check if pressure is given, if not use gcm value
         if pressure_0 is None:
             pressure_0 = np.max(self.prt.press)*1e-6
+
+        # output
+        wrt.write_status("STAT", "Calculate transmission spectra")
+        wrt.write_status("INFO", "gravity: " + str(gravity))
+        wrt.write_status("INFO", "rplanet: " + str(rplanet))
+        if clouds is not None:
+            if isinstance(clouds, bool):
+                wrt.write_status("INFO", "Using GCM cloud structure")
+            else:
+                wrt.write_status("INFO", "Using given cloud structure")
+            if use_bruggemann:
+                wrt.write_status("INFO", "Bruggemann mixing used")
+            else:
+                wrt.write_status("INFO", "LLL mixing used")
+
+
 
         # check if clouds are wished
         do_clouds = False

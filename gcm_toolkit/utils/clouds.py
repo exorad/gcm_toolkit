@@ -150,6 +150,7 @@ def eff_func(volume_fraction, wavelength, use_bruggemann=False):
     for wav in range(len_w):
         for hig in range(len_h):
             if use_bruggemann:
+                wrt.write_status('INFO', 'Bruggemann progress: ' + str(round((hig + wav*len_h)/len_h/len_w*100, 1)) + '  %', end='\r')
                 # initial guess using linear approximation
                 eff_0 = np.zeros((2,))
                 eff_0[0] = sum(work[:, hig, wav, 0] * work[:, hig, wav, 1])

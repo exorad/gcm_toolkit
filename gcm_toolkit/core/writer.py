@@ -128,7 +128,7 @@ def writer_setup(typ):
         Writer.file_name = None
 
 
-def write_status(tag, message):
+def write_status(tag, message, end='\n'):
     """
     Write a status output that is auto layouted according to
     _writer set up. Careful: an ERROR status will call a
@@ -141,6 +141,8 @@ def write_status(tag, message):
         'STAT', 'INFO', 'E-INFO', 'WARN', 'ERROR'
     message : str
         The message to be printed.
+    end : str, optional
+        end of string, default='\n'
     """
     writer = Writer()
     # define colors and layout according to tags
@@ -166,7 +168,7 @@ def write_status(tag, message):
     if Writer.on:
         # write message to terminal
         if Writer.file_name is None:
-            print(color + liner + Writer.ENDC)
+            print(color + liner + Writer.ENDC, end=end)
 
         # write message to file
         else:
