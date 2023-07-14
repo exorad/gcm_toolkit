@@ -369,7 +369,11 @@ class PrtInterface(Interface):
 
         wrt.write_status("STAT", "Selected data set for petitRADTRANS interface")
         wrt.write_status("INFO", "time: " + str(time))
-        wrt.write_status("INFO", "tag: " + tag)
+        if tag is not None:
+            wrt.write_status("INFO", "tag: " + tag)
+        else:
+            wrt.write_status("INFO", "No tag given")
+
         if terminator_avg:
             wrt.write_status("INFO", "Data set ready for transmission spectrum calculation")
 
