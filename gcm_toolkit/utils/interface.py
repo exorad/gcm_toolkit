@@ -344,6 +344,8 @@ class PrtInterface(Interface):
         super().__init__(tools)
         self.prt = prt
 
+        wrt.write_status("STAT", "Created Interface class for gcm_toolkit and petitRADTRANS")
+
     def set_data(self, time, tag=None, regrid_lowres=False,
                  terminator_avg=False, lat_points=1, lon_resolution=10):
         """
@@ -364,6 +366,17 @@ class PrtInterface(Interface):
         lon_resolution: float, optional
             longitudinal opening angle for terminator avareging
         """
+
+        wrt.write_status("STAT", "Selected data set for petitRADTRANS interface")
+        wrt.write_status("INFO", "time: " + str(time))
+        if tag is not None:
+            wrt.write_status("INFO", "tag: " + tag)
+        else:
+            wrt.write_status("INFO", "No tag given")
+
+        if terminator_avg:
+            wrt.write_status("INFO", "Data set ready for transmission spectrum calculation")
+
 
         self._set_data_common(time, tag=tag, regrid_lowres=regrid_lowres,
                               terminator_avg=terminator_avg, lat_points=lat_points,
@@ -578,7 +591,8 @@ class PrtInterface(Interface):
             pressure_0=None,
             mass_frac=None,
             clouds=None,
-            use_bruggemann=False
+            use_bruggemann=False,
+            asymmetric=False,
     ):
         """
         Calculate the transit spectrum. This function avarages T-p profiles in
@@ -615,6 +629,8 @@ class PrtInterface(Interface):
         use_bruggemann: bool, optional
             If this flag is set to true, bruggemann mixing is used. This is
             more accurate but takes much longer to calculate.
+        asymmetric : bool, optional
+            If true, the spectra will be calculated for the morning and evening limb speratly.
 
         Returns
         -------
@@ -643,6 +659,22 @@ class PrtInterface(Interface):
         if pressure_0 is None:
             pressure_0 = np.max(self.prt.press)*1e-6
 
+        # output
+        wrt.write_status("STAT", "Calculate transmission spectra")
+        wrt.write_status("INFO", "gravity: " + str(gravity))
+        wrt.write_status("INFO", "rplanet: " + str(rplanet))
+        if clouds is not None:
+            if isinstance(clouds, bool):
+                wrt.write_status("INFO", "Using GCM cloud structure")
+            else:
+                wrt.write_status("INFO", "Using given cloud structure")
+            if use_bruggemann:
+                wrt.write_status("INFO", "Bruggemann mixing used")
+            else:
+                wrt.write_status("INFO", "LLL mixing used")
+
+
+
         # check if clouds are wished
         do_clouds = False
         if clouds is not None:
@@ -660,23 +692,38 @@ class PrtInterface(Interface):
 
         # get profile for each latitude and each terminator
         spectra_list = []
+        output_list = []
+        del_lat = 180/len(self.dsi[c['lat']].values)
         for i, lat in enumerate(self.dsi[c['lat']].values):
             # add morning terminator spectra
             spectra_list.append(self._get_1_transit_spectra([i, lat], [0, -90], mass_frac, gravity,
                                                             mmw, rplanet, pressure_0,
                                                             do_clouds, clouds, use_bruggemann))
+            output_list.append([(-90, (i+0.5)*del_lat - 90), spectra_list[-1]])
 
             # add evening terminator spectra
             spectra_list.append(self._get_1_transit_spectra([i, lat], [1, 90], mass_frac, gravity,
                                                             mmw, rplanet, pressure_0,
                                                             do_clouds, clouds, use_bruggemann))
-
-        # avarage over all profiles (area avaraged)
-        spectra = (np.asarray(spectra_list))**2/len(np.asarray(spectra_list))
-        spectra = np.sqrt(np.sum(spectra, axis=0))
+            output_list.append([(90, (i+0.5)*del_lat - 90), spectra_list[-1]])
 
         # calcualte wavelengths in micron
         wavelengths = 29979245800.0/self.prt.freq/1e-4
+        
+        # calcualte spectra either for each limb seperatly or together
+        if not asymmetric:
+            spectra = (np.asarray(spectra_list))**2/len(np.asarray(spectra_list))
+            spectra = np.sqrt(np.sum(spectra, axis=0))
+        else:
+            spectra = np.zeros((2, len(wavelengths)))
+            for pos, spec in output_list:
+                if pos[0] == -90:
+                    spectra[0, :] += (np.asarray(spec))**2/len(np.asarray(spectra_list))*2
+                else:
+                    spectra[1, :] += (np.asarray(spec))**2/len(np.asarray(spectra_list))*2
+                    
+            spectra = np.sqrt(spectra)
+
 
         # return the final spectra
         return wavelengths, spectra
@@ -794,7 +841,7 @@ class PrtInterface(Interface):
             if key not in abus:
                 # if a species is missing, check for partial matches
                 for k_abus in abus:
-                    if k_abus in key:
+                    if k_abus+'_' in key:
                         abus[key] = abus[k_abus]
                         break
                 else:
