@@ -89,7 +89,16 @@ class _Chemistry:
         var_names = interpol_abundances(
             np.array([0.55]), np.array([0.0]), np.array([100]), np.array([0.1])
         ).keys()
-        for key in [c["T"], *var_names]:
+
+        # also consider cloud properties if present
+        cloud_keys = []
+        if 'ClAb' in self.dsi.keys():
+            cloud_keys = ['ClAb', 'ClDs', 'ClDr']
+            for key in self.dsi.keys():
+                if 'ClVf' in key:
+                    cloud_keys.append(key)
+
+        for key in [c["T"], *var_names, *cloud_keys]:
             self.abunds.update(
                 {
                     key: xr.DataArray(
@@ -121,6 +130,29 @@ class _Chemistry:
                 self.abunds[c["T"]].loc[
                     {c["lon"]: lon, c["lat"]: lat}
                 ] = temp_i
+
+        # also consider cloud properties if present
+        if 'ClAb' in self.dsi.keys():
+            for lon in self.dsi.lon:
+                for lat in self.dsi.lat:
+                    ClAb_i = self.dsi[c['ClAb']].sel(lon=lon, lat=lat)
+                    ClDs_i = self.dsi[c['ClDs']].sel(lon=lon, lat=lat)
+                    ClDr_i = self.dsi[c['ClDr']].sel(lon=lon, lat=lat)
+                    self.abunds[c["ClAb"]].loc[
+                        {c["lon"]: lon, c["lat"]: lat}
+                    ] = ClAb_i
+                    self.abunds[c["ClDs"]].loc[
+                        {c["lon"]: lon, c["lat"]: lat}
+                    ] = ClDs_i
+                    self.abunds[c["ClDr"]].loc[
+                        {c["lon"]: lon, c["lat"]: lat}
+                    ] = ClDr_i
+                    for key in self.dsi.keys():
+                        if 'ClVf' in key:
+                            ClVf_i = self.dsi[key].sel(lon=lon, lat=lat)
+                            self.abunds[key].loc[
+                                {c["lon"]: lon, c["lat"]: lat}
+                            ] = ClVf_i
 
         self.abunds.attrs.update({"p_unit": p_unit})
 
@@ -377,7 +409,6 @@ class PrtInterface(Interface):
         if terminator_avg:
             wrt.write_status("INFO", "Data set ready for transmission spectrum calculation")
 
-
         self._set_data_common(time, tag=tag, regrid_lowres=regrid_lowres,
                               terminator_avg=terminator_avg, lat_points=lat_points,
                               lon_resolution=lon_resolution)
@@ -405,6 +436,8 @@ class PrtInterface(Interface):
         gravity=None,
         filename=None,
         normalize=True,
+        clouds=False,
+        use_bruggemann=False,
         **prt_args,
     ):
         """
@@ -464,6 +497,7 @@ class PrtInterface(Interface):
             )
 
         theta_list, temp_list, abunds_list = [], [], []
+        cloud_list = None
         for i, lon_i in enumerate(np.array(lon).flat):
             lat_i = np.array(lat).flat[i]
             theta_list.append(theta_star.sel(lon=lon_i, lat=lat_i).values)
@@ -475,12 +509,48 @@ class PrtInterface(Interface):
                 }
             )
 
+            # claculate cloud opacites
+            if clouds:
+                # first initalisation
+                if cloud_list is None:
+                    cloud_list = []
+                # find all volume fractions
+                vol_fracs = {}
+                for key in abus.keys():
+                    if 'ClVf' in key:
+                        vol_fracs[key[5:]] = abus[key].sel(lon=lon_i, lat=lat_i).values[::-1]
+
+                # calculate cloud opacities
+                # qabs is the absorption efficiency, qsca the scattering efficiency
+                # and csec the cross-section
+                qabs, qsca, csec = cloud_opacities(
+                    299792458 / self.prt.freq,
+                    abus[c["ClDs"]].sel(lon=lon_i, lat=lat_i).values[::-1]*1e-6,
+                    abus[c["ClAb"]].sel(lon=lon_i, lat=lat_i).values[::-1],
+                    abus[c["ClDr"]].sel(lon=lon_i, lat=lat_i).values[::-1],
+                    vol_fracs,
+                    use_bruggemann
+                )
+
+                # save opacity kappas
+                cloud_data = np.zeros((2, len(self.prt.freq), len(self.prt.press)))
+                for k, _ in enumerate(csec):
+                    cloud_data[0, :, k] = qabs[k] * csec[k]
+                    cloud_data[1, :, k] = qsca[k] * csec[k]
+                cloud_list.append(cloud_data)
+
         if gravity is None:
             gravity = self.dsi.attrs.get(c["g"]) * 100
 
         wlen = nc.c / self.prt.freq / 1e-4
         stellar_spectrum = self._get_stellar_spec(wlen=wlen, t_star=Tstar)
         mmw = np.ones_like(self.prt.press) * mmw  # broadcast if needed
+
+        # patch prt if necessary
+        if clouds:
+            # adjust prt for clouds
+            self.prt.clouds_mix_opa = types.MethodType(patch_cloud_mix_opa, self.prt)
+            self.prt.delete_clouds = types.MethodType(patch_delete_clouds, self.prt)
 
         spectra_raw = calc_spectra(
             self.prt,
@@ -492,6 +562,7 @@ class PrtInterface(Interface):
             Tstar=Tstar,
             Rstar=Rstar,
             semimajoraxis=semimajoraxis,
+            cloud_structure=cloud_list,
             **prt_args,
         )
         spectra_raw = np.array(spectra_raw)
@@ -673,8 +744,6 @@ class PrtInterface(Interface):
             else:
                 wrt.write_status("INFO", "LLL mixing used")
 
-
-
         # check if clouds are wished
         do_clouds = False
         if clouds is not None:
@@ -723,7 +792,6 @@ class PrtInterface(Interface):
                     spectra[1, :] += (np.asarray(spec))**2/len(np.asarray(spectra_list))*2
                     
             spectra = np.sqrt(spectra)
-
 
         # return the final spectra
         return wavelengths, spectra
@@ -797,44 +865,10 @@ class PrtInterface(Interface):
         else:
             abus = mass_frac[0][lat[0]]
 
-        # prepare array for cloud data
-        cloud_data = np.zeros((2, len(self.prt.freq), len(self.prt.press)))
-
         # check if clouds are wished
+        cloud_data = np.zeros((2, len(self.prt.freq), len(self.prt.press)))
         if do_clouds:
-            # adjust prt for clouds
-            self.prt.clouds_mix_opa = types.MethodType(patch_cloud_mix_opa, self.prt)
-            self.prt.calc_transm = types.MethodType(patch_calc_transm, self.prt)
-            self.prt.delete_clouds = types.MethodType(patch_delete_clouds, self.prt)
-
-            # load or calculate cloud opacities
-            if isinstance(clouds, bool):
-                # find all volume fractions
-                vol_fracs = {}
-                for key in self.dsi.keys():
-                    if 'ClVf' in key:
-                        vol_fracs[key[5:]] = self.dsi.sel(lat=lat[1], lon=lon[1])[key].values[::-1]
-
-                # calculate cloud opacities
-                # qabs is the absorption efficiency, qsca the scattering efficiency
-                # and csec the cross-section
-                qabs, qsca, csec = cloud_opacities(
-                    299792458 / self.prt.freq,
-                    self.dsi.sel(lat=lat[1], lon=lon[1])['ClDs'].values[::-1]*1e-6,
-                    self.dsi.sel(lat=lat[1], lon=lon[1])['ClAb'].values[::-1],
-                    self.dsi.sel(lat=lat[1], lon=lon[1])['ClDr'].values[::-1],
-                    vol_fracs,
-                    use_bruggemann
-                    )
-
-                # save opacity kappas
-                for k, _ in enumerate(csec):
-                    cloud_data[0, :, k] = qabs[k] * csec[k]
-                    cloud_data[1, :, k] = qsca[k] * csec[k]
-            else:
-                # load data from input if given
-                cloud_data[0, :, :] = clouds[lon[0], lat[0], :, :, 0]
-                cloud_data[1, :, :] = clouds[lon[0], lat[0], :, :, 1]
+            cloud_data = _cloud_init(lat, lon, clouds, use_bruggemann)
 
         # check if all opacity species are in mass fractions
         for key in self.prt.line_species:
@@ -858,6 +892,78 @@ class PrtInterface(Interface):
 
         # add the spectra to the list
         return self.prt.transm_rad
+
+    def _cloud_init(self, lat, lon, clouds, use_bruggemann):
+        """
+        Calculate the transit spectrum. This function avarages T-p profiles in
+        the terminator region and uses poorman equilbriums chemistry.
+
+        Parameters
+        ----------
+        lat: Tuple
+            Tuple containing latitude index and latitude angle.
+        lon: Tuple
+            Tuple containing longitude index and latitude angle.
+        clouds: Union[np.ndarray[i, j, h, w, k], bool]
+            The cloud opacities for each t_p point. Structure is as follows:
+            mass_frac[i][j][w][h][k]
+            - i: [2 elements] 0 for morning terminator, 1 for evening terminator
+            - j: [lat_points elements] latitude point starting from lowest
+                 (closeset to lat = -90) to highest (closest to lat = 90)
+            - w: [number of wavelength bins] this has to be equivalent to the wavelength
+                 structure of prt.
+            - h: [number of pressure points] this needs to be equivalent to the pressure
+                structure of the gcm.
+            - k: 0 for kappa_absorption and 1 for kappa_scatering
+        use_bruggemann: bool
+            If this flag is set to true, bruggemann mixing is used. This is
+            more accurate but takes much longer to calculate.
+
+        Returns
+        -------
+        np.array cloud_data
+            prepared cloud opacities for petitRadtrans
+
+        """
+        # prepare array for cloud data
+        cloud_data = np.zeros((2, len(self.prt.freq), len(self.prt.press)))
+
+        # adjust prt for clouds
+        self.prt.clouds_mix_opa = types.MethodType(patch_cloud_mix_opa, self.prt)
+        self.prt.calc_transm = types.MethodType(patch_calc_transm, self.prt)
+        self.prt.delete_clouds = types.MethodType(patch_delete_clouds, self.prt)
+
+        # load or calculate cloud opacities
+        if isinstance(clouds, bool):
+            # find all volume fractions
+            vol_fracs = {}
+            for key in self.dsi.keys():
+                if 'ClVf' in key:
+                    vol_fracs[key[5:]] = self.dsi.sel(lat=lat[1], lon=lon[1])[key].values[::-1]
+
+            # calculate cloud opacities
+            # qabs is the absorption efficiency, qsca the scattering efficiency
+            # and csec the cross-section
+            qabs, qsca, csec = cloud_opacities(
+                299792458 / self.prt.freq,
+                self.dsi.sel(lat=lat[1], lon=lon[1])['ClDs'].values[::-1]*1e-6,
+                self.dsi.sel(lat=lat[1], lon=lon[1])['ClAb'].values[::-1],
+                self.dsi.sel(lat=lat[1], lon=lon[1])['ClDr'].values[::-1],
+                vol_fracs,
+                use_bruggemann
+            )
+
+            # save opacity kappas
+            for k, _ in enumerate(csec):
+                cloud_data[0, :, k] = qabs[k] * csec[k]
+                cloud_data[1, :, k] = qsca[k] * csec[k]
+        else:
+            # load data from input if given
+            cloud_data[0, :, :] = clouds[lon[0], lat[0], :, :, 0]
+            cloud_data[1, :, :] = clouds[lon[0], lat[0], :, :, 1]
+
+        # return prepared cloud opacities
+        return cloud_data
 
     def _get_stellar_spec(self, wlen, t_star):
         """

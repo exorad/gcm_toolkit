@@ -64,6 +64,9 @@ VARNAMES = dict(
     R_p="R_p",
     cp="cp",
     R="R",
+    ClDs='ClDs',
+    ClAb='ClAb',
+    ClDr='ClDr',
 )
 
 SUPPORTED_GCMS = ["MITgcm"]
