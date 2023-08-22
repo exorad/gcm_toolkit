@@ -868,7 +868,7 @@ class PrtInterface(Interface):
         # check if clouds are wished
         cloud_data = np.zeros((2, len(self.prt.freq), len(self.prt.press)))
         if do_clouds:
-            cloud_data = _cloud_init(lat, lon, clouds, use_bruggemann)
+            cloud_data = self._cloud_init(lat, lon, clouds, use_bruggemann)
 
         # check if all opacity species are in mass fractions
         for key in self.prt.line_species:

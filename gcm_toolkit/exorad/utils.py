@@ -97,7 +97,7 @@ def convert_winds_and_t(dsi, temp_dim, w_dim):
             grid = cs.init_grid_CS(ds=dsi)
         else:
             grid = cs.init_grid_LL(ds=dsi)
-
+	
         w_interp = grid.interp(dsi[w_dim], axis=c.Z, to="center")
 
         # convert vertical wind speed from Pa/s to m/s
