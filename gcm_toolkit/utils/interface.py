@@ -794,7 +794,7 @@ class PrtInterface(Interface):
             spectra = np.sqrt(spectra)
 
         # return the final spectra
-        return wavelengths, spectra
+        return wavelengths, spectra, output_list
 
     def _get_1_transit_spectra(self, lat, lon, mass_frac, gravity, mmw, rplanet,
                                pressure_0, do_clouds, clouds, use_bruggemann):
