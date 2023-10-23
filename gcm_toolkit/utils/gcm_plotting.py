@@ -165,6 +165,7 @@ def isobaric_slice(
             time_string = f"{time}"
         title = f"p = {this_p:.2e} {p_unit}, time = {time_string} {time_unit}"
     ax.set_title(title, **font_labels)
+    return plotted
 
 
 def plot_horizontal_wind(
@@ -502,3 +503,5 @@ def zonal_mean(
     # Invert y-axis and set scale to log
     ax.set_yscale("log")
     ax.invert_yaxis()
+
+    return plotted
