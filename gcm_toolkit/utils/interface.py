@@ -238,17 +238,17 @@ class Interface:
         dsi = self.tools.get_one_model(tag).sel(time=time)
 
         if terminator_avg:
-            # To perform a proper avareging over the terminator region, the data is 
+            # To perform a proper avareging over the terminator region, the data is
             # sampled and regridded.
-            
+
             # set latitude step size and latitude centers
             d_lat = 180 / lat_points
             c_lat = np.linspace(-90+d_lat/2, 90-d_lat/2, lat_points)
-            
+
             # read out values from x array to normal array input
             coords = np.meshgrid(dsi[c['lon']], dsi[c['lat']])
             coords = np.asarray([coords[0].flatten(), coords[1].flatten()])
-            
+
             # read out data that needs to be avaraged
             data = []
             names = []
@@ -274,14 +274,14 @@ class Interface:
                 },
                 attrs=dsi.attrs
             )
-            
+
             # loop over both limbs seperatly
             tmp = np.zeros((lat_points, 2, data_nr))
             for i, limb in enumerate([-90., 90.]):
                 # loop over each latitude point
                 for j, lp in enumerate(c_lat):
                     tmp[j, i, :] = self._terminator_slice_interpolator(
-                            coords, data, lp - d_lat/2, lp + d_lat/2, 
+                            coords, data, lp - d_lat/2, lp + d_lat/2,
                             lon_resolution, limb)
 
             # reshape output data and add it to the new dataset
@@ -404,13 +404,6 @@ class Interface:
         # define uniform grid to take the avarege of the physical values
         grid_y, grid_x = np.meshgrid(np.linspace(lmin, lmax, 100),
                                      np.linspace(-oa, oa, 100))
-        
-        # # debuging plotting routines
-        # import matplotlib.pyplot as plt
-        # plt.figure()
-        # plt.plot(grid_x, grid_y, 'k.')
-        # plt.plot(np.asarray(d_gri)[:, 0], np.asarray(d_gri)[:, 1], 'r.')
-        # plt.show()
         
         # interpolate data to new grid
         out = np.zeros((len(data[:, 0]),))
