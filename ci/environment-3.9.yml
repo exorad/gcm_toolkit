@@ -16,3 +16,6 @@ dependencies:
   - pip:
       - git+https://github.com/MITgcm/xmitgcm.git
       - miepython
+      - petitRADTRANS==2.4.9
+      - prt-phasecurve
+
