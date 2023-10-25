@@ -3,17 +3,32 @@ channels:
   - conda-forge
 dependencies:
   - python=3.10
-  - xarray
   - cubedsphere
   - pytest
   - codecov
   - pytest-cov
   - matplotlib
   - astropy
-  - numpy
+  - numpy==1.24.4
   - scipy
   - setuptools
   - netcdf4
   - pandas>2.0.3
   - numba>=0.58.0
   - llvmlite>=0.41.0
+  - corner
+  - tqdm
+  - dask
+  - cfgv
+  - distlib
+  - filelock
+  - h5py
+  - miepython
+  - molmass
+  - platformdirs
+  - nodeenv 
+  - pre-commit 
+  - pymultinest
+  - pyqt5-sip 
+  - seaborn
+  - pip
