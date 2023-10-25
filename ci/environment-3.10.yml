@@ -18,9 +18,3 @@ dependencies:
   - pandas>2.0.3
   - numba>=0.58.0
   - llvmlite>=0.41.0
-  - pip
-  - pip:
-      - git+https://github.com/MITgcm/xmitgcm.git
-      - miepython
-      - petitRADTRANS==2.4.9
-      - prt-phasecurve

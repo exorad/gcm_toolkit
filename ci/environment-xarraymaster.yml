@@ -19,8 +19,4 @@ dependencies:
   - llvmlite>=0.41.0
   - pip
   - pip:
-      - git+https://github.com/MITgcm/xmitgcm.git
       - git+https://github.com/pydata/xarray.git
-      - miepython
-      - petitRADTRANS==2.4.9
-      - prt-phasecurve
