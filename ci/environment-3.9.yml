@@ -7,7 +7,6 @@ dependencies:
   - pytest
   - codecov
   - pytest-cov
-  - h5py
   - matplotlib
   - astropy
   - numpy
