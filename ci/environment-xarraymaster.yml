@@ -9,7 +9,7 @@ dependencies:
   - pytest-cov
   - matplotlib
   - astropy
-  - numpy==1.24.4
+  - numpy
   - scipy
   - setuptools
   - netcdf4
@@ -23,8 +23,6 @@ dependencies:
   - distlib
   - filelock
   - h5py
-  - miepython
-  - molmass
   - platformdirs
   - nodeenv 
   - pre-commit 

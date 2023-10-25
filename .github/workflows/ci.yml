@@ -43,7 +43,7 @@ jobs:
       - name: Set up conda environment
         shell: bash -l {0}
         run: |
-          python -m pip install --no-deps git+https://github.com/MITgcm/xmitgcm.git petitRADTRANS==2.4.9 prt-phasecurve
+          python -m pip install --no-deps molmass miepython git+https://github.com/MITgcm/xmitgcm.git petitRADTRANS==2.4.9 prt-phasecurve
           python -m pip install -e .
           conda list
       - name: Run Tests
@@ -78,7 +78,7 @@ jobs:
       - name: Set up conda environment
         shell: bash -l {0}
         run: |
-          python -m pip install --no-deps git+https://github.com/MITgcm/xmitgcm.git petitRADTRANS==2.4.9 prt-phasecurve        
+          python -m pip install --no-deps molmass miepython git+https://github.com/MITgcm/xmitgcm.git petitRADTRANS==2.4.9 prt-phasecurve        
           python -m pip install -e .
           conda list
       - name: Run Tests
