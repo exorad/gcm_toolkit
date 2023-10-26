@@ -6,6 +6,7 @@ dependencies:
   - cubedsphere
   - pytest
   - codecov
+  - xmitgcm
   - pytest-cov
   - matplotlib
   - astropy
@@ -13,21 +14,13 @@ dependencies:
   - scipy
   - setuptools
   - netcdf4
-  - pandas>2.0.3
-  - numba>=0.58.0
-  - llvmlite>=0.41.0
+  - pandas
+  - numba
   - corner
   - tqdm
-  - dask
-  - cfgv
-  - distlib
-  - filelock
   - h5py
-  - platformdirs
-  - nodeenv 
   - pre-commit 
   - pymultinest
-  - pyqt5-sip 
   - seaborn
   - pip
   - pip:
