@@ -43,15 +43,21 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
     )
 
     # add cloud properties
-    dsi_clouds = tools.get_models('0')
-    tmp = np.ones((len(dsi_clouds['time']), len(dsi_clouds['lat']),
-                   len(dsi_clouds['lon']), len(dsi_clouds['Z_l'])))
-    dsi_clouds['ClAb'] = (('time', 'lat', 'lon', 'Z_l'), tmp*1e-5)
-    dsi_clouds['ClDs'] = (('time', 'lat', 'lon', 'Z_l'), tmp*1e2)
-    dsi_clouds['ClDr'] = (('time', 'lat', 'lon', 'Z_l'), tmp*1e3)
-    dsi_clouds['ClVf_Test1[s]'] = (('time', 'lat', 'lon', 'Z_l'), tmp*0.5)
-    dsi_clouds['ClVf_Test2[s]'] = (('time', 'lat', 'lon', 'Z_l'), tmp*0.5)
-    tools._replace_model('0', dsi_clouds)
+    dsi_clouds = tools.get_models("0")
+    tmp = np.ones(
+        (
+            len(dsi_clouds["time"]),
+            len(dsi_clouds["lat"]),
+            len(dsi_clouds["lon"]),
+            len(dsi_clouds["Z"]),
+        )
+    )
+    dsi_clouds["ClAb"] = (("time", "lat", "lon", "Z"), tmp * 1e-5)
+    dsi_clouds["ClDs"] = (("time", "lat", "lon", "Z"), tmp * 1e2)
+    dsi_clouds["ClDr"] = (("time", "lat", "lon", "Z"), tmp * 1e3)
+    dsi_clouds["ClVf_Test1[s]"] = (("time", "lat", "lon", "Z"), tmp * 0.5)
+    dsi_clouds["ClVf_Test2[s]"] = (("time", "lat", "lon", "Z"), tmp * 0.5)
+    tools._replace_model("0", dsi_clouds)
 
     phases = np.linspace(0, 1, 50)
     interface = tools.get_prt_interface(pRT)
@@ -113,9 +119,11 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
         )
 
     # test transit calculation set up
-    interface.set_data(time=expected["times"][-1], terminator_avg=True, lon_resolution=60)
-    assert (interface.dsi['lon'].values == [-90, 90]).all()
-    assert interface.dsi['lat'].values == [0]
+    interface.set_data(
+        time=expected["times"][-1], terminator_avg=True, lon_resolution=60
+    )
+    assert (interface.dsi["lon"].values == [-90, 90]).all()
+    assert interface.dsi["lat"].values == [0]
 
     # test transit calculation
     interface.chem_from_poorman("T", co_ratio=0.55, feh_ratio=0.0)
@@ -129,7 +137,9 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
 
     # test transit calculation
     interface.chem_from_poorman("T", co_ratio=0.55, feh_ratio=0.0)
-    wave, spectra = interface.calc_transit_spectrum(mmw=2.33, clouds=True, use_bruggemann=True)
+    wave, spectra = interface.calc_transit_spectrum(
+        mmw=2.33, clouds=True, use_bruggemann=True
+    )
     assert sum(spectra) == 45237213620.53514
 
     # Test if Pa works
@@ -253,7 +263,7 @@ def test_PAC_interface(all_nc_testdata):
     pac2d.set_data(time=expected["times"][-1])
 
     with pytest.raises(OSError):
-        pac1d.write_inputfile('non/existent/path')
-        pac2d.write_inputfile('non/existent/path')
-        pac2d.generate_lptfile('non/existent/path')
-        pac2d.generate_aptfiles('non/existent/path')
+        pac1d.write_inputfile("non/existent/path")
+        pac2d.write_inputfile("non/existent/path")
+        pac2d.generate_lptfile("non/existent/path")
+        pac2d.generate_aptfiles("non/existent/path")
