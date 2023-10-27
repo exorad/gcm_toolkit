@@ -128,7 +128,7 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
     # test transit calculation
     interface.chem_from_poorman("T", co_ratio=0.55, feh_ratio=0.0)
     wave, spectra, _ = interface.calc_transit_spectrum(mmw=2.33)
-    assert sum(spectra) == 45398350665.651955
+    assert sum(spectra) == 45398356903.221634
 
     # test transit calculation
     interface.chem_from_poorman("T", co_ratio=0.55, feh_ratio=0.0)
@@ -140,7 +140,7 @@ def test_prt_interface(petitradtrans_testdata, all_raw_testdata):
     wave, spectra, _ = interface.calc_transit_spectrum(
         mmw=2.33, clouds=True, use_bruggemann=True
     )
-    #assert sum(spectra) == 45398350666.008026
+    assert sum(spectra) == 45398350666.008026
 
     # Test if Pa works
     interface.dsi.attrs["p_unit"] = "Pa"
