@@ -253,10 +253,11 @@ class Interface:
             data = []
             names = []
             data_nr = 0
+
             for key in dsi.keys():
                 if key in ['T', 'ClAb', 'ClDs', 'ClDr'] or 'ClVf' in key:
                     names.append(key)
-                    for h, _ in enumerate(dsi[c['Z_l']]):
+                    for h, _ in enumerate(dsi[c['Z']]):
                         data.append(dsi[key].values[h].flatten())
                         data_nr += 1
 
@@ -269,7 +270,6 @@ class Interface:
                 coords={
                     'lat': ([c["lat"]], c_lat),
                     'lon': ([c["lon"]], [-90, 90]),
-                    'Z_l': ([c["Z_l"]], dsi[c['Z_l']].values),
                     'Z': ([c["Z"]], dsi[c['Z']].values)
                 },
                 attrs=dsi.attrs
@@ -288,10 +288,10 @@ class Interface:
             index = 0
             for key in names:
                 fill = np.zeros((lat_points, 2, len(dsi[c["Z"]].values)))
-                for h, _ in enumerate(dsi[c['Z_l']]):
+                for h, _ in enumerate(dsi[c['Z']]):
                     fill[:, :, h] = tmp[:, :, index]
                     index += 1
-                ds_transit[key] = ((c['lat'], c['lon'], c['Z_l']), fill)
+                ds_transit[key] = ((c['lat'], c['lon'], c['Z']), fill)
 
             # add mark that data is ready for tranist callcuations
             ds_transit.attrs['transit'] = True
