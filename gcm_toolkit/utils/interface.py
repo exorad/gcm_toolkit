@@ -257,8 +257,8 @@ class Interface:
             for key in dsi.keys():
                 if key in ['T', 'ClAb', 'ClDs', 'ClDr'] or 'ClVf' in key:
                     names.append(key)
-                    for h, _ in enumerate(dsi[c['Z']]):
-                        data.append(dsi[key].values[h].flatten())
+                    for h, zco in enumerate(dsi[c['Z']]):
+                        data.append(dsi[key].sel(Z=zco).values.flatten())
                         data_nr += 1
 
             # convert data to array
