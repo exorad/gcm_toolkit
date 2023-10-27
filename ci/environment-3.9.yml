@@ -6,13 +6,20 @@ dependencies:
   - cubedsphere
   - pytest
   - codecov
+  - xmitgcm
   - pytest-cov
-  - xarray
-  - h5py
-  - numpy=1.21.5
-  - setuptools=61.2.0
+  - matplotlib
+  - astropy
+  - numpy
+  - scipy
+  - setuptools
   - netcdf4
+  - pandas
+  - numba
+  - corner
+  - tqdm
+  - h5py
+  - pre-commit 
+  - pymultinest
+  - seaborn
   - pip
-  - pip:
-      - git+https://github.com/MITgcm/xmitgcm.git
-      - miepython
