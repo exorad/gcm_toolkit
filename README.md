@@ -17,15 +17,16 @@ package as a general tool for the analysis of data from different 3D GCMs.
 
 *gcm_toolkit* is currently under development. Feel free to contribute!
 
-## Features (Current/Planned)
+## Features (Current)
 
-* Multiple read-in methods (currently only *MITgcm*)
+* GCM read-in methods (currently only *MITgcm*)
 * 'Tag' system for easy referencing of multiple models in memory
 * Making use of [xarray](https://docs.xarray.dev/en/stable/)'s intuitive system of multi-D arrays
 * Quick plotting routines
     * isobaric slices
     * zonal means
     * evolution over time
+    * ... and more
 * Direct data access for custom plotting and post-processing
 
 ## Main Authors
