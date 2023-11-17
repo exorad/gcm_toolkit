@@ -1,5 +1,5 @@
 """
-Things related to exorad that are not tested in test_gcmt
+Things related to mitgcm that are not tested in test_gcmt
 """
 import os
 
