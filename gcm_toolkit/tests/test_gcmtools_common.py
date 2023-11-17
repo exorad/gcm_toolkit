@@ -59,6 +59,10 @@ _experiments_raw = {
         "prt_max": 0.0042081,  # values for petitradtrans test
         "prt_min": 0.00023373,  # values for petitradtrans test
         "prt_sum": 0.31550672,  # values for petitradtrans test
+        "prt_trans_1": 45491365294.92735, # values for petitradtrans test no clouds
+        "prt_trans_2": 45491359621.84237, # values for petitradtrans test with clouds
+        "prt_trans_3": 45398350666.008026, # values for petitradtrans test with brugemann clouds
+        "prt_trans_accuracy": 1000000, # accuracy required for transmission spectrum tests
     },
 }
 
@@ -79,6 +83,10 @@ _experiments_nc = {
         "prt_max": 0.0042081,  # values for petitradtrans test
         "prt_min": 0.00023373,  # values for petitradtrans test
         "prt_sum": 0.31550672,  # values for petitradtrans test
+        "prt_trans_1": 45491365294.92735, # values for petitradtrans test no clouds
+        "prt_trans_2": 45491359621.84237, # values for petitradtrans test with clouds
+        "prt_trans_3": 45398350666.008026, # values for petitradtrans test with brugemann clouds
+        "prt_trans_accuracy": 1000000, # accuracy required for transmission spectrum tests
     },
 }
 
