@@ -46,13 +46,15 @@ def convert_pressure(dsi, current_unit, goal_unit):
                 .to(u.Unit(goal_unit))
                 .value
             )
-    dsi.attrs.update(
-        {
-            "p_ref": (dsi.p_ref * u.Unit(current_unit))
-            .to(u.Unit(goal_unit))
-            .value
-        }
-    )
+    for attr in [c["p_ref"], c["p0"]]:
+        if attr in dsi.attrs:
+            dsi.attrs.update(
+                {
+                    attr: (dsi.attrs[attr] * u.Unit(current_unit))
+                    .to(u.Unit(goal_unit))
+                    .value
+                }
+            )
 
     # store the units in the dataset attributes
     dsi.attrs["p_unit"] = goal_unit
@@ -90,7 +92,7 @@ def convert_time(dsi, current_unit, goal_unit):
     if (
         current_unit != goal_unit
         and (current_unit == "iter" or goal_unit == "iter")
-        and dsi.attrs.get("dt") is None
+        and dsi.attrs.get(c["dt"]) is None
     ):
         raise ValueError(
             "You can only convert units if the timestep is known. "
@@ -98,9 +100,9 @@ def convert_time(dsi, current_unit, goal_unit):
 
     # Convert time:
     if current_unit == "iter" and goal_unit == "day":
-        dsi[c["time"]] = dsi.iter * dsi.attrs["dt"] / (3600 * 24)
+        dsi[c["time"]] = dsi.iter * dsi.attrs[c["dt"]] / (3600 * 24)
     if current_unit == "day" and goal_unit == "iter":
-        dsi[c["time"]] = dsi.iter / dsi.attrs["dt"] * (3600 * 24)
+        dsi[c["time"]] = dsi.iter / dsi.attrs[c["dt"]] * (3600 * 24)
 
     # store the units in the dataset attributes
     dsi.attrs["time_unit"] = goal_unit

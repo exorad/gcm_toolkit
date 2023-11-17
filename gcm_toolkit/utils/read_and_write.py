@@ -56,7 +56,7 @@ def m_read_raw(
     if gcm == "MITgcm":
         wrt.write_status("STAT", "Read in raw MITgcm data")
         wrt.write_status("INFO", "File path: " + data_path)
-        from ..exorad import m_read_from_mitgcm
+        from ..mitgcm import m_read_from_mitgcm
 
         if tag is not None and load_existing:
             try:

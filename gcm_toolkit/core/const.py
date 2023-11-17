@@ -7,7 +7,7 @@ Consistent namings of variables
 These variable names are currently in sync with the naming scheme
 from the cubedsphere package.
 The advantage of that is that we do not need to worry about
-variable naming inconsistancies with exorad data.
+variable naming inconsistancies with mitgcm data.
 ==============================================================
 """
 VARNAMES = dict(
@@ -62,8 +62,12 @@ VARNAMES = dict(
     P_orb="P_orb",
     g="g",
     R_p="R_p",
+    Kappa="Kappa",
     cp="cp",
-    R="R",
+    R="R",  # specific gas constant
+    p_ref="p_ref",
+    p0="p0",
+    dt="dt",
 )
 
 SUPPORTED_GCMS = ["MITgcm"]
