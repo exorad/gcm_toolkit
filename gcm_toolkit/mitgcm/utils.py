@@ -154,7 +154,7 @@ def mitgcm_postprocessing(dsi, outdir=None, datafile=None):
             get_parameter(datafile, "ro_sealevel", 1.0e5)
         ),  # bot layer pres in pa
         c["p_ref"]: float(
-            get_parameter(datafile, "atm_p0", 1.0e5)
+            get_parameter(datafile, "atm_po", 1.0e5)
         ),  # reference pressure in pa
         c["cp"]: cp,  # heat cap at constant pres
         c["R"]: rs,  # specific gas constant
