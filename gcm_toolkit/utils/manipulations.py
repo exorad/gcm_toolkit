@@ -222,7 +222,7 @@ def _calc_hydrostat_eq(dsi, temp_key):
     Helper function that calculated rho and dz/dp
     based on the ideal gas equation and on hydrostatic eq.
     """
-    rho = dsi[c["Z"]] / dsi.attrs[c["R_s"]] / dsi[temp_key]
+    rho = dsi[c["Z"]] / dsi.attrs[c["R"]] / dsi[temp_key]
     dzdp = -1 / rho / dsi.attrs[c["g"]]
     return dzdp, rho
 
@@ -305,7 +305,7 @@ def m_add_theta(dsi, var_key_out=None, temp_key="T"):
         A dataArray with reduced dimensionality, containing the potential temperature
     """
     theta = dsi[c[temp_key]] * (dsi.attrs[c["p_ref"]] / dsi[c["Z"]]) ** (
-        dsi.attrs[c["R_s"]] / dsi.attrs[c["cp"]]
+        dsi.attrs[c["R"]] / dsi.attrs[c["cp"]]
     )
 
     if var_key_out is not None:

@@ -87,12 +87,10 @@ def convert_winds_and_t(dsi, temp_dim, w_dim):
     )
 
     # calculate scale height
-    h_val = dsi.attrs[c["R_s"]] / dsi.attrs[c["g"]] * dsi[temp_dim]
+    h_val = dsi.attrs[c["R"]] / dsi.attrs[c["g"]] * dsi[temp_dim]
 
     # calculate geometric height
-    rho = (
-        dsi[c["Z"]] / dsi.attrs[c["R_s"]] / dsi[temp_dim]
-    )  # ideal gas equation
+    rho = dsi[c["Z"]] / dsi.attrs[c["R"]] / dsi[temp_dim]  # ideal gas equation
     dzdp = -1 / rho / dsi.attrs[c["g"]]  # hydrostatic eq.
     dsi[c["Z_geo"]] = dzdp.cumulative_integrate(coord=c["Z"])
 
@@ -159,7 +157,7 @@ def mitgcm_postprocessing(dsi, outdir=None, datafile=None):
             get_parameter(datafile, "atm_p0", 1.0e5)
         ),  # reference pressure in pa
         c["cp"]: cp,  # heat cap at constant pres
-        c["R_s"]: rs,  # specific gas constant
+        c["R"]: rs,  # specific gas constant
         c[
             "Kappa"
         ]: kappa,  # ratio of heat cap at constant pres to specific gas constant
