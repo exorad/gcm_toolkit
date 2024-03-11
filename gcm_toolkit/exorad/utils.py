@@ -79,7 +79,11 @@ def convert_winds_and_t(dsi, temp_dim, w_dim):
     """
     import cubedsphere as cs
     import cubedsphere.const as c
-
+    
+    # save potential temperature
+    dsi[temp_dim + '_pot'] = dsi[temp_dim]
+    
+    #calculate temperature
     kappa = dsi.attrs["R"] / dsi.attrs["cp"]
     dsi[temp_dim] = dsi[temp_dim] * (dsi[c.Z] / dsi.attrs["p_ref"]) ** kappa
 
